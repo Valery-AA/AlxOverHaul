@@ -19,8 +19,6 @@ import bpy
 import AlxPackage
 from bpy.props import StringProperty
 
-
-
 class Alx_Panel_Rigging(bpy.types.Panel):
     """"""
 
@@ -49,7 +47,7 @@ class Alx_Panel_Rigging(bpy.types.Panel):
             InfluencingArmature = None
             PrePoseSwitchObject = None
 
-            if (context.active_object.find_armature() is not None) and (context.active_object.type != "ARMATURE"):
+            if (context.active_object.find_armature() is not None) and (context.active_object.type == "MESH"):
                 InfluencingArmature = context.active_object.find_armature()
                 PrePoseSwitchObject = context.active_object
                 
@@ -66,16 +64,20 @@ class Alx_Panel_Rigging(bpy.types.Panel):
                 Alxrow.label(text="No Influencing Armature Found")
 
 
-            if (context.mode != "PAINT_WEIGHT") and (context.active_object.type == "MESH") and (InfluencingArmature is not None) and (PrePoseSwitchObject is not None):
-                ObjOPSwitch = self.layout.operator(Alx_OT_AutoWeightPaintSwitch.bl_idname, text="Weight Paint")
-                ObjOPSwitch.ParentArmatureTarget = InfluencingArmature.data.name
-                ObjOPSwitch.WeightPaintObject = PrePoseSwitchObject.data.name
+            if (context.mode != "PAINT_WEIGHT") and (InfluencingArmature is not None) and(PrePoseSwitchObject is not None):
+                ObjectOPSwitch = self.layout.operator(Alx_OT_AutoWeightPaintSwitch.bl_idname, text="Weight Paint")
+                ObjectOPSwitch.ParentArmatureTarget = InfluencingArmature.data.name
+                ObjectOPSwitch.ParentArmatureName = InfluencingArmature.name
+                ObjectOPSwitch.WeightPaintTarget = PrePoseSwitchObject.data.name
+                ObjectOPSwitch.WeightPaintName = PrePoseSwitchObject.name
 
             if (context.mode != "OBJECT"):
                 self.layout.operator("object.mode_set", text="Object")
                 
             if  (context.mode !="POSE") and (InfluencingArmature is not None):
-                self.layout.operator(Alx_OT_AutoSwitchToPose.bl_idname, text="Pose").SwitchArmatureTarget = InfluencingArmature.data.name
+                PoseOPSwitch = self.layout.operator(Alx_OT_AutoSwitchToPose.bl_idname, text="Pose")
+                PoseOPSwitch.SwitchArmatureTarget = InfluencingArmature.data.name
+                PoseOPSwitch.SwitchArmatureName = InfluencingArmature.name
         
 class Alx_OT_AutoWeightPaintSwitch(bpy.types.Operator):
     """"""
@@ -84,7 +86,10 @@ class Alx_OT_AutoWeightPaintSwitch(bpy.types.Operator):
     bl_idname = "alx.weightpaint_auto_switch"
 
     ParentArmatureTarget : StringProperty()
-    WeightPaintObject : StringProperty()
+    ParentArmatureName : StringProperty()
+
+    WeightPaintTarget : StringProperty()
+    WeightPaintName : StringProperty()
 
     @classmethod
     def poll (self, context):
@@ -92,9 +97,22 @@ class Alx_OT_AutoWeightPaintSwitch(bpy.types.Operator):
     
     def execute(self, context):
 
-        if (context.mode !="PAINT_WEIGHT") and (self.ParentArmatureTarget != "") and (self.WeightPaintObject != ""):
-            bpy.data.objects[self.ParentArmatureTarget].select_set(True)
-            bpy.context.view_layer.objects.active =  bpy.data.objects[self.WeightPaintObject]
+        if (context.mode !="PAINT_WEIGHT") and (((self.ParentArmatureTarget != "") or (self.ParentArmatureName != "")) and ((self.WeightPaintTarget != "") or (self.WeightPaintName != ""))):
+
+            if (bpy.data.objects.get(self.ParentArmatureTarget) is not None):
+                bpy.data.objects.get(self.ParentArmatureTarget).select_set(True)
+
+            if (bpy.data.objects.get(self.ParentArmatureName) is not None):
+                bpy.data.objects.get(self.ParentArmatureName).select_set(True)
+
+
+            if (bpy.data.objects.get(self.WeightPaintName) is not None):
+                bpy.context.view_layer.objects.active =  bpy.data.objects.get(self.WeightPaintName)
+
+            if (bpy.data.objects.get(self.WeightPaintName) is not None):
+                bpy.context.view_layer.objects.active =  bpy.data.objects.get(self.WeightPaintName)
+
+            
             if (context.active_object.type == "MESH"):
                 bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
 
@@ -107,6 +125,7 @@ class Alx_OT_AutoSwitchToPose(bpy.types.Operator):
     bl_idname = "alx.pose_auto_switch"
 
     SwitchArmatureTarget : StringProperty()
+    SwitchArmatureName : StringProperty()
 
     @classmethod
     def poll (self, context):
@@ -114,10 +133,13 @@ class Alx_OT_AutoSwitchToPose(bpy.types.Operator):
     
     def execute(self, context):
 
+        if (context.mode !="POSE") and ((self.SwitchArmatureTarget != "") or (self.SwitchArmatureName != "")):
+            if (bpy.data.objects.get(self.SwitchArmatureTarget) is not None):
+                bpy.context.view_layer.objects.active =  bpy.data.objects.get(self.SwitchArmatureTarget)
 
+            if (bpy.data.objects.get(self.SwitchArmatureName) is not None):
+                bpy.context.view_layer.objects.active =  bpy.data.objects.get(self.SwitchArmatureName)
 
-        if (context.mode !="POSE") and (self.SwitchArmatureTarget != ""):
-            bpy.context.view_layer.objects.active =  bpy.data.objects[self.SwitchArmatureTarget]
             if (context.active_object.type == "ARMATURE"):
                 bpy.ops.object.mode_set(mode="POSE")
 
