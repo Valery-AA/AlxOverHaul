@@ -30,119 +30,108 @@ class Alx_Panel_Rigging(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 
-    bl_options = {"DEFAULT_CLOSED"}
-
     @classmethod
     def poll(cls, context):
             return True
         
     def draw(self, context):
-        Alxlayout = self.layout
-        Alxrow = Alxlayout.row()
 
-        Alxlayout.label(text="Pose:")
+        AlxLayout = self.layout
+        AlxRow = AlxLayout.row()
+
+        AlxLayout.label(text="Pose:")
         
         if (context.active_object is not None):
             
-            InfluencingArmature = None
-            PrePoseSwitchObject = None
+            AlxParentArmature = None
+            AlxContextObject = None
 
-            if (context.active_object.find_armature() is not None) and (context.active_object.type == "MESH"):
-                InfluencingArmature = context.active_object.find_armature()
-                PrePoseSwitchObject = context.active_object
-                
-            elif (context.active_object.find_armature() is None) and (context.active_object.type == "ARMATURE"):
-                InfluencingArmature = context.active_object
+            if (context.active_object.type == "MESH") and (context.active_object.find_armature() is not None):
+                AlxParentArmature = bpy.data.armatures[context.active_object.find_armature().data.name]
+                AlxContextObject = context.active_object.data.name
+            if (context.active_object.type == "ARMATURE") and (context.active_object is not None):
+                AlxParentArmature = bpy.data.armatures[context.active_object.data.name]
+            
 
-                if (InfluencingArmature is not None):
-                    if (bpy.data.armatures[InfluencingArmature.data.name] is not None):
-                        ParentArmature = bpy.data.armatures[InfluencingArmature.data.name]
-
-                        Alxrow.prop(ParentArmature, "pose_position", expand=True)
-
+            if (AlxParentArmature is not None):
+                AlxLayout.row().prop(AlxParentArmature, "pose_position", expand=True)
             else:
-                Alxrow.label(text="No Influencing Armature Found")
+                AlxLayout.row().label(text="No Influencing Armature Found")
 
-
-            if (context.mode != "PAINT_WEIGHT") and (InfluencingArmature is not None) and(PrePoseSwitchObject is not None):
-                ObjectOPSwitch = self.layout.operator(Alx_OT_AutoWeightPaintSwitch.bl_idname, text="Weight Paint")
-                ObjectOPSwitch.ParentArmatureTarget = InfluencingArmature.data.name
-                ObjectOPSwitch.ParentArmatureName = InfluencingArmature.name
-                ObjectOPSwitch.WeightPaintTarget = PrePoseSwitchObject.data.name
-                ObjectOPSwitch.WeightPaintName = PrePoseSwitchObject.name
 
             if (context.mode != "OBJECT"):
-                self.layout.operator("object.mode_set", text="Object")
-                
-            if  (context.mode !="POSE") and (InfluencingArmature is not None):
-                PoseOPSwitch = self.layout.operator(Alx_OT_AutoSwitchToPose.bl_idname, text="Pose")
-                PoseOPSwitch.SwitchArmatureTarget = InfluencingArmature.data.name
-                PoseOPSwitch.SwitchArmatureName = InfluencingArmature.name
-        
-class Alx_OT_AutoWeightPaintSwitch(bpy.types.Operator):
+                OMSwitch = AlxLayout.row().operator(Alx_OT_AutoObjectModeSwitch.bl_idname, text="Object", emboss=True)
+
+            if (context.mode != "POSE") and (AlxParentArmature is not None):
+                PMSwitch = AlxLayout.row().operator(Alx_OT_AutoPoseModeSwitch.bl_idname, text="Pose", emboss=True)
+                PMSwitch.PoseActiveArmature = AlxParentArmature.name
+
+            if (context.mode != "PAINT_WEIGHT") and (AlxParentArmature is not None) and (AlxContextObject is not None):
+                WPMSwitch = AlxLayout.row().operator(Alx_OT_AutoWeightPaintModeSwitch.bl_idname, text="Weight Paint", emboss=True, depress=True)
+                WPMSwitch.WeightPaintActiveArmature = AlxParentArmature.name
+                WPMSwitch.WeightPaintActiveObject = AlxContextObject
+  
+class Alx_OT_AutoObjectModeSwitch(bpy.types.Operator):
     """"""
 
-    bl_label = "Auto Switch To Influencing Armature"
-    bl_idname = "alx.weightpaint_auto_switch"
-
-    ParentArmatureTarget : StringProperty()
-    ParentArmatureName : StringProperty()
-
-    WeightPaintTarget : StringProperty()
-    WeightPaintName : StringProperty()
+    bl_label = "Auto Switch To Object Mode For Active Object"
+    bl_idname = "alx.auto_object_mode_switch"
 
     @classmethod
     def poll (self, context):
         return True
     
     def execute(self, context):
+        bpy.ops.object.mode_set(mode="OBJECT")
 
-        if (context.mode !="PAINT_WEIGHT") and (((self.ParentArmatureTarget != "") or (self.ParentArmatureName != "")) and ((self.WeightPaintTarget != "") or (self.WeightPaintName != ""))):
+        return {"FINISHED"}
 
-            if (bpy.data.objects.get(self.ParentArmatureTarget) is not None):
-                bpy.data.objects.get(self.ParentArmatureTarget).select_set(True)
+class Alx_OT_AutoWeightPaintModeSwitch(bpy.types.Operator):
+    """"""
 
-            if (bpy.data.objects.get(self.ParentArmatureName) is not None):
-                bpy.data.objects.get(self.ParentArmatureName).select_set(True)
+    bl_label = "Auto-Select and enter weight paint based on selected object"
+    bl_idname = "alx.auto_weightpaint_mode_switch"
 
+    WeightPaintActiveArmature : StringProperty()
+    WeightPaintActiveObject : StringProperty()
 
-            if (bpy.data.objects.get(self.WeightPaintName) is not None):
-                bpy.context.view_layer.objects.active =  bpy.data.objects.get(self.WeightPaintName)
+    @classmethod
+    def poll (self, context):
+        return (context.mode != "POSE")
+    
+    def execute(self, context):
 
-            if (bpy.data.objects.get(self.WeightPaintName) is not None):
-                bpy.context.view_layer.objects.active =  bpy.data.objects.get(self.WeightPaintName)
+        if (context.mode is not "PAINT_WEIGHT") and (self.WeightPaintActiveArmature is not None):
+            bpy.context.selected_objects.append(bpy.data.armatures.get(self.WeightPaintActiveArmature))
 
-            
+            if (bpy.data.objects.get(self.WeightPaintActiveObject) is not None):
+                bpy.context.view_layer.objects.active =  bpy.data.objects.get(self.WeightPaintActiveObject)  
+
             if (context.active_object.type == "MESH"):
                 bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
 
         return {"FINISHED"}
     
-class Alx_OT_AutoSwitchToPose(bpy.types.Operator):
+class Alx_OT_AutoPoseModeSwitch(bpy.types.Operator):
     """"""
 
     bl_label = "Auto Switch To Influencing Armature"
-    bl_idname = "alx.pose_auto_switch"
+    bl_idname = "alx.auto_pose_mode_switch"
 
-    SwitchArmatureTarget : StringProperty()
-    SwitchArmatureName : StringProperty()
+    PoseActiveArmature : StringProperty()
 
     @classmethod
     def poll (self, context):
-        return True
+        return (context.mode != "PAINT_WEIGHT")
     
     def execute(self, context):
 
-        if (context.mode !="POSE") and ((self.SwitchArmatureTarget != "") or (self.SwitchArmatureName != "")):
-            if (bpy.data.objects.get(self.SwitchArmatureTarget) is not None):
-                bpy.context.view_layer.objects.active =  bpy.data.objects.get(self.SwitchArmatureTarget)
+        if (context.mode != "POSE") and (self.PoseActiveArmature != ""):
+            bpy.ops.object.select_all(action='DESELECT')
+            bpy.data.objects[bpy.data.armatures.find(self.PoseActiveArmature)].select_set(True)
+            bpy.context.view_layer.objects.active = bpy.data.objects[bpy.data.armatures.find(self.PoseActiveArmature)]
 
-            if (bpy.data.objects.get(self.SwitchArmatureName) is not None):
-                bpy.context.view_layer.objects.active =  bpy.data.objects.get(self.SwitchArmatureName)
-
-            if (context.active_object.type == "ARMATURE"):
-                bpy.ops.object.mode_set(mode="POSE")
-
+            bpy.ops.object.mode_set(mode="POSE")
         return {"FINISHED"}
 
 class Alx_UL_ActionSelector(bpy.types.UIList):
@@ -179,27 +168,24 @@ class Alx_Panel_SwapArmatureAction(bpy.types.Panel):
 
 @bpy.app.handlers.persistent
 def AlxUpdateActionUI(context):
-            InfluencingArmature = bpy.context.view_layer.objects.active.find_armature()
-            if (InfluencingArmature is not None):
-                if (bpy.data.armatures[InfluencingArmature.data.name] is not None):
-                    ParentArmature = bpy.data.armatures[InfluencingArmature.data.name]
+        if (bpy.context.view_layer.objects.active is not None) and (bpy.context.view_layer.objects.active.find_armature() is not None):
+            AlxActionParentArmature = bpy.data.armatures[bpy.context.view_layer.objects.active.find_armature().data.name]
+        
+            if (AlxActionParentArmature is not None) and (AlxActionParentArmature.animation_data is not None):
+                ActiveActionIndex = bpy.data.actions.find(AlxActionParentArmature.animation_data.action.name)
 
-                    if (ParentArmature is not None) and (ParentArmature.animation_data is not None) and (ParentArmature.animation_data.action is not None):
-                        ActiveActionIndex = bpy.data.actions.find(ParentArmature.animation_data.action.name)
-
-                        if ActiveActionIndex != ParentArmature.UIActionIndex:
-                            ParentArmature.UIActionIndex = ActiveActionIndex
+                if ActiveActionIndex != AlxActionParentArmature.UIActionIndex:
+                    AlxActionParentArmature.UIActionIndex = ActiveActionIndex
 
 def AlxUpdateAddonActionList(self, context):
-         if(context.active_object is not None):
-            InfluencingArmature = bpy.context.view_layer.objects.active.find_armature()
-            if (InfluencingArmature is not None):
-                if (bpy.data.armatures[InfluencingArmature.data.name] is not None):
-                    ParentArmature = bpy.data.armatures[InfluencingArmature.data.name]
-            
-                    if (ParentArmature is not None) and (ParentArmature.animation_data is not None) and (ParentArmature.animation_data.action is not None):
-                        ParentArmature.animation_data.action = bpy.data.actions[ParentArmature.UIActionIndex]
-                        bpy.context.scene.frame_current = 0
+    if(bpy.context.view_layer.objects.active is not None):
+        if (bpy.context.view_layer.objects.active.find_armature() is not None):
+            AlxActionParentArmature = bpy.data.armatures[bpy.context.view_layer.objects.active.find_armature().data.name]
+
+            if (AlxActionParentArmature is not None):
+                if (AlxActionParentArmature is not None) and (AlxActionParentArmature.animation_data is not None):
+                    AlxActionParentArmature.animation_data.action = bpy.data.actions[AlxActionParentArmature.UIActionIndex]
+                    bpy.context.scene.frame_current = 0
 
 bpy.app.handlers.depsgraph_update_post.append(AlxUpdateActionUI)
 
@@ -214,8 +200,9 @@ def unregister():
 AlxClassQueue = [Alx_Panel_Rigging, 
                  Alx_Panel_SwapArmatureAction,
                  Alx_UL_ActionSelector,
-                 Alx_OT_AutoSwitchToPose,
-                 Alx_OT_AutoWeightPaintSwitch
+                 Alx_OT_AutoObjectModeSwitch,
+                 Alx_OT_AutoPoseModeSwitch,
+                 Alx_OT_AutoWeightPaintModeSwitch
                  ]
 
 def AlxFeedToRegister():
