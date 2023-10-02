@@ -16,8 +16,9 @@ if "bpy" in locals():
         importlib.reload(AlxPackage)
 
 import bpy
+from bpy.types import Context
 import AlxPackage
-from bpy.props import StringProperty
+from bpy.props import StringProperty, IntProperty
 
 class Alx_Panel_Rigging(bpy.types.Panel):
     """"""
@@ -37,7 +38,6 @@ class Alx_Panel_Rigging(bpy.types.Panel):
     def draw(self, context):
 
         AlxLayout = self.layout
-        AlxRow = AlxLayout.row()
 
         AlxLayout.label(text="Pose:")
         
@@ -67,10 +67,55 @@ class Alx_Panel_Rigging(bpy.types.Panel):
                 PMSwitch.PoseActiveArmature = AlxParentArmature.name
 
             if (context.mode != "PAINT_WEIGHT") and (AlxParentArmature is not None) and (AlxContextObject is not None):
-                WPMSwitch = AlxLayout.row().operator(Alx_OT_AutoWeightPaintModeSwitch.bl_idname, text="Weight Paint", emboss=True, depress=True)
+                WPMSwitch = AlxLayout.row().operator(Alx_OT_AutoWeightPaintModeSwitch.bl_idname, text="Weight Paint", emboss=True)
                 WPMSwitch.WeightPaintActiveArmature = AlxParentArmature.name
                 WPMSwitch.WeightPaintActiveObject = AlxContextObject
   
+class Alx_Panel_Geometry(bpy.types.Panel):
+    """"""
+
+    bl_label = "Alx Geometry Panel"
+    bl_idname = "Alx.Panel_PT_AlxGeometry"
+
+    bl_category = "Alx 3D"
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+
+    @classmethod
+    def poll(cls, context):
+            return True
+        
+    def draw(self, context):
+
+        AlxLayout = self.layout
+
+        if (context.active_object is not None):
+            AlxLayout.row().prop(context.active_object, "display_type")
+        GBVon = AlxLayout.row().operator(Alx_OT_GlobalBevelSwitch.bl_idname, text="Bevel On", emboss=True)
+        GBVon.ModVisibility = True
+        GBVoff = AlxLayout.row().operator(Alx_OT_GlobalBevelSwitch.bl_idname, text="Bevel Off", emboss=True)
+        GBVoff.ModVisibility = False
+
+class Alx_Panel_UVEditing(bpy.types.Panel):
+    """"""
+
+    bl_label = "Alx UV Panel"
+    bl_idname = "Alx.Panel_PT_AlxUVEditing"
+
+    bl_category = "Alx 3D"
+
+    bl_space_type = "IMAGE_EDITOR"
+    bl_region_type = "UI"
+
+    @classmethod
+    def poll(cls, context):
+            return True
+        
+    def draw(self, context):
+
+        AlxLayout = self.layout
+
 class Alx_OT_AutoObjectModeSwitch(bpy.types.Operator):
     """"""
 
@@ -132,6 +177,27 @@ class Alx_OT_AutoPoseModeSwitch(bpy.types.Operator):
             bpy.context.view_layer.objects.active = bpy.data.objects[bpy.data.armatures.find(self.PoseActiveArmature)]
 
             bpy.ops.object.mode_set(mode="POSE")
+        return {"FINISHED"}
+
+class Alx_OT_GlobalBevelSwitch(bpy.types.Operator):
+    """"""
+
+    bl_label = "Switch Between Global Bevel Visibility"
+    bl_idname = "alx.auto_global_bevel_switch"
+
+    ModVisibility : IntProperty()
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        for ObjWmod in bpy.data.objects:
+            objMODs = getattr(ObjWmod, "modifiers", [])
+            for objMOD in objMODs:
+                if (objMOD.type == "BEVEL"):
+                    objMOD.show_viewport = self.ModVisibility
+
         return {"FINISHED"}
 
 class Alx_UL_ActionSelector(bpy.types.UIList):
@@ -202,7 +268,12 @@ AlxClassQueue = [Alx_Panel_Rigging,
                  Alx_UL_ActionSelector,
                  Alx_OT_AutoObjectModeSwitch,
                  Alx_OT_AutoPoseModeSwitch,
-                 Alx_OT_AutoWeightPaintModeSwitch
+                 Alx_OT_AutoWeightPaintModeSwitch,
+
+                 Alx_Panel_Geometry,
+                 Alx_OT_GlobalBevelSwitch,
+
+                 Alx_Panel_UVEditing
                  ]
 
 def AlxFeedToRegister():
