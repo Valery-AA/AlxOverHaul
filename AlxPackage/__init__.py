@@ -45,7 +45,7 @@ class Alx_Menu_AlexandriaToolPie(bpy.types.Menu):
             if (context.active_object.type == "ARMATURE") and (context.active_object is not None):
                 AlxParentArmature = bpy.data.objects[context.active_object.name]
 
-        PieUI.box().label(text = "PLACEHOLDER")
+        PieUI.label(text = "PLACEHOLDER")
 
         RBoxMenuSpace = PieUI.box()
         OT_MBSelection = RBoxMenuSpace.operator(Alx_OT_ModifierBevelSelection.bl_idname, text="Bevel Object")
@@ -86,8 +86,8 @@ class Alx_Menu_AlexandriaToolPie(bpy.types.Menu):
         OT_MBSwitch = BevelVisibilityRow.operator(Alx_OT_ModifierBevelSwitch.bl_idname, text="Bevel Off", emboss=True)
         OT_MBSwitch.ModVisibility = False
 
-        PieUI.box().label(text = "PLACEHOLDER")
-        PieUI.box().label(text = "PLACEHOLDER")
+        PieUI.label(text = "PLACEHOLDER")
+        PieUI.label(text = "PLACEHOLDER")
 
 class Alx_OT_ModeObjectSwitch(bpy.types.Operator):
     """"""
