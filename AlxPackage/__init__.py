@@ -18,109 +18,82 @@ if "bpy" in locals():
 import bpy
 from bpy.types import Context
 import AlxPackage
-from bpy.props import StringProperty, IntProperty
+from bpy.props import StringProperty, FloatProperty, BoolProperty
 
-class Alx_Panel_Rigging(bpy.types.Panel):
-    """"""
 
-    bl_label = "Alx Rigging Panel"
-    bl_idname = "Alx.Panel_PT_AlxRigging"
-
-    bl_category = "Alx 3D"
-
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
+class Alx_Menu_AlexandriaToolPie(bpy.types.Menu):
+    bl_label = "Alexandria Tool Pie"
+    bl_idname = "alx.menu_pie_MT_alexandria_tool_pie"
 
     @classmethod
     def poll(cls, context):
-            return True
-        
+        return True
+    
     def draw(self, context):
-
         AlxLayout = self.layout
 
-        AlxLayout.label(text="Pose:")
-        
+        PieUI = AlxLayout.menu_pie()
+
         if (context.active_object is not None):
             
             AlxParentArmature = None
             AlxContextObject = None
 
             if (context.active_object.type == "MESH") and (context.active_object.find_armature() is not None):
-                AlxParentArmature = bpy.data.armatures[context.active_object.find_armature().data.name]
+                AlxParentArmature = context.active_object.find_armature()
                 AlxContextObject = context.active_object.data.name
             if (context.active_object.type == "ARMATURE") and (context.active_object is not None):
-                AlxParentArmature = bpy.data.armatures[context.active_object.data.name]
-            
+                AlxParentArmature = bpy.data.objects[context.active_object.name]
 
-            if (AlxParentArmature is not None):
-                AlxLayout.row().prop(AlxParentArmature, "pose_position", expand=True)
-            else:
-                AlxLayout.row().label(text="No Influencing Armature Found")
+        PieUI.box().label(text = "PLACEHOLDER")
 
+        RBoxMenuSpace = PieUI.box()
+        OT_MBSelection = RBoxMenuSpace.operator(Alx_OT_ModifierBevelSelection.bl_idname, text="Bevel Object")
 
-            if (context.mode != "OBJECT"):
-                OMSwitch = AlxLayout.row().operator(Alx_OT_AutoObjectModeSwitch.bl_idname, text="Object", emboss=True)
+        BBoxMenuSpace = PieUI.box()
 
-            if (context.mode != "POSE") and (AlxParentArmature is not None):
-                PMSwitch = AlxLayout.row().operator(Alx_OT_AutoPoseModeSwitch.bl_idname, text="Pose", emboss=True)
-                PMSwitch.PoseActiveArmature = AlxParentArmature.name
+        BBoxMenuSpace.label(text="Available Mode:")
 
-            if (context.mode != "PAINT_WEIGHT") and (AlxParentArmature is not None) and (AlxContextObject is not None):
-                WPMSwitch = AlxLayout.row().operator(Alx_OT_AutoWeightPaintModeSwitch.bl_idname, text="Weight Paint", emboss=True)
-                WPMSwitch.WeightPaintActiveArmature = AlxParentArmature.name
-                WPMSwitch.WeightPaintActiveObject = AlxContextObject
-  
-class Alx_Panel_Geometry(bpy.types.Panel):
-    """"""
+        ModeSwitchRow = BBoxMenuSpace.row(align=True)
 
-    bl_label = "Alx Geometry Panel"
-    bl_idname = "Alx.Panel_PT_AlxGeometry"
+        if (context.mode != "OBJECT"):
+            OT_MOSwitch = ModeSwitchRow.operator(Alx_OT_ModeObjectSwitch.bl_idname, text="OBJECT", emboss=True)
 
-    bl_category = "Alx 3D"
+        if (context.mode != "POSE") and (AlxParentArmature is not None):
+            OT_MPSwitch = ModeSwitchRow.operator(Alx_OT_ModePoseSwitch.bl_idname, text="POSE", emboss=True)
+            OT_MPSwitch.PoseActiveArmature = AlxParentArmature.name
 
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
+        if (context.mode != "PAINT_WEIGHT") and (AlxParentArmature is not None) and (AlxContextObject is not None):
+            OT_MWPSwitch = ModeSwitchRow.operator(Alx_OT_ModeWeightPaintSwitch.bl_idname, text="WEIGHT PAINT", emboss=True)
+            OT_MWPSwitch.WeightPaintActiveArmature = AlxParentArmature.name
+            OT_MWPSwitch.WeightPaintActiveObject = AlxContextObject
 
-    @classmethod
-    def poll(cls, context):
-            return True
-        
-    def draw(self, context):
+        TBoxMenuSpace = PieUI.box()
 
-        AlxLayout = self.layout
+        if (AlxParentArmature is not None):
+            TBoxMenuSpace.row().prop(bpy.data.armatures[AlxParentArmature.data.name], "pose_position", expand=True)  
+        else:
+            TBoxMenuSpace.label(text="No Influencing Armature Found")
 
         if (context.active_object is not None):
-            AlxLayout.row().prop(context.active_object, "display_type")
-        GBVon = AlxLayout.row().operator(Alx_OT_GlobalBevelSwitch.bl_idname, text="Bevel On", emboss=True)
-        GBVon.ModVisibility = True
-        GBVoff = AlxLayout.row().operator(Alx_OT_GlobalBevelSwitch.bl_idname, text="Bevel Off", emboss=True)
-        GBVoff.ModVisibility = False
+            TBoxMenuSpace.row().prop(context.active_object, "display_type")
 
-class Alx_Panel_UVEditing(bpy.types.Panel):
+        BevelVisibilityRow = TBoxMenuSpace.row(align=True)
+
+        OT_MBSwitch = BevelVisibilityRow.operator(Alx_OT_ModifierBevelSwitch.bl_idname, text="Bevel On", emboss=True)
+        OT_MBSwitch.ModVisibility = True
+
+        OT_MBSwitch = BevelVisibilityRow.operator(Alx_OT_ModifierBevelSwitch.bl_idname, text="Bevel Off", emboss=True)
+        OT_MBSwitch.ModVisibility = False
+
+        PieUI.box().label(text = "PLACEHOLDER")
+        PieUI.box().label(text = "PLACEHOLDER")
+
+class Alx_OT_ModeObjectSwitch(bpy.types.Operator):
     """"""
 
-    bl_label = "Alx UV Panel"
-    bl_idname = "Alx.Panel_PT_AlxUVEditing"
-
-    bl_category = "Alx 3D"
-
-    bl_space_type = "IMAGE_EDITOR"
-    bl_region_type = "UI"
-
-    @classmethod
-    def poll(cls, context):
-            return True
-        
-    def draw(self, context):
-
-        AlxLayout = self.layout
-
-class Alx_OT_AutoObjectModeSwitch(bpy.types.Operator):
-    """"""
-
-    bl_label = "Auto Switch To Object Mode For Active Object"
-    bl_idname = "alx.auto_object_mode_switch"
+    bl_label = ""
+    bl_idname = "alx.mode_object_switch"
 
     @classmethod
     def poll (self, context):
@@ -131,37 +104,11 @@ class Alx_OT_AutoObjectModeSwitch(bpy.types.Operator):
 
         return {"FINISHED"}
 
-class Alx_OT_AutoWeightPaintModeSwitch(bpy.types.Operator):
+class Alx_OT_ModePoseSwitch(bpy.types.Operator):
     """"""
 
-    bl_label = "Auto-Select and enter weight paint based on selected object"
-    bl_idname = "alx.auto_weightpaint_mode_switch"
-
-    WeightPaintActiveArmature : StringProperty()
-    WeightPaintActiveObject : StringProperty()
-
-    @classmethod
-    def poll (self, context):
-        return (context.mode != "POSE")
-    
-    def execute(self, context):
-
-        if (context.mode is not "PAINT_WEIGHT") and (self.WeightPaintActiveArmature is not None):
-            bpy.context.selected_objects.append(bpy.data.armatures.get(self.WeightPaintActiveArmature))
-
-            if (bpy.data.objects.get(self.WeightPaintActiveObject) is not None):
-                bpy.context.view_layer.objects.active =  bpy.data.objects.get(self.WeightPaintActiveObject)  
-
-            if (context.active_object.type == "MESH"):
-                bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
-
-        return {"FINISHED"}
-    
-class Alx_OT_AutoPoseModeSwitch(bpy.types.Operator):
-    """"""
-
-    bl_label = "Auto Switch To Influencing Armature"
-    bl_idname = "alx.auto_pose_mode_switch"
+    bl_label = ""
+    bl_idname = "alx.mode_pose_switch"
 
     PoseActiveArmature : StringProperty()
 
@@ -172,20 +119,50 @@ class Alx_OT_AutoPoseModeSwitch(bpy.types.Operator):
     def execute(self, context):
 
         if (context.mode != "POSE") and (self.PoseActiveArmature != ""):
-            bpy.ops.object.select_all(action='DESELECT')
-            bpy.data.objects[bpy.data.armatures.find(self.PoseActiveArmature)].select_set(True)
-            bpy.context.view_layer.objects.active = bpy.data.objects[bpy.data.armatures.find(self.PoseActiveArmature)]
 
-            bpy.ops.object.mode_set(mode="POSE")
+            if (bpy.data.objects[self.PoseActiveArmature] is not None):
+                bpy.context.view_layer.objects.active = bpy.data.objects[self.PoseActiveArmature]
+
+            if (context.active_object.type == "ARMATURE"):
+                bpy.ops.object.mode_set(mode="POSE")
         return {"FINISHED"}
 
-class Alx_OT_GlobalBevelSwitch(bpy.types.Operator):
+class Alx_OT_ModeWeightPaintSwitch(bpy.types.Operator):
     """"""
 
-    bl_label = "Switch Between Global Bevel Visibility"
-    bl_idname = "alx.auto_global_bevel_switch"
+    bl_label = ""
+    bl_idname = "alx.mode_weight_paint_switch"
 
-    ModVisibility : IntProperty()
+    WeightPaintActiveArmature : StringProperty()
+    WeightPaintActiveObject : StringProperty()
+
+    @classmethod
+    def poll (self, context):
+        return (context.mode != "POSE")
+    
+    def execute(self, context):
+
+        if (context.mode != "PAINT_WEIGHT") and (self.WeightPaintActiveArmature != ""):
+            
+            bpy.data.objects[self.WeightPaintActiveArmature].select_set(True)
+
+            if (bpy.data.objects[self.WeightPaintActiveArmature] is not None):
+                bpy.context.view_layer.objects.active =  bpy.data.objects[self.WeightPaintActiveObject]
+
+            if (context.active_object.type == "MESH"):
+                bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
+
+        return {"FINISHED"}
+
+
+
+class Alx_OT_ModifierBevelSwitch(bpy.types.Operator):
+    """"""
+
+    bl_label = ""
+    bl_idname = "alx.modifier_bevel_switch_visibility"
+
+    ModVisibility : BoolProperty()
 
     @classmethod
     def poll(cls, context):
@@ -199,6 +176,78 @@ class Alx_OT_GlobalBevelSwitch(bpy.types.Operator):
                     objMOD.show_viewport = self.ModVisibility
 
         return {"FINISHED"}
+
+class Alx_OT_ModifierBevelSelection(bpy.types.Operator):
+    """"""
+
+    bl_label = ""
+    bl_idname = "alx.modifier_bevel_selection"
+
+    ChamferWidth : FloatProperty(name="Width", default=0.01000)
+    ShouldOverride : BoolProperty(name="Should Override", default=True)
+    UseWeight : BoolProperty(name="Use Weight", default=True)
+
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def execute(self, context):
+        for SelObj in bpy.context.selected_objects:
+            if (SelObj.type == "MESH"):
+                match self.ShouldOverride:
+                    case True:
+                        objMODs = getattr(SelObj, "modifiers", [])
+                        for objMOD in objMODs:
+                            if (objMOD.type == "BEVEL"):
+                                objMOD.width = self.ChamferWidth
+                                objMOD.segments = 1
+                                match self.UseWeight:
+                                    case True:
+                                        objMOD.limit_method = "WEIGHT"
+                                    case False:
+                                        objMOD.limit_method = "ANGLE"
+                                        objMOD.angle_limit = 30 * (3.14/180)
+                                objMOD.miter_outer = "MITER_ARC"
+                                objMOD.harden_normals = True
+                    case False:
+                        NewBMod = SelObj.modifiers.new("Bevel", "BEVEL")
+                        NewBMod.width = self.ChamferWidth
+                        NewBMod.segments = 1
+                        match self.UseWeight:
+                                    case True:
+                                        NewBMod.limit_method = "WEIGHT"
+                                    case False:
+                                        NewBMod.limit_method = "ANGLE"
+                                        NewBMod.angle_limit = 30 * (3.14/180)
+                        NewBMod.miter_outer = "MITER_ARC"
+                        NewBMod.harden_normals = True      
+        return {"FINISHED"}
+    
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
 
 class Alx_UL_ActionSelector(bpy.types.UIList):
 
@@ -216,8 +265,6 @@ class Alx_Panel_SwapArmatureAction(bpy.types.Panel):
     bl_idname = "Alx.Action_OT_Selector"
 
     bl_category = "Alx 3D"
-
-    bl_parent_id = "Alx.Panel_PT_AlxRigging"
 
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -259,22 +306,28 @@ bpy.app.handlers.depsgraph_update_post.append(AlxUpdateActionUI)
 
 def register():
     AlxPackage.AlxFeedToRegister()
+    AlxPackage.AlxFeedKeymaps()
 
 def unregister():
     AlxPackage.AlxFeedToUnregister()
 
-AlxClassQueue = [Alx_Panel_Rigging, 
-                 Alx_Panel_SwapArmatureAction,
-                 Alx_UL_ActionSelector,
-                 Alx_OT_AutoObjectModeSwitch,
-                 Alx_OT_AutoPoseModeSwitch,
-                 Alx_OT_AutoWeightPaintModeSwitch,
+AlxClassQueue = [
+                Alx_Menu_AlexandriaToolPie,
+                Alx_OT_ModeObjectSwitch,
+                Alx_OT_ModePoseSwitch,
+                Alx_OT_ModeWeightPaintSwitch,
 
-                 Alx_Panel_Geometry,
-                 Alx_OT_GlobalBevelSwitch,
+                Alx_OT_ModifierBevelSwitch,
+                Alx_OT_ModifierBevelSelection,
 
-                 Alx_Panel_UVEditing
-                 ]
+
+
+
+
+
+                Alx_Panel_SwapArmatureAction,
+                Alx_UL_ActionSelector
+                ]
 
 def AlxFeedToRegister():
     for AlxQCls in AlxClassQueue:
@@ -288,8 +341,17 @@ def AlxFeedToRegister():
 def AlxFeedToUnregister():
     for AlxQCls in AlxClassQueue:
         bpy.utils.unregister_class(AlxQCls)
+
     del bpy.types.Object.UIActionIndex
     print("AlxUnRegister Called")
+
+def AlxFeedKeymaps():
+    WindowMNG = bpy.context.window_manager
+    AlxAddonKeymapConfig = WindowMNG.keyconfigs.addon
+    
+    AlexandriaToolPieKM = WindowMNG.keyconfigs.addon.keymaps.new(name="3D View", space_type="VIEW_3D")
+    ATPKeymapItem = AlexandriaToolPieKM.keymap_items.new("wm.call_menu_pie", ctrl=True, alt=True, type="A", value="PRESS")
+    ATPKeymapItem.properties.name = Alx_Menu_AlexandriaToolPie.bl_idname
 
 
 
