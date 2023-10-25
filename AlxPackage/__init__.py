@@ -21,9 +21,9 @@ import AlxPackage
 from bpy.props import StringProperty, FloatProperty, BoolProperty
 
 
-class Alx_Menu_AlexandriaToolPie(bpy.types.Menu):
+class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
     bl_label = "Alexandria Tool Pie"
-    bl_idname = "alx.menu_pie_MT_alexandria_tool_pie"
+    bl_idname = "alx.menu_alexandria_tool_pie"
 
     @classmethod
     def poll(cls, context):
@@ -41,14 +41,14 @@ class Alx_Menu_AlexandriaToolPie(bpy.types.Menu):
 
             if (context.active_object.type == "MESH") and (context.active_object.find_armature() is not None):
                 AlxParentArmature = context.active_object.find_armature()
-                AlxContextObject = context.active_object.data.name
+                AlxContextObject = context.active_object.name
             if (context.active_object.type == "ARMATURE") and (context.active_object is not None):
                 AlxParentArmature = bpy.data.objects[context.active_object.name]
 
-        PieUI.label(text = "PLACEHOLDER")
+        PieUI.box().label(text = "PLACEHOLDER")
 
         RBoxMenuSpace = PieUI.box()
-        OT_MBSelection = RBoxMenuSpace.operator(Alx_OT_ModifierBevelSelection.bl_idname, text="Bevel Object")
+        OT_MBSelection = RBoxMenuSpace.row().operator(Alx_OT_ModifierBevelSelection.bl_idname, text="Bevel Object")
 
         BBoxMenuSpace = PieUI.box()
 
@@ -68,10 +68,13 @@ class Alx_Menu_AlexandriaToolPie(bpy.types.Menu):
             OT_MWPSwitch.WeightPaintActiveArmature = AlxParentArmature.name
             OT_MWPSwitch.WeightPaintActiveObject = AlxContextObject
 
+        BBoxMenuSpace.label(text="Render Mode:")
+        BBoxMenuSpace.row(align=True).prop(context.area.spaces.active.shading, "type", text="", expand=True)
+
         TBoxMenuSpace = PieUI.box()
 
         if (AlxParentArmature is not None):
-            TBoxMenuSpace.row().prop(bpy.data.armatures[AlxParentArmature.data.name], "pose_position", expand=True)  
+            TBoxMenuSpace.row().prop(bpy.data.armatures[AlxParentArmature.data.name], "pose_position", expand=True)
         else:
             TBoxMenuSpace.label(text="No Influencing Armature Found")
 
@@ -86,8 +89,41 @@ class Alx_Menu_AlexandriaToolPie(bpy.types.Menu):
         OT_MBSwitch = BevelVisibilityRow.operator(Alx_OT_ModifierBevelSwitch.bl_idname, text="Bevel Off", emboss=True)
         OT_MBSwitch.ModVisibility = False
 
-        PieUI.label(text = "PLACEHOLDER")
-        PieUI.label(text = "PLACEHOLDER")
+        OverlayShadingRow = TBoxMenuSpace.row(align=True)
+        OverlayShadingRow.prop(context.area.spaces.active.shading, "show_xray", text="Mesh", icon="XRAY")
+        OverlayShadingRow.prop(context.space_data.overlay, "show_xray_bone", text="Bone", icon="XRAY")
+
+        OverlayShadingRow.prop(context.space_data.overlay, "show_wireframes", text="", icon="MOD_WIREFRAME")
+
+        ObjectIsolatorRow = TBoxMenuSpace.row(align=True) 
+        OT_Isolate = ObjectIsolatorRow.operator(Alx_OT_ModeObjectIsolator.bl_idname, text="Isolate", emboss=True)
+        OT_Isolate.IsolatorState = True
+        OT_Isolate = ObjectIsolatorRow.operator(Alx_OT_ModeObjectIsolator.bl_idname, text="Show All", emboss=True)
+        OT_Isolate.IsolatorState = False
+
+        PieUI.box().label(text = "PLACEHOLDER")
+        PieUI.box().label(text = "PLACEHOLDER")
+
+class Alx_OT_ModeObjectIsolator(bpy.types.Operator):
+    """"""
+
+    # Missing Auto Restore Visibility List
+
+    bl_label = ""
+    bl_idname = "alx.mode_object_isolator"
+
+    IsolatorState: BoolProperty()
+
+    @classmethod
+    def poll(self, context):
+        return True
+    
+    def execute(self, context):
+        ActiveOBJName = bpy.data.objects[bpy.context.view_layer.objects.active.name].data.name
+        for SceneOBJ in bpy.data.objects:
+            if SceneOBJ.data.name != ActiveOBJName:
+                bpy.data.objects[SceneOBJ.name].hide_viewport = self.IsolatorState
+        return {"FINISHED"}
 
 class Alx_OT_ModeObjectSwitch(bpy.types.Operator):
     """"""
@@ -96,7 +132,7 @@ class Alx_OT_ModeObjectSwitch(bpy.types.Operator):
     bl_idname = "alx.mode_object_switch"
 
     @classmethod
-    def poll (self, context):
+    def poll(self, context):
         return True
     
     def execute(self, context):
@@ -227,6 +263,28 @@ class Alx_OT_ModifierBevelSelection(bpy.types.Operator):
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)
 
+class Alx_PT_PanelIDMapping(bpy.types.Panel):
+    """"""
+
+    bl_label = ""
+    bl_idname = "alx.panel_vertex_idmapping"
+
+    bl_category = "Alx 3D"
+
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def draw(self, context):
+        
+        AlxLayout = self.layout
+
+
+
+
 
 
 
@@ -312,7 +370,9 @@ def unregister():
     AlxPackage.AlxFeedToUnregister()
 
 AlxClassQueue = [
-                Alx_Menu_AlexandriaToolPie,
+                Alx_MT_AlexandriaToolPie,
+
+                Alx_OT_ModeObjectIsolator,
                 Alx_OT_ModeObjectSwitch,
                 Alx_OT_ModePoseSwitch,
                 Alx_OT_ModeWeightPaintSwitch,
@@ -320,6 +380,7 @@ AlxClassQueue = [
                 Alx_OT_ModifierBevelSwitch,
                 Alx_OT_ModifierBevelSelection,
 
+                Alx_PT_PanelIDMapping,
 
 
 
@@ -332,6 +393,8 @@ AlxClassQueue = [
 def AlxFeedToRegister():
     for AlxQCls in AlxClassQueue:
         bpy.utils.register_class(AlxQCls)
+
+    AlxFeedKeymaps()
 
     bpy.types.Object.UIActionIndex = bpy.props.IntProperty(update=AlxUpdateAddonActionList)
     print("AlxRegister Called")
@@ -349,9 +412,9 @@ def AlxFeedKeymaps():
     WindowMNG = bpy.context.window_manager
     AlxAddonKeymapConfig = WindowMNG.keyconfigs.addon
     
-    AlexandriaToolPieKM = WindowMNG.keyconfigs.addon.keymaps.new(name="3D View", space_type="VIEW_3D")
+    AlexandriaToolPieKM = AlxAddonKeymapConfig.keymaps.new(name="3D View", space_type="VIEW_3D")
     ATPKeymapItem = AlexandriaToolPieKM.keymap_items.new("wm.call_menu_pie", ctrl=True, alt=True, type="A", value="PRESS")
-    ATPKeymapItem.properties.name = Alx_Menu_AlexandriaToolPie.bl_idname
+    ATPKeymapItem.properties.name = Alx_MT_AlexandriaToolPie.bl_idname
 
 
 
