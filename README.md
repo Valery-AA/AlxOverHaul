@@ -5,12 +5,6 @@
  	whether it means auto selections, automated mode changes, access to pannel that are not available in certain modes for selection conflicts etc.
 
  	no custom tools are planned at the moment and focus will remain on requests and other(at personal or contributor necessity)
-# Version And Features
-	V0.2.1
- 	
-  	- Active or Influencing Armature Pose State option available everywhere
-   	- Mode Auto-Switcher and Auto-Selection(Weight Paint, Pose Mode)
-   	- Action Selector for armatures related to current mode/active object
 
 # Version And Version Standard
 	For clarity sake both for users and new contributors this version structure will be preferable when commiting
