@@ -1,14 +1,24 @@
 # Project Info
-	The goal of this addon is to provide easy access to tools, functions, panels or
-    anything that may stand in the way of a fast workflow
+The goal of this addon is to provide easy access to tools, functions, panels 
+ or anything that may stand in the way of a fast workflow
 
- 	whether it means auto selections, automated mode changes, access to pannel that are not available in certain modes for selection conflicts etc.
-
- 	no custom tools are planned at the moment and focus will remain on requests and other(at personal or contributor necessity)
+ Whether it means auto selections, automated mode changes,
+  allowing access to pannels that are not available in certain modes etc.
 
 # Version And Version Standard
-	For clarity sake both for users and new contributors this version structure will be preferable when commiting
+**For clarity sake both for users and new contributors this version structure will be preferable when commiting**
 
- 	- v0.0.x for bug fixes and simple code restructuring, with a(alpha) and b(beta) for changes that are possibly unstable/need more testing respectively
-  	- v0.x.0 for new addition that expand the reach of addon i.e.: the addition of a tool to an area of blender in a system that wasn't touched before
-   	- vx.0.0 for major changes, completion of a system's coverage, or in case of major optimization/code rewrites
+ + v0.0.x for bug fixes and simple code restructuring
+   
++ v0.x.0 for new addition that expand the reach of addon 
+
++ vx.0.0 for major changes, completion of a system's coverage, or in case of major optimization/code rewrites
+
+with a(alpha) and b(beta) for changes that are possibly unstable/need more testing respectively
+
+# Code Changes And Contribution
+The **_main_** branch has been set to be read-only to not hinder the stability
+Pull requests are the core of where changes can be proposed so that they can be verified
+
+Before Rasing an issue check discussions, or issues with [dev_bug_notice](https://github.com/Valery-AA/AlxOverHaul/issues?q=is%3Aissue+is%3Aopen+label%3A%22dev+bug+notice%22)
+keeping the list of issues as clean as possible will make spotting actual bugs much easier
