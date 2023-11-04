@@ -30,13 +30,15 @@ class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
     
     def draw(self, context):
         AlxLayout = self.layout
+        AlxParentArmature = None
+        AlxContextObject = None
+
 
         PieUI = AlxLayout.menu_pie()
 
         if (context.active_object is not None):
             
-            AlxParentArmature = None
-            AlxContextObject = None
+            
 
             if (context.active_object.type == "MESH") and (context.active_object.find_armature() is not None):
                 AlxParentArmature = context.active_object.find_armature()
@@ -44,11 +46,14 @@ class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
             if (context.active_object.type == "ARMATURE") and (context.active_object is not None):
                 AlxParentArmature = bpy.data.objects[context.active_object.name]
 
-        PieUI.box().label(text = "PLACEHOLDER")
+        PieUI.box().label(text = "PLACEHOLDER 1")
 
         RBoxMenuSpace = PieUI.box()
-        OT_MBSelection = RBoxMenuSpace.row().operator(Alx_OT_ModifierBevelSelection.bl_idname, text="Bevel")
-        OT_MSSelection = RBoxMenuSpace.row().operator(Alx_OT_ModifierSubdivisionSelection.bl_idname, text="SubDivision")
+        RBoxMenuSpace.row().label(text="Poly Modifiers:")
+        BasicDeformingMod = RBoxMenuSpace.row(align=True)
+        OT_MBSelection = BasicDeformingMod.operator(Alx_OT_ModifierBevelSelection.bl_idname, text="Bevel")
+        OT_MSSelection = BasicDeformingMod.operator(Alx_OT_ModifierSubdivisionSelection.bl_idname, text="SubDiv")
+        OT_MWSelection = BasicDeformingMod.operator(Alx_OT_ModifierWeldSelection.bl_idname, text="Weld")
 
         BBoxMenuSpace = PieUI.box()
 
@@ -88,29 +93,38 @@ class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
 
         OT_MBSwitch = BevelVisibilityRow.operator(Alx_OT_ModifierBevelSwitch.bl_idname, text="Bevel Off", emboss=True)
         OT_MBSwitch.ModVisibility = False
-
+ 
         OverlayShadingRow = TBoxMenuSpace.row(align=True)
         OverlayShadingRow.prop(context.area.spaces.active.shading, "show_xray", text="Mesh", icon="XRAY")
         OverlayShadingRow.prop(context.space_data.overlay, "show_xray_bone", text="Bone", icon="XRAY")
 
         OverlayShadingRow.prop(context.space_data.overlay, "show_wireframes", text="", icon="MOD_WIREFRAME")
 
-        ObjectIsolatorRow = TBoxMenuSpace.row(align=True) 
-        OT_Isolate = ObjectIsolatorRow.operator(Alx_OT_ModeObjectIsolator.bl_idname, text="Isolate", emboss=True)
-        OT_Isolate.IsolatorState = True
-        OT_Isolate = ObjectIsolatorRow.operator(Alx_OT_ModeObjectIsolator.bl_idname, text="Show All", emboss=True)
-        OT_Isolate.IsolatorState = False
+        CompoundIsolatorRow = TBoxMenuSpace.row(align=True) 
+        OT_OBJIsolate = CompoundIsolatorRow.operator(Alx_OT_SceneObjectIsolator.bl_idname, text="Isolate", emboss=True)
+        OT_OBJIsolate.IsolatorState = True
+        OT_OBJIsolate = CompoundIsolatorRow.operator(Alx_OT_SceneObjectIsolator.bl_idname, text="Show All", emboss=True)
+        OT_OBJIsolate.IsolatorState = False
 
-        PieUI.box().label(text = "PLACEHOLDER")
-        PieUI.box().label(text = "PLACEHOLDER")
+        OT_COLIsolate = CompoundIsolatorRow.operator(Alx_OT_SceneCollectionIsolator.bl_idname, text="", icon="OUTLINER_COLLECTION")
 
-class Alx_OT_ModeObjectIsolator(bpy.types.Operator):
+        if (context.active_object.type == "MESH"):
+            SmoothingRow = TBoxMenuSpace.row(align=True)
+            OT_ShadeS = SmoothingRow.operator("object.shade_smooth", text="Smooth", emboss=True)
+            OT_ShadeAS = SmoothingRow.operator("object.shade_smooth", text="ASmooth", emboss=True)
+            OT_ShadeAS.use_auto_smooth = True
+            SmoothingRow.operator("object.shade_flat", text="Flat", emboss=True)
+
+        PieUI.box().label(text = "PLACEHOLDER 2")
+        PieUI.box().label(text = "PLACEHOLDER 3")
+        PieUI.box().label(text = "PLACEHOLDER 4")
+        PieUI.box().label(text = "PLACEHOLDER 5")
+
+class Alx_OT_SceneObjectIsolator(bpy.types.Operator):
     """"""
 
-    # Missing Auto Restore Visibility List
-
     bl_label = ""
-    bl_idname = "alx.mode_object_isolator"
+    bl_idname = "alx.scene_object_isolator"
 
     IsolatorState: BoolProperty()
 
@@ -124,6 +138,30 @@ class Alx_OT_ModeObjectIsolator(bpy.types.Operator):
             if SceneOBJ.data.name != ActiveOBJName:
                 bpy.data.objects[SceneOBJ.name].hide_viewport = self.IsolatorState
         return {"FINISHED"}
+
+class Alx_OT_SceneCollectionIsolator(bpy.types.Operator):
+    """"""
+
+    bl_label = ""
+    bl_idname = "alx.scene_collection_isolator"
+
+    IsolatorState: BoolProperty(default=False)
+
+    @classmethod
+    def poll(self, context):
+        return True
+
+    def execute(self, context):
+        ActiveCollection = bpy.data.objects[bpy.context.view_layer.objects.active.name].users_collection[0]
+
+        for collection in bpy.data.collections:
+            if (collection is not ActiveCollection) and (collection is not ActiveCollection) and (ActiveCollection not in collection.children_recursive):
+                collection.hide_viewport = self.IsolatorState
+
+        self.IsolatorState = not self.IsolatorState
+        return {"FINISHED"}
+
+
 
 class Alx_OT_ModeObjectSwitch(bpy.types.Operator):
     """"""
@@ -219,53 +257,69 @@ class Alx_OT_ModifierBevelSelection(bpy.types.Operator):
     bl_label = ""
     bl_idname = "alx.modifier_bevel_selection"
 
-    ShouldOverride : BoolProperty(name="Should Override", default=True)
-
-    Segments : IntProperty(name="Segments", default=1)
-    Width : FloatProperty(name="Width", default=0.01000, unit="LENGTH")
+    Segments : IntProperty(name="Segments", default=1, min=1)
+    Width : FloatProperty(name="Width", default=0.01000, unit="LENGTH", min=0.0)
     UseWeight : BoolProperty(name="Use Weight", default=True)
+    HardenNormals : BoolProperty(name="Harden Normals", default=True)
 
     @classmethod
     def poll(cls, context):
         return True
     
     def execute(self, context):
-        for SelObj in bpy.context.selected_objects:
-            if (SelObj.type == "MESH"):
-                match self.ShouldOverride:
-                    case True:
-                        objMODs = getattr(SelObj, "modifiers", [])
-                        for objMOD in objMODs:
-                            if (objMOD.type == "BEVEL"):
 
-                                objMOD.segments = self.Segments
-                                objMOD.width = self.Width
+        for window in context.window_manager.windows:
+            screen = window.screen
+            for area in screen.areas:
+                if area.type == 'VIEW_3D':
+                    with context.temp_override(window=window, area=area):
+
+                        BevelMod = None
+
+                        for SelObj in bpy.context.selected_objects:
+
+                            if (SelObj.type == "MESH"):
+                                ObjMODs = SelObj.modifiers
                                 
+                                for ObjMOD in ObjMODs:
+                                
+                                    if (ObjMOD.type == "BEVEL"):
+                                        
+                                        BevelMod = ObjMOD
+                                        BevelMod.segments = self.Segments
+                                        BevelMod.width = self.Width
+                
+                                        match self.UseWeight:
+
+                                            case True:
+                                                BevelMod.limit_method = "WEIGHT"
+
+                                            case False:
+                                                BevelMod.limit_method = "ANGLE"
+                                                BevelMod.angle_limit = 30 * (3.14/180)
+
+                                        BevelMod.miter_outer = "MITER_ARC"
+                                        BevelMod.harden_normals = self.HardenNormals
+
+                                        return {"FINISHED"}
+                                
+                                BevelMod = SelObj.modifiers.new("Bevel", "BEVEL")
+                                BevelMod.segments = self.Segments
+                                BevelMod.width = self.Width
+
                                 match self.UseWeight:
+
                                     case True:
-                                        objMOD.limit_method = "WEIGHT"
+                                        BevelMod.limit_method = "WEIGHT"
+
                                     case False:
-                                        objMOD.limit_method = "ANGLE"
-                                        objMOD.angle_limit = 30 * (3.14/180)
+                                        BevelMod.limit_method = "ANGLE"
+                                        BevelMod.angle_limit = 30 * (3.14/180)
 
-                                objMOD.miter_outer = "MITER_ARC"
-                                objMOD.harden_normals = True
+                                BevelMod.miter_outer = "MITER_ARC"
+                                BevelMod.harden_normals = self.HardenNormals
+                        break
 
-                    case False:
-
-                        NewBMod = SelObj.modifiers.new("Bevel", "BEVEL")
-                        NewBMod.segments = self.Segments
-                        NewBMod.width = self.Width
-
-                        match self.UseWeight:
-                                    case True:
-                                        NewBMod.limit_method = "WEIGHT"
-                                    case False:
-                                        NewBMod.limit_method = "ANGLE"
-                                        NewBMod.angle_limit = 30 * (3.14/180)
-
-                        NewBMod.miter_outer = "MITER_ARC"
-                        NewBMod.harden_normals = True      
         return {"FINISHED"}
     
 
@@ -278,8 +332,6 @@ class Alx_OT_ModifierSubdivisionSelection(bpy.types.Operator):
     bl_label = ""
     bl_idname = "alx.modifier_subdivision_selection"
 
-    ShouldOverride : BoolProperty(name="Should Override", default=True)
-
     UseSimple : BoolProperty(name="Simple", default=False)
     ViewportLevel : IntProperty(name="Viewport", default=1)
     RenderLevel : IntProperty(name="Render", default=1)
@@ -290,43 +342,121 @@ class Alx_OT_ModifierSubdivisionSelection(bpy.types.Operator):
         return True
     
     def execute(self, context):
-        for SelObj in bpy.context.selected_objects:
-            if (SelObj.type == "MESH"):
-                match self.ShouldOverride:
-                    case True:
-                        objMODs = getattr(SelObj, "modifiers", [])
-                        for objMOD in objMODs:
-                            if (objMOD.type == "SUBSURF"):
+        for window in context.window_manager.windows:
+            screen = window.screen
+            for area in screen.areas:
+                if area.type == 'VIEW_3D':
+                    with context.temp_override(window=window, area=area):
 
-                                match self.UseSimple:
-                                    case True:
-                                        objMOD.subdivision_type = "SIMPLE"
-                                    case False:
-                                        objMOD.subdivision_type = "CATMULL_CLARK"
+                        SubDivMod = None
 
-                                objMOD.levels = self.ViewportLevel
-                                objMOD.render_levels = self.RenderLevel
-                                objMOD.show_only_control_edges = self.Complex
+                        for SelObj in bpy.context.selected_objects:
 
-                    case False:
+                            if (SelObj.type == "MESH"):
+                                ObjMODs = SelObj.modifiers
+                                
+                                for ObjMOD in ObjMODs:
+                                
+                                    if (ObjMOD.type == "SUBSURF"):
+                                        SubDivMod = ObjMOD
 
-                        NewBMod = SelObj.modifiers.new("Subdivision Surface", "SUBSURF")
+                                        match self.UseSimple:
+                                            case True:
+                                                SubDivMod.subdivision_type = "SIMPLE"
 
+                                            case False:
+                                                SubDivMod.subdivision_type = "CATMULL_CLARK"
+
+                                        SubDivMod.levels = self.ViewportLevel
+                                        SubDivMod.render_levels = self.RenderLevel
+                                        SubDivMod.show_only_control_edges = not self.Complex
+
+                                        return {"FINISHED"}
+
+                        SubDivMod = SelObj.modifiers.new("Subdivision Surface", "SUBSURF")
+          
                         match self.UseSimple:
-                                    case True:
-                                        NewBMod.subdivision_type = "SIMPLE"
-                                    case False:
-                                        NewBMod.subdivision_type = "CATMULL_CLARK"
+                            case True:
+                                SubDivMod.subdivision_type = "SIMPLE"
+                            case False:
+                                SubDivMod.subdivision_type = "CATMULL_CLARK"
 
-                        NewBMod.levels = self.ViewportLevel
-                        NewBMod.render_levels = self.RenderLevel
-                        NewBMod.show_only_control_edges = self.Complex
+                        SubDivMod.levels = self.ViewportLevel
+                        SubDivMod.render_levels = self.RenderLevel
+                        SubDivMod.show_only_control_edges = not self.Complex
 
         return {"FINISHED"}
     
 
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)
+
+class Alx_OT_ModifierWeldSelection(bpy.types.Operator):
+    """"""
+
+    bl_label = ""
+    bl_idname = "alx.modifier_weld_selection"
+
+    UseMergeAll : BoolProperty(name="Merge All", default=True)
+    UseMergeOnlyLooseEdges : BoolProperty(name="Only Loose Edges", default=True)
+
+    MergeDistance : FloatProperty(name="Distance", default=0.00100, unit="LENGTH", min=0.0)
+
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def execute(self, context):
+
+        for window in context.window_manager.windows:
+            screen = window.screen
+            for area in screen.areas:
+                if area.type == 'VIEW_3D':
+                    with context.temp_override(window=window, area=area):
+
+                        WeldMod = None
+
+                        for SelObj in bpy.context.selected_objects:
+
+                            if (SelObj.type == "MESH"):
+                                ObjMODs = SelObj.modifiers
+                                
+                                for ObjMOD in ObjMODs:
+                                
+                                    if (ObjMOD.type == "WELD"):
+                                        WeldMod = ObjMOD
+
+                                        match self.UseMergeAll:
+                                            case True:
+                                                WeldMod.mode = "ALL"
+
+                                            case False:
+                                                WeldMod.mode = "CONNECTED"
+                                                WeldMod.loose_edges = self.UseMergeOnlyLooseEdges
+
+                                        WeldMod.merge_threshold = self.MergeDistance
+
+                                        return {"FINISHED"}
+
+                                WeldMod = SelObj.modifiers.new("Weld", "WELD")
+          
+                                match self.UseMergeAll:
+                                    case True:
+                                        WeldMod.mode = "ALL"
+
+                                    case False:
+                                        WeldMod.mode = "CONNECTED"
+                                        WeldMod.loose_edges = self.UseMergeOnlyLooseEdges
+
+                                WeldMod.merge_threshold = self.MergeDistance
+            
+            return {"FINISHED"}
+                        
+
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+
 
 class Alx_PT_PanelIDMapping(bpy.types.Panel):
     """"""
@@ -432,7 +562,8 @@ bpy.app.handlers.depsgraph_update_post.append(AlxUpdateActionUI)
 AlxClassQueue = [
                 Alx_MT_AlexandriaToolPie,
 
-                Alx_OT_ModeObjectIsolator,
+                Alx_OT_SceneObjectIsolator,
+                Alx_OT_SceneCollectionIsolator,
                 Alx_OT_ModeObjectSwitch,
                 Alx_OT_ModePoseSwitch,
                 Alx_OT_ModeWeightPaintSwitch,
@@ -441,6 +572,7 @@ AlxClassQueue = [
                 
                 Alx_OT_ModifierBevelSelection,
                 Alx_OT_ModifierSubdivisionSelection,
+                Alx_OT_ModifierWeldSelection
                 ]
 
 addon_keymaps = []
@@ -453,7 +585,7 @@ def register():
     kc = wm.keyconfigs.addon
 
     km = kc.keymaps.new(name='3D View')
-    kmi = km.keymap_items.new(idname="wm.call_menu_pie", type="A", value="PRESS", ctrl=True, shift=False, alt=True, head=True)
+    kmi = km.keymap_items.new(idname="wm.call_menu_pie", type="A", value="CLICK", ctrl=True, shift=False, alt=True)
     kmi.properties.name = Alx_MT_AlexandriaToolPie.bl_idname
 
     addon_keymaps.append((km,kmi))
