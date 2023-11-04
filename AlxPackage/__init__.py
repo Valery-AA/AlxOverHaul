@@ -145,7 +145,7 @@ class Alx_OT_SceneCollectionIsolator(bpy.types.Operator):
     bl_label = ""
     bl_idname = "alx.scene_collection_isolator"
 
-    IsolatorState: BoolProperty(default=False)
+    IsolatorState: BoolProperty(default=True)
 
     @classmethod
     def poll(self, context):
@@ -274,9 +274,9 @@ class Alx_OT_ModifierBevelSelection(bpy.types.Operator):
                 if area.type == 'VIEW_3D':
                     with context.temp_override(window=window, area=area):
 
-                        BevelMod = None
-
                         for SelObj in bpy.context.selected_objects:
+
+                            HasModifier = False
 
                             if (SelObj.type == "MESH"):
                                 ObjMODs = SelObj.modifiers
@@ -284,41 +284,40 @@ class Alx_OT_ModifierBevelSelection(bpy.types.Operator):
                                 for ObjMOD in ObjMODs:
                                 
                                     if (ObjMOD.type == "BEVEL"):
-                                        
-                                        BevelMod = ObjMOD
-                                        BevelMod.segments = self.Segments
-                                        BevelMod.width = self.Width
+                                        HasModifier = True
+
+                                        ObjMOD.segments = self.Segments
+                                        ObjMOD.width = self.Width
                 
                                         match self.UseWeight:
 
                                             case True:
-                                                BevelMod.limit_method = "WEIGHT"
+                                                ObjMOD.limit_method = "WEIGHT"
 
                                             case False:
-                                                BevelMod.limit_method = "ANGLE"
-                                                BevelMod.angle_limit = 30 * (3.14/180)
+                                                ObjMOD.limit_method = "ANGLE"
+                                                ObjMOD.angle_limit = 30 * (3.14/180)
 
-                                        BevelMod.miter_outer = "MITER_ARC"
-                                        BevelMod.harden_normals = self.HardenNormals
+                                        ObjMOD.miter_outer = "MITER_ARC"
+                                        ObjMOD.harden_normals = self.HardenNormals
 
-                                        return {"FINISHED"}
+                                if (HasModifier == False):        
                                 
-                                BevelMod = SelObj.modifiers.new("Bevel", "BEVEL")
-                                BevelMod.segments = self.Segments
-                                BevelMod.width = self.Width
+                                    BevelMod = SelObj.modifiers.new("Bevel", "BEVEL")
+                                    BevelMod.segments = self.Segments
+                                    BevelMod.width = self.Width
 
-                                match self.UseWeight:
+                                    match self.UseWeight:
 
-                                    case True:
-                                        BevelMod.limit_method = "WEIGHT"
+                                        case True:
+                                            BevelMod.limit_method = "WEIGHT"
 
-                                    case False:
-                                        BevelMod.limit_method = "ANGLE"
-                                        BevelMod.angle_limit = 30 * (3.14/180)
+                                        case False:
+                                            BevelMod.limit_method = "ANGLE"
+                                            BevelMod.angle_limit = 30 * (3.14/180)
 
-                                BevelMod.miter_outer = "MITER_ARC"
-                                BevelMod.harden_normals = self.HardenNormals
-                        break
+                                    BevelMod.miter_outer = "MITER_ARC"
+                                    BevelMod.harden_normals = self.HardenNormals
 
         return {"FINISHED"}
     
@@ -348,9 +347,9 @@ class Alx_OT_ModifierSubdivisionSelection(bpy.types.Operator):
                 if area.type == 'VIEW_3D':
                     with context.temp_override(window=window, area=area):
 
-                        SubDivMod = None
-
                         for SelObj in bpy.context.selected_objects:
+
+                            HasModifier = False
 
                             if (SelObj.type == "MESH"):
                                 ObjMODs = SelObj.modifiers
@@ -358,32 +357,32 @@ class Alx_OT_ModifierSubdivisionSelection(bpy.types.Operator):
                                 for ObjMOD in ObjMODs:
                                 
                                     if (ObjMOD.type == "SUBSURF"):
-                                        SubDivMod = ObjMOD
+                                        HasModifier = True
 
                                         match self.UseSimple:
                                             case True:
-                                                SubDivMod.subdivision_type = "SIMPLE"
+                                                ObjMOD.subdivision_type = "SIMPLE"
 
                                             case False:
-                                                SubDivMod.subdivision_type = "CATMULL_CLARK"
+                                                ObjMOD.subdivision_type = "CATMULL_CLARK"
 
-                                        SubDivMod.levels = self.ViewportLevel
-                                        SubDivMod.render_levels = self.RenderLevel
-                                        SubDivMod.show_only_control_edges = not self.Complex
+                                        ObjMOD.levels = self.ViewportLevel
+                                        ObjMOD.render_levels = self.RenderLevel
+                                        ObjMOD.show_only_control_edges = not self.Complex
 
-                                        return {"FINISHED"}
+                                if (HasModifier == False):    
 
-                        SubDivMod = SelObj.modifiers.new("Subdivision Surface", "SUBSURF")
-          
-                        match self.UseSimple:
-                            case True:
-                                SubDivMod.subdivision_type = "SIMPLE"
-                            case False:
-                                SubDivMod.subdivision_type = "CATMULL_CLARK"
+                                    SubDivMod = SelObj.modifiers.new("Subdivision Surface", "SUBSURF")
+                    
+                                    match self.UseSimple:
+                                        case True:
+                                            SubDivMod.subdivision_type = "SIMPLE"
+                                        case False:
+                                            SubDivMod.subdivision_type = "CATMULL_CLARK"
 
-                        SubDivMod.levels = self.ViewportLevel
-                        SubDivMod.render_levels = self.RenderLevel
-                        SubDivMod.show_only_control_edges = not self.Complex
+                                    SubDivMod.levels = self.ViewportLevel
+                                    SubDivMod.render_levels = self.RenderLevel
+                                    SubDivMod.show_only_control_edges = not self.Complex
 
         return {"FINISHED"}
     
@@ -414,9 +413,9 @@ class Alx_OT_ModifierWeldSelection(bpy.types.Operator):
                 if area.type == 'VIEW_3D':
                     with context.temp_override(window=window, area=area):
 
-                        WeldMod = None
-
                         for SelObj in bpy.context.selected_objects:
+
+                            HasModifier = False
 
                             if (SelObj.type == "MESH"):
                                 ObjMODs = SelObj.modifiers
@@ -424,31 +423,30 @@ class Alx_OT_ModifierWeldSelection(bpy.types.Operator):
                                 for ObjMOD in ObjMODs:
                                 
                                     if (ObjMOD.type == "WELD"):
-                                        WeldMod = ObjMOD
+                                        HasModifier = True
 
                                         match self.UseMergeAll:
                                             case True:
-                                                WeldMod.mode = "ALL"
+                                                ObjMOD.mode = "ALL"
 
                                             case False:
-                                                WeldMod.mode = "CONNECTED"
-                                                WeldMod.loose_edges = self.UseMergeOnlyLooseEdges
+                                                ObjMOD.mode = "CONNECTED"
+                                                ObjMOD.loose_edges = self.UseMergeOnlyLooseEdges
 
-                                        WeldMod.merge_threshold = self.MergeDistance
+                                        ObjMOD.merge_threshold = self.MergeDistance
 
-                                        return {"FINISHED"}
+                                if (HasModifier == False):    
+                                    WeldMod = SelObj.modifiers.new("Weld", "WELD")
+            
+                                    match self.UseMergeAll:
+                                        case True:
+                                            WeldMod.mode = "ALL"
 
-                                WeldMod = SelObj.modifiers.new("Weld", "WELD")
-          
-                                match self.UseMergeAll:
-                                    case True:
-                                        WeldMod.mode = "ALL"
+                                        case False:
+                                            WeldMod.mode = "CONNECTED"
+                                            WeldMod.loose_edges = self.UseMergeOnlyLooseEdges
 
-                                    case False:
-                                        WeldMod.mode = "CONNECTED"
-                                        WeldMod.loose_edges = self.UseMergeOnlyLooseEdges
-
-                                WeldMod.merge_threshold = self.MergeDistance
+                                    WeldMod.merge_threshold = self.MergeDistance
             
             return {"FINISHED"}
                         
