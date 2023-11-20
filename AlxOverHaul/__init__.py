@@ -11,11 +11,11 @@ bl_info = {
 
 if "bpy" in locals():
     import importlib
-    if "AlxPackage" in locals():
-        importlib.reload(AlxPackage)
+    if "AlxOverHaul" in locals():
+        importlib.reload(AlxOverHaul)
 
 import bpy
-import AlxPackage
+import AlxOverHaul
 from bpy.types import Context
 from bpy.props import StringProperty, IntProperty, FloatProperty, BoolProperty, CollectionProperty, PointerProperty
 
@@ -82,13 +82,16 @@ class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
         ModeSwitchRow = BBoxMenuSectionM.row(align=True)
         if (context.mode != "OBJECT"):
             OT_MOSwitch = ModeSwitchRow.operator(Alx_OT_ModeObjectSwitch.bl_idname, text="OBJECT", emboss=True)
+            OT_MOSwitch.DefaultBehaviour = False
 
         if (context.mode != "POSE") and (AlxParentArmature is not None):
             OT_MPSwitch = ModeSwitchRow.operator(Alx_OT_ModePoseSwitch.bl_idname, text="POSE", emboss=True)
+            OT_MPSwitch.DefaultBehaviour = False
             OT_MPSwitch.PoseActiveArmature = AlxParentArmature.name
 
         if (context.mode != "PAINT_WEIGHT") and (AlxParentArmature is not None) and (AlxContextObject is not None):
             OT_MWPSwitch = ModeSwitchRow.operator(Alx_OT_ModeWeightPaintSwitch.bl_idname, text="WEIGHT PAINT", emboss=True)
+            OT_MWPSwitch.DefaultBehaviour = False
             OT_MWPSwitch.WeightPaintActiveArmature = AlxParentArmature.name
             OT_MWPSwitch.WeightPaintActiveObject = AlxContextObject
 
@@ -226,20 +229,19 @@ class Alx_OT_ModeObjectSwitch(bpy.types.Operator):
     bl_label = ""
     bl_idname = "alx.mode_object_switch"
 
-    DefaultBehaviour : BoolProperty(default=False)  
+    DefaultBehaviour : BoolProperty(default=True)  
 
     @classmethod
     def poll(self, context):
         return True
     
     def execute(self, context):
-        if (self.DefaultBehaviour):
-            for window in context.window_manager.windows:
-                screen = window.screen
-                for area in screen.areas:
-                    if area.type == 'VIEW_3D':
-                        with context.temp_override(window=window, area=area):
-                            bpy.ops.object.mode_set(mode="OBJECT")
+        for window in context.window_manager.windows:
+            screen = window.screen
+            for area in screen.areas:
+                if area.type == 'VIEW_3D':
+                    with context.temp_override(window=window, area=area):
+                        bpy.ops.object.mode_set(mode="OBJECT")
 
         return {"FINISHED"}
 
@@ -249,7 +251,7 @@ class Alx_OT_ModePoseSwitch(bpy.types.Operator):
     bl_label = ""
     bl_idname = "alx.mode_pose_switch"
 
-    DefaultBehaviour : BoolProperty(default=False)
+    DefaultBehaviour : BoolProperty(default=True)
     PoseActiveArmature : StringProperty()
 
     @classmethod
@@ -257,7 +259,7 @@ class Alx_OT_ModePoseSwitch(bpy.types.Operator):
         return (context.mode != "PAINT_WEIGHT")
     
     def execute(self, context):
-        if (self.DefaultBehaviour):
+        if (self.DefaultBehaviour is True):
             for window in context.window_manager.windows:
                 screen = window.screen
                 for area in screen.areas:
@@ -271,7 +273,7 @@ class Alx_OT_ModePoseSwitch(bpy.types.Operator):
                                     break
             return {"FINISHED"}
 
-        if (context.mode != "POSE") and (self.PoseActiveArmature != ""):
+        if (self.DefaultBehaviour is False) and (context.mode != "POSE") and (self.PoseActiveArmature != ""):
 
             if (bpy.data.objects[self.PoseActiveArmature] is not None):
                 bpy.context.view_layer.objects.active = bpy.data.objects[self.PoseActiveArmature]
@@ -286,7 +288,7 @@ class Alx_OT_ModeWeightPaintSwitch(bpy.types.Operator):
     bl_label = ""
     bl_idname = "alx.mode_weight_paint_switch"
 
-    DefaultBehaviour : BoolProperty(default=False)
+    DefaultBehaviour : BoolProperty(default=True)
     WeightPaintActiveArmature : StringProperty()
     WeightPaintActiveObject : StringProperty()
 
@@ -295,7 +297,7 @@ class Alx_OT_ModeWeightPaintSwitch(bpy.types.Operator):
         return (context.mode != "POSE")
     
     def execute(self, context):
-        if (self.DefaultBehaviour):
+        if (self.DefaultBehaviour is True):
             for window in context.window_manager.windows:
                 screen = window.screen
                 for area in screen.areas:
@@ -309,7 +311,7 @@ class Alx_OT_ModeWeightPaintSwitch(bpy.types.Operator):
                                     break
             return {"FINISHED"}
 
-        if (context.mode != "PAINT_WEIGHT") and (self.WeightPaintActiveArmature != ""):
+        if (self.DefaultBehaviour is False) and (context.mode != "PAINT_WEIGHT") and (self.WeightPaintActiveArmature != ""):
             
             bpy.data.objects[self.WeightPaintActiveArmature].select_set(True)
 
