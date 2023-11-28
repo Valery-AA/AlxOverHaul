@@ -2,8 +2,8 @@ bl_info = {
     "name" : "AlxOverHaul",
     "author" : "Valery [.V Arhal]",
     "description" : "",
-    "version" : (0, 3, 1),
-    "warning" : "[Heavly Under Development] Minimum Supported BL Version 3.0",
+    "version" : (0, 4, 1),
+    "warning" : "[Heavly Under Development] Minimum Supported BL Version 4.0",
     "category" : "3D View",
     "location" : "[Ctrl Alt A] PieMenu, [Alx 3D] Panel Tab",
     "blender" : (4, 0, 0)
@@ -16,13 +16,14 @@ if "bpy" in locals():
 
 import bpy
 import AlxOverHaul
-from bpy.types import Context
-from bpy.props import StringProperty, IntProperty, FloatProperty, BoolProperty, CollectionProperty, PointerProperty
+from bpy.types import Context, Event
+from bpy.props import StringProperty, IntProperty, FloatProperty, BoolProperty, CollectionProperty, EnumProperty, PointerProperty
+
 
 
 class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
     bl_label = "Alexandria Tool Pie"
-    bl_idname = "alx.menu_alexandria_tool_pie"
+    bl_idname = "alx_menu_alexandria_tool_pie"
 
     @classmethod
     def poll(cls, context):
@@ -34,20 +35,29 @@ class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
         AlxParentArmature = None
         AlxContextObject = None
 
-
         PieUI = AlxLayout.menu_pie()
 
         if (context.active_object is not None):
-            
-            
 
-            if (context.active_object.type == "MESH") and (context.active_object.find_armature() is not None):
-                AlxParentArmature = context.active_object.find_armature()
-                AlxContextObject = context.active_object.name
+            if (context.active_object.type == "MESH"):
+                if (context.active_object.find_armature() is not None):
+                    AlxParentArmature = context.active_object.find_armature()
+                AlxContextObject = context.active_object
             if (context.active_object.type == "ARMATURE") and (context.active_object is not None):
-                AlxParentArmature = bpy.data.objects[context.active_object.name]
+                AlxParentArmature = bpy.data.objects.get(context.active_object.name)
 
-        PieUI.box()
+        LBoxMenuSpace = PieUI.box()
+
+        # LBoxMenuSectionR = LBoxMenuSpace.box()
+        # LBoxMenuSectionR.ui_units_x = 10.0
+        # LBoxMenuSectionR.ui_units_y = 10.0
+        # LBoxMenuSectionM = LBoxMenuSpace.box()
+        # LBoxMenuSectionM.ui_units_x = 10.0
+        # LBoxMenuSectionM.ui_units_y = 10.0
+        # LBoxMenuSectionL = LBoxMenuSpace.box()
+        # LBoxMenuSectionL.ui_units_x = 10.0
+        # LBoxMenuSectionL.ui_units_y = 10.0
+
 
         RBoxMenuSpace = PieUI.box()
         RBoxMenuSpace.row().label(text="Poly Modifiers:")
@@ -93,7 +103,7 @@ class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
             OT_MWPSwitch = ModeSwitchRow.operator(Alx_OT_ModeWeightPaintSwitch.bl_idname, text="WEIGHT PAINT", emboss=True)
             OT_MWPSwitch.DefaultBehaviour = False
             OT_MWPSwitch.WeightPaintActiveArmature = AlxParentArmature.name
-            OT_MWPSwitch.WeightPaintActiveObject = AlxContextObject
+            OT_MWPSwitch.WeightPaintActiveObject = AlxContextObject.name
 
         BBoxMenuSectionL.row().prop(context.scene.render, "engine", text="")
         BBoxMenuSectionL.row(align=True).prop(context.area.spaces.active.shading, "type", text="", expand=True)
@@ -113,6 +123,7 @@ class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
         TBoxMenuSectionR.ui_units_x = 10.0
         TBoxMenuSectionR.ui_units_y = 10.0
        
+        # Menu Section Left
         if (bpy.context.mode == "EDIT_MESH") and (bpy.context.active_object.type == "MESH"):
             AlxEditMirror = TBoxMenuSectionL.row(align=True)
             AlxEditMirror.prop(bpy.context.active_object.data, "use_mirror_x", text="X", toggle=True)
@@ -122,6 +133,9 @@ class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
             TBoxMenuSectionL.row().prop(context.tool_settings, "use_edge_path_live_unwrap", text="Auto Unwrap", icon="UV")
 
         if (context.mode == "POSE"):
+            AlxPoseMirror = TBoxMenuSectionL.row(align=True)
+            AlxPoseMirror.prop(context.active_object.pose, "use_mirror_x", text="X Mirror")
+            AlxPoseMirror.prop(context.active_object.pose, "use_mirror_relative", text="Local Mirror")
             TBoxMenuSectionL.row().prop(context.active_object.pose, "use_auto_ik", text="Auto IK", icon="CON_KINEMATIC")
 
         if (context.mode == "PAINT_WEIGHT"):
@@ -134,9 +148,7 @@ class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
             TBoxMenuSectionL.row(align=True).prop(context.tool_settings, "vertex_group_user", expand=True)
             TBoxMenuSectionL.row().prop(context.tool_settings, "use_auto_normalize", text="Auto Normalize", icon="MOD_VERTEX_WEIGHT")
 
-
-
-
+        # Menu Section Middle
         if (AlxParentArmature is not None):
             TBoxMenuSectionM.row().prop(bpy.data.armatures[AlxParentArmature.data.name], "pose_position", expand=True)
         else:
@@ -144,6 +156,8 @@ class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
 
         if (context.active_object is not None):
             TBoxMenuSectionM.row(align=True).prop(context.active_object, "display_type", expand=True)
+
+
 
         AlxBevelVisibility = TBoxMenuSectionM.row(align=True)
         OT_MBSwitch = AlxBevelVisibility.operator(Alx_OT_ModifierBevelSwitch.bl_idname, text="Bevel ON", emboss=True)
@@ -155,6 +169,7 @@ class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
         AlxOverlayShading.prop(context.space_data.overlay, "show_overlays", text="", icon="OVERLAY")
         AlxOverlayShading.prop(context.area.spaces.active.shading, "show_xray", text="Mesh", icon="XRAY")
         AlxOverlayShading.prop(context.space_data.overlay, "show_xray_bone", text="Bone", icon="XRAY")
+        AlxOverlayShading.prop(context.space_data.overlay, "show_retopology", text="", icon="MESH_GRID")
         AlxOverlayShading.prop(context.space_data.overlay, "show_wireframes", text="", icon="MOD_WIREFRAME")
 
         AlxObjectIsolator = TBoxMenuSectionM.row(align=True) 
@@ -171,13 +186,20 @@ class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
             OT_ShadeAS.use_auto_smooth = True
             AlxObjectSmoothing.operator("object.shade_flat", text="Flat", emboss=True)
 
+        # Menu Section Right
+        if (context.mode == "OBJECT") and (AlxContextObject is not None):
+            OT_VGCE = TBoxMenuSectionR.row().operator(Alx_OT_VertexGroupCleanEmpty.bl_idname, text="Clean VxGroups", emboss=True)
+            OT_VGCE.VertexDataObject = AlxContextObject.name
+
+
+        if (context.mode == "POSE") and (AlxParentArmature is not None):
+            OT_BMIBN = TBoxMenuSectionR.row().operator(Alx_OT_BoneMatchIKByName.bl_idname, text="Symmetric IK", icon="MOD_MIRROR")
+            OT_BMIBN.ActivePoseArmatureObject = AlxParentArmature.name
         
 
         PieUI.box()
         PieUI.box()
-
-        LBBoxMenuSpace = PieUI.box()
-
+        PieUI.box()
         PieUI.box()
 
 class Alx_OT_SceneObjectIsolator(bpy.types.Operator):
@@ -265,7 +287,6 @@ class Alx_OT_ModePoseSwitch(bpy.types.Operator):
                 for area in screen.areas:
                     if area.type == 'VIEW_3D':
                         with context.temp_override(window=window, area=area):
-
                             for Object in bpy.context.selected_objects:
                                 if Object.type == "ARMATURE":
                                     bpy.context.view_layer.objects.active = Object
@@ -273,10 +294,13 @@ class Alx_OT_ModePoseSwitch(bpy.types.Operator):
                                     break
             return {"FINISHED"}
 
-        if (self.DefaultBehaviour is False) and (context.mode != "POSE") and (self.PoseActiveArmature != ""):
+        if (self.DefaultBehaviour == False) and (context.mode != "POSE") and (self.PoseActiveArmature != ""):
+            if (bpy.data.objects[self.PoseActiveArmature].hide_get() == True):
+                bpy.data.objects[self.PoseActiveArmature].hide_set(False)
 
-            if (bpy.data.objects[self.PoseActiveArmature] is not None):
+            if (bpy.data.objects[self.PoseActiveArmature] is not None) and (bpy.data.objects[self.PoseActiveArmature].hide_get() == False):
                 bpy.context.view_layer.objects.active = bpy.data.objects[self.PoseActiveArmature]
+
 
             if (context.active_object.type == "ARMATURE"):
                 bpy.ops.object.mode_set(mode="POSE")
@@ -290,7 +314,7 @@ class Alx_OT_ModeWeightPaintSwitch(bpy.types.Operator):
 
     DefaultBehaviour : BoolProperty(default=True)
     WeightPaintActiveArmature : StringProperty()
-    WeightPaintActiveObject : StringProperty()
+    WeightPaintActiveObject : StringProperty(options={"HIDDEN"})
 
     @classmethod
     def poll (self, context):
@@ -312,7 +336,11 @@ class Alx_OT_ModeWeightPaintSwitch(bpy.types.Operator):
             return {"FINISHED"}
 
         if (self.DefaultBehaviour is False) and (context.mode != "PAINT_WEIGHT") and (self.WeightPaintActiveArmature != ""):
-            
+            if (bpy.data.objects[self.WeightPaintActiveArmature].hide_get() == True):
+                bpy.data.objects[self.WeightPaintActiveArmature].hide_set(False)
+
+            bpy.data.objects[self.WeightPaintActiveArmature].hide_viewport = False
+
             bpy.data.objects[self.WeightPaintActiveArmature].select_set(True)
 
             if (bpy.data.objects[self.WeightPaintActiveArmature] is not None):
@@ -322,8 +350,6 @@ class Alx_OT_ModeWeightPaintSwitch(bpy.types.Operator):
                 bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
 
         return {"FINISHED"}
-
-
 
 class Alx_OT_ModifierBevelSwitch(bpy.types.Operator):
     """"""
@@ -553,7 +579,214 @@ class Alx_OT_ModifierWeldSelection(bpy.types.Operator):
     def invoke(self, context, event):
         return context.window_manager.invoke_props_popup(self, event)
 
+class Alx_OT_VertexGroupCleanEmpty(bpy.types.Operator):
+    """"""
 
+    bl_label = ""
+    bl_idname = "alx.vertex_group_clean_empty"
+
+    VertexDataObject : StringProperty(options={"HIDDEN"})
+
+    @classmethod
+    def poll(self, context):
+        return True
+    
+    def execute(self, context):
+        if (self.VertexDataObject != "") and (bpy.data.objects.get(self.VertexDataObject) is not None):
+            for VGroup in bpy.data.objects.get(self.VertexDataObject).vertex_groups:
+                i = 0
+                HasAtLeastOneVertex = False
+                while i < len(bpy.data.objects.get(self.VertexDataObject).data.vertices):
+                    if(i < 0): break
+                    try:
+                        VGroup.weight(i)
+                    except:
+                        pass
+
+                    else:
+                        HasAtLeastOneVertex = True    
+                    i += 1
+                if(HasAtLeastOneVertex == False):
+                    bpy.data.objects.get(self.VertexDataObject).vertex_groups.remove(VGroup)
+        return{"FINISHED"}
+
+def AlxGetBoneAlwaysLeft(Bone, Armature):
+    LeftBone = ""
+    if (len(Bone.name) != 0) and (len(Bone.name) > 2):
+        if (Bone.name[-2] == "."):
+            
+            match Bone.name[-1]:
+                case "R":
+                    LeftBone = Bone.name[0:-1] + "L"
+                case "L":
+                    LeftBone = Bone.name[0:-1] + "L"
+                case "r":
+                    LeftBone = Bone.name[0:-1] + "l"
+                case "l":
+                    OppositeBoneName = Bone.name[0:-1] + "l"
+
+    return bpy.data.objects.get(Armature).pose.bones.get(LeftBone)
+
+def AlxGetBoneOpposite(Bone, Armature):
+    OppositeBoneName = ""
+    if (len(Bone.name) != 0) and (len(Bone.name) > 2):
+        if (Bone.name[-2] == "."):
+            
+            match Bone.name[-1]:
+                case "R":
+                    OppositeBoneName = Bone.name[0:-1] + "L"
+                case "L":
+                    OppositeBoneName = Bone.name[0:-1] + "R"
+                case "r":
+                    OppositeBoneName = Bone.name[0:-1] + "l"
+                case "l":
+                    OppositeBoneName = Bone.name[0:-1] + "r"
+
+    return bpy.data.objects.get(Armature).pose.bones.get(OppositeBoneName)
+
+def AlxGetBoneNameOpposite(BoneName):
+    OppositeBoneName = ""
+    if (len(BoneName) != 0) and (len(BoneName) > 2):
+        if (BoneName[-2] == "."):
+            
+            match BoneName[-1]:
+                case "R":
+                    OppositeBoneName = BoneName[0:-1] + "L"
+                case "L":
+                    OppositeBoneName = BoneName[0:-1] + "R"
+                case "r":
+                    OppositeBoneName = BoneName[0:-1] + "l"
+                case "l":
+                    OppositeBoneName = BoneName[0:-1] + "r"
+    return OppositeBoneName
+
+def AlxGetIKConstraint(Bone):
+    for Constraint in Bone.constraints:
+        if (Constraint.type == "IK"):
+            return Constraint
+
+def AlxCloneIKBoneLimitOnChain(IKHead, Armature):
+    i = 0
+    if (AlxGetIKConstraint(IKHead) is not None):
+        ChainLength = AlxGetIKConstraint(IKHead).chain_count
+        ParentOnChain = None
+
+        IKHeadOpposite = AlxGetBoneOpposite(IKHead, Armature)
+
+        IKHeadOpposite.use_ik_limit_x = IKHead.use_ik_limit_x
+        IKHeadOpposite.ik_min_x = IKHead.ik_min_x
+        IKHeadOpposite.ik_max_x = IKHead.ik_max_x
+
+        IKHeadOpposite.use_ik_limit_y = IKHead.use_ik_limit_y
+        IKHeadOpposite.ik_min_y = IKHead.ik_min_y
+        IKHeadOpposite.ik_max_y = IKHead.ik_max_y
+
+        IKHeadOpposite.use_ik_limit_z = IKHead.use_ik_limit_z
+        IKHeadOpposite.ik_min_z = IKHead.ik_max_z * -1
+        IKHeadOpposite.ik_max_z = IKHead.ik_min_z * -1
+
+        ParentOnChain = IKHead
+        ParentOnChainOpposite = AlxGetBoneOpposite(IKHead, Armature)
+        if (ParentOnChain is not None) and (ParentOnChainOpposite is not None):
+            while i < ChainLength:
+                if (i < 0): break
+
+                ParentOnChainOpposite.use_ik_limit_x = ParentOnChain.use_ik_limit_x
+                ParentOnChainOpposite.ik_min_x = ParentOnChain.ik_min_x
+                ParentOnChainOpposite.ik_max_x = ParentOnChain.ik_max_x
+
+
+                ParentOnChainOpposite.use_ik_limit_y = ParentOnChain.use_ik_limit_y
+                ParentOnChainOpposite.ik_min_y = ParentOnChain.ik_min_y
+                ParentOnChainOpposite.ik_max_y = ParentOnChain.ik_max_y
+
+                ParentOnChainOpposite.use_ik_limit_z = ParentOnChain.use_ik_limit_z
+                ParentOnChainOpposite.ik_min_z = ParentOnChain.ik_max_z * -1
+                ParentOnChainOpposite.ik_max_z = ParentOnChain.ik_min_z * -1
+
+                ParentOnChain = ParentOnChain.parent
+                ParentOnChainOpposite = ParentOnChainOpposite.parent
+                i += 1
+
+def AlxCloneIKSettings(CheckBone, OppositeBone):
+    if (CheckBone is not None) and (OppositeBone is not None):
+        CheckBoneIK = AlxGetIKConstraint(CheckBone)
+        OppositeBoneIK = AlxGetIKConstraint(OppositeBone)
+
+
+
+        if (CheckBoneIK is not None) and (OppositeBoneIK is not None):
+            if (CheckBoneIK.target is not None):
+                OppositeBoneIK.target = CheckBoneIK.target
+            if (CheckBoneIK.subtarget is not None):
+                if (CheckBoneIK.target.type == "ARMATURE"):
+                    OppositeBoneIK.subtarget = AlxGetBoneNameOpposite(CheckBoneIK.subtarget)
+
+            OppositeBoneIK.chain_count = CheckBoneIK.chain_count
+            OppositeBoneIK.use_tail = CheckBoneIK.use_tail
+
+        if (CheckBoneIK is None) and (OppositeBoneIK is not None):
+            NewIK = CheckBone.constraints.new("IK")
+
+            if (OppositeBoneIK.target is not None):
+                NewIK.target = OppositeBoneIK.target
+
+                if (OppositeBoneIK.subtarget is not None):
+                    if (OppositeBoneIK.target.type == "ARMATURE"):
+                        NewIK.subtarget = AlxGetBoneNameOpposite(OppositeBoneIK.subtarget)
+
+            NewIK.chain_count = OppositeBoneIK.chain_count
+            NewIK.use_tail = OppositeBoneIK.use_tail
+
+        if (CheckBoneIK is not None) and (OppositeBoneIK is None):
+            NewIK = OppositeBone.constraints.new("IK")
+
+            if (CheckBoneIK.target is not None):
+                NewIK.target = CheckBoneIK.target
+
+                if (CheckBoneIK.subtarget is not None):
+                    if (CheckBoneIK.target.type == "ARMATURE"):
+                        NewIK.subtarget = AlxGetBoneNameOpposite(CheckBoneIK.subtarget)
+
+            NewIK.chain_count = CheckBoneIK.chain_count
+            NewIK.use_tail = CheckBoneIK.use_tail
+
+class Alx_OT_BoneMatchIKByName(bpy.types.Operator):
+    """"""
+
+    bl_label = ""
+    bl_idname = "alx.bone_match_ik_by_name"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    ActivePoseArmatureObject : StringProperty(options={"HIDDEN"})
+
+    @classmethod
+    def poll(self, context):
+        return (context.mode == "POSE")
+
+    def execute(self, context):
+        for window in context.window_manager.windows:
+            screen = window.screen
+            for area in screen.areas:
+                if area.type == 'VIEW_3D':
+                    with context.temp_override(window=window, area=area):
+
+                        if (bpy.data.objects.get(self.ActivePoseArmatureObject).type == "ARMATURE"):
+                            PoseBoneData = bpy.data.objects.get(self.ActivePoseArmatureObject).pose.bones
+
+                            CorrectPairBones = []
+
+                            for PoseBone in PoseBoneData:
+                                if (PoseBone.name[-2] == ".") and (PoseBone.name[0:-2] not in CorrectPairBones):
+                                    CorrectPairBones.append(PoseBone.name[0:-2])
+                                    PoseBoneLeft = AlxGetBoneAlwaysLeft(PoseBone, self.ActivePoseArmatureObject)
+                                    OppositeBoneLeft = AlxGetBoneOpposite(AlxGetBoneAlwaysLeft(PoseBone, self.ActivePoseArmatureObject), self.ActivePoseArmatureObject)
+                                    
+                                    AlxCloneIKSettings(PoseBoneLeft, OppositeBoneLeft)
+                                    AlxCloneIKBoneLimitOnChain(PoseBoneLeft, self.ActivePoseArmatureObject)
+
+
+        return {"FINISHED"}
 
 # ### Alx Material Property Groups
 # class Alx_Material(bpy.types.PropertyGroup):
@@ -798,6 +1031,9 @@ AlxClassQueue = [
                 Alx_OT_ModifierSubdivisionSelection,
                 Alx_OT_ModifierWeldSelection,
 
+                Alx_OT_VertexGroupCleanEmpty,
+                Alx_OT_BoneMatchIKByName
+
 
 
                 # Alx_Material,
@@ -813,29 +1049,23 @@ AlxClassQueue = [
                 # Alx_PT_MaterialSlotSelector
                 ]
 
-# addon_keymaps = []
-
-# def AlxAssignKeymaps():
-    # wm = bpy.context.window_manager
-    # kc = wm.keyconfigs.addon
-
-    # km = kc.keymaps.new(name='3D View')
-    # kmi = km.keymap_items.new(idname="wm.call_menu_pie", type="A", value="CLICK", ctrl=True, shift=False, alt=True)
-    # kmi.properties.name = Alx_MT_AlexandriaToolPie.bl_idname
-
-    # addon_keymaps.append((km,kmi))
-
-    #     wm = bpy.context.window_manager
-    # kc = wm.keyconfigs.addon
-    # if kc:
-    #     for km, kmi in addon_keymaps:
-    #         km.keymap_items.remove(kmi)
-    # addon_keymaps.clear()
+addon_keymaps = []
 
 def register():
+
+
     print("AlxOverHaul Registering...")
     for AlxQCls in AlxClassQueue:
         bpy.utils.register_class(AlxQCls)
+
+    wm = bpy.context.window_manager
+    kc = wm.keyconfigs.addon
+    if kc:
+
+        km = kc.keymaps.new(name='3D View', space_type='VIEW_3D')
+        kmi = km.keymap_items.new("wm.call_menu_pie", type="A", ctrl=True, alt=True, value="CLICK")
+        kmi.properties.name = Alx_MT_AlexandriaToolPie.bl_idname
+        addon_keymaps.append((km, kmi))
 
     # bpy.types.Scene.alx_materials = CollectionProperty(type=Alx_Material)
     # bpy.types.Scene.alx_active_material_index = IntProperty()
@@ -843,6 +1073,8 @@ def register():
 
     #bpy.app.handlers.depsgraph_update_post.append(AlxMaterialRegisterChanges)
     #bpy.msgbus.subscribe_rna(key=(bpy.types.Object, "material_slots"), owner="owner", args=(), notify=AlxMaterialRegisterChanges)
+
+
 
     print("AlxOverHaul Registered:")
     print(AlxClassQueue)
@@ -854,6 +1086,10 @@ def unregister():
 
     # del bpy.types.Scene.alx_materials
     # del bpy.types.Scene.alx_active_material_index
+
+    for km, kmi in addon_keymaps:
+        km.keymap_items.remove(kmi)
+    addon_keymaps.clear()
 
 if __name__ == "__main__":
     register()
