@@ -16,6 +16,7 @@ if "bpy" in locals():
 
 import bpy
 import AlxOverHaul
+
 from bpy.types import Context, Event
 from bpy.props import StringProperty, IntProperty, FloatProperty, BoolProperty, CollectionProperty, EnumProperty, PointerProperty
 
@@ -32,8 +33,10 @@ class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
     def draw(self, context):
         AlxLayout = self.layout
 
-        AlxParentArmature = None
         AlxContextObject = None
+        AlxContextArmature = None
+        AlxVerifiedContextObject = None
+        
 
         PieUI = AlxLayout.menu_pie()
 
@@ -41,10 +44,10 @@ class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
 
             if (context.active_object.type == "MESH"):
                 if (context.active_object.find_armature() is not None):
-                    AlxParentArmature = context.active_object.find_armature()
+                    AlxContextArmature = context.active_object.find_armature()
                 AlxContextObject = context.active_object
             if (context.active_object.type == "ARMATURE") and (context.active_object is not None):
-                AlxParentArmature = bpy.data.objects.get(context.active_object.name)
+                AlxContextArmature = bpy.data.objects.get(context.active_object.name)
 
         LBoxMenuSpace = PieUI.box()
 
@@ -77,40 +80,50 @@ class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
         BBoxMenuSectionL.ui_units_x = 12.0
         BBoxMenuSectionL.ui_units_y = 10.0
 
-        BBoxMenuSectionM.row().label(text="Mode:")
 
-        AlxOPSMode = BBoxMenuSectionM.row()
-        OPS_OBJMode = AlxOPSMode.operator(Alx_OT_ModeObjectSwitch.bl_idname, text="OBJECT", icon="OBJECT_DATAMODE")
-        OPS_OBJMode.DefaultBehaviour = True
-        OPS_OBJMode = AlxOPSMode.operator(Alx_OT_ModePoseSwitch.bl_idname, text="POSE", icon="ARMATURE_DATA")
-        OPS_OBJMode.DefaultBehaviour = True
-        OPS_OBJMode = AlxOPSMode.operator(Alx_OT_ModeWeightPaintSwitch.bl_idname, text="WEIGHT PAINT", icon="WPAINT_HLT")
-        OPS_OBJMode.DefaultBehaviour = True
+        AlxOPS_ModeRow = BBoxMenuSectionM.row(align=True)
+        ALXOPS_DEFMode_OBJECT = AlxOPS_ModeRow.operator(Alx_OT_AutomaticMode.bl_idname, text="OBJECT", icon="OBJECT_DATAMODE")
+        ALXOPS_DEFMode_OBJECT.DefaultBehaviour = True
+        ALXOPS_DEFMode_OBJECT.TargetMode = "OBJECT"
 
-        BBoxMenuSectionM.row().label(text="Auto Mode:")
+        ALXOPS_DEFMode_POSE = AlxOPS_ModeRow.operator(Alx_OT_AutomaticMode.bl_idname, text="POSE", icon="ARMATURE_DATA")
+        ALXOPS_DEFMode_POSE.DefaultBehaviour = True
+        ALXOPS_DEFMode_POSE.TargetMode = "POSE"
 
-        ModeSwitchRow = BBoxMenuSectionM.row(align=True)
-        if (context.mode != "OBJECT"):
-            OT_MOSwitch = ModeSwitchRow.operator(Alx_OT_ModeObjectSwitch.bl_idname, text="OBJECT", emboss=True)
-            OT_MOSwitch.DefaultBehaviour = False
+        ALXOPS_DEFMode_WEIGHT = AlxOPS_ModeRow.operator(Alx_OT_AutomaticMode.bl_idname, text="WPAINT", icon="WPAINT_HLT")
+        ALXOPS_DEFMode_WEIGHT.DefaultBehaviour = True
+        ALXOPS_DEFMode_WEIGHT.TargetMode = "WEIGHT_PAINT"
 
-        if (context.mode != "POSE") and (AlxParentArmature is not None):
-            OT_MPSwitch = ModeSwitchRow.operator(Alx_OT_ModePoseSwitch.bl_idname, text="POSE", emboss=True)
-            OT_MPSwitch.DefaultBehaviour = False
-            OT_MPSwitch.PoseActiveArmature = AlxParentArmature.name
+        AlxOPS_AutoModeRow = BBoxMenuSectionM.row(align=True)
+        ALXOPS_AutoMode_OBJECT = AlxOPS_AutoModeRow.operator(Alx_OT_AutomaticMode.bl_idname, text="A-OBJECT", icon="OBJECT_DATAMODE")
+        ALXOPS_AutoMode_OBJECT.DefaultBehaviour = False
+        ALXOPS_AutoMode_OBJECT.TargetMode = "OBJECT"
 
-        if (context.mode != "PAINT_WEIGHT") and (AlxParentArmature is not None) and (AlxContextObject is not None):
-            OT_MWPSwitch = ModeSwitchRow.operator(Alx_OT_ModeWeightPaintSwitch.bl_idname, text="WEIGHT PAINT", emboss=True)
-            OT_MWPSwitch.DefaultBehaviour = False
-            OT_MWPSwitch.WeightPaintActiveArmature = AlxParentArmature.name
-            OT_MWPSwitch.WeightPaintActiveObject = AlxContextObject.name
+        if (AlxContextArmature is not None):
+            ALXOPS_AutoMode_POSE = AlxOPS_AutoModeRow.operator(Alx_OT_AutomaticMode.bl_idname, text="A-POSE", icon="ARMATURE_DATA")
+            ALXOPS_AutoMode_POSE.DefaultBehaviour = False
+            ALXOPS_AutoMode_POSE.TargetMode = "POSE"
+            ALXOPS_AutoMode_POSE.TargetArmature = AlxContextArmature.name
+
+
+        if  (AlxContextArmature is not None):
+            ALXOPS_AutoMode_WEIGHT = AlxOPS_AutoModeRow.operator(Alx_OT_AutomaticMode.bl_idname, text="A-WPAINT", icon="WPAINT_HLT")
+            ALXOPS_AutoMode_WEIGHT.DefaultBehaviour = False
+            ALXOPS_AutoMode_WEIGHT.TargetMode = "PAINT_WEIGHT"
+
+            AlxVerifiedContextObject = AlxContextObject
+
+            if (context.mode == "POSE") and (AlxContextObject is None):
+                for Object in bpy.context.selected_objects:
+                    if (Object.type == "MESH") and (Object.find_armature() is not None) and (Object.find_armature() is AlxContextArmature):
+                        AlxVerifiedContextObject = Object
+                        ALXOPS_AutoMode_WEIGHT.TargetObject = AlxVerifiedContextObject.name
+            if (AlxContextObject is not None):
+                ALXOPS_AutoMode_WEIGHT.TargetObject = AlxContextObject.name
+            ALXOPS_AutoMode_WEIGHT.TargetArmature = AlxContextArmature.name
 
         BBoxMenuSectionL.row().prop(context.scene.render, "engine", text="")
         BBoxMenuSectionL.row(align=True).prop(context.area.spaces.active.shading, "type", text="", expand=True)
-
-
-
-
 
         TBoxMenuSpace = PieUI.box().row()
         TBoxMenuSectionL = TBoxMenuSpace.box()
@@ -149,8 +162,8 @@ class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
             TBoxMenuSectionL.row().prop(context.tool_settings, "use_auto_normalize", text="Auto Normalize", icon="MOD_VERTEX_WEIGHT")
 
         # Menu Section Middle
-        if (AlxParentArmature is not None):
-            TBoxMenuSectionM.row().prop(bpy.data.armatures[AlxParentArmature.data.name], "pose_position", expand=True)
+        if (AlxContextArmature is not None):
+            TBoxMenuSectionM.row().prop(bpy.data.armatures[AlxContextArmature.data.name], "pose_position", expand=True)
         else:
             TBoxMenuSectionM.row().label(text="No Influencing Armature Found")
 
@@ -192,15 +205,107 @@ class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
             OT_VGCE.VertexDataObject = AlxContextObject.name
 
 
-        if (context.mode == "POSE") and (AlxParentArmature is not None):
+        if (context.mode == "POSE") and (AlxContextArmature is not None):
             OT_BMIBN = TBoxMenuSectionR.row().operator(Alx_OT_BoneMatchIKByName.bl_idname, text="Symmetric IK", icon="MOD_MIRROR")
-            OT_BMIBN.ActivePoseArmatureObject = AlxParentArmature.name
+            OT_BMIBN.ActivePoseArmatureObject = AlxContextArmature.name
         
 
         PieUI.box()
         PieUI.box()
         PieUI.box()
         PieUI.box()
+
+class Alx_OT_AutomaticMode(bpy.types.Operator):
+    """"""
+
+    bl_label = ""
+    bl_idname = "alx.automatic_mode_changer"
+    bl_options = {"INTERNAL"}
+
+    DefaultBehaviour : bpy.props.BoolProperty(name="", default=True, options={"HIDDEN"})
+    TargetMode : bpy.props.StringProperty(name="", default="OBJECT", options={"HIDDEN"})
+    
+    TargetObject : bpy.props.StringProperty(name="", options={"HIDDEN"})
+    TargetArmature : bpy.props.StringProperty(name="", options={"HIDDEN"})
+
+    @classmethod
+    def poll(self, context):
+        return True
+    
+    def execute(self, context):
+        for window in context.window_manager.windows:
+            screen = window.screen
+            for area in screen.areas:
+                if (area.type == 'VIEW_3D'):
+                    with context.temp_override(window=window, area=area):
+
+                        if (self.DefaultBehaviour == True):
+                            match self.TargetMode:
+                                case "OBJECT":
+                                    if (context.mode != "OBJECT"):
+                                        bpy.ops.object.mode_set(mode="OBJECT")
+                                    return {"FINISHED"}
+
+                                case "POSE":
+                                    if (context.mode != "POSE"):
+                                        for Object in bpy.context.selected_objects:
+                                            if (Object.type == "ARMATURE"):
+                                                bpy.context.view_layer.objects.active = Object
+                                                bpy.ops.object.mode_set(mode="POSE")
+                                    return {"FINISHED"}
+                                
+                                case "PAINT_WEIGHT":
+                                    if (context.mode != "PAINT_WEIGHT"):
+                                        for Object in bpy.context.selected_objects:
+                                            if Object.type == "MESH":
+                                                bpy.context.view_layer.objects.active = Object
+                                                bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
+                                    return {"FINISHED"}
+
+                        if (self.DefaultBehaviour == False):
+                            match self.TargetMode:
+                                case "OBJECT":
+                                    if (context.mode != "OBJECT"):
+                                        bpy.ops.object.mode_set(mode="OBJECT")
+                                    return {"FINISHED"}
+
+                                case "POSE":
+                                    if (context.mode != "POSE"):
+                                        if (self.TargetArmature != ""):
+                                            if (bpy.data.objects[self.TargetArmature] is not None):
+                                                
+                                                if (context.mode == "PAINT_WEIGHT"):
+                                                    bpy.ops.object.mode_set(mode="OBJECT")
+
+                                                bpy.data.objects.get(self.TargetArmature).hide_set(False)
+                                                bpy.data.objects.get(self.TargetArmature).hide_viewport = False
+
+                                                if (bpy.data.objects[self.TargetArmature] is not None):
+                                                    bpy.context.view_layer.objects.active = bpy.data.objects.get(self.TargetArmature)
+                                                    if (context.active_object.type == "ARMATURE"):
+                                                        bpy.ops.object.mode_set(mode="POSE")
+                                    return {"FINISHED"}
+                                
+                                case "PAINT_WEIGHT":
+                                    if (context.mode != "PAINT_WEIGHT"):
+                                        if (self.TargetObject != "") and (self.TargetArmature != ""):
+                                            if (bpy.data.objects[self.TargetObject] is not None) and (bpy.data.objects[self.TargetArmature] is not None):
+
+                                                if (context.mode == "POSE"):
+                                                    bpy.ops.object.mode_set(mode="OBJECT")
+                                                
+                                                bpy.data.objects.get(self.TargetArmature).hide_set(False)
+                                                bpy.data.objects.get(self.TargetArmature).hide_viewport = False
+
+                                                bpy.data.objects.get(self.TargetArmature).select_set(True)
+
+                                                bpy.context.view_layer.objects.active = bpy.data.objects.get(self.TargetObject)
+
+                                                if (context.active_object.type == "MESH"):
+                                                    bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
+                                    return {"FINISHED"}
+
+        return {"FINISHED"}
 
 class Alx_OT_SceneObjectIsolator(bpy.types.Operator):
     """"""
@@ -241,114 +346,6 @@ class Alx_OT_SceneCollectionIsolator(bpy.types.Operator):
                 collection.hide_viewport = self.IsolatorState
 
         self.IsolatorState = not self.IsolatorState
-        return {"FINISHED"}
-
-
-
-class Alx_OT_ModeObjectSwitch(bpy.types.Operator):
-    """"""
-
-    bl_label = ""
-    bl_idname = "alx.mode_object_switch"
-
-    DefaultBehaviour : BoolProperty(default=True)  
-
-    @classmethod
-    def poll(self, context):
-        return True
-    
-    def execute(self, context):
-        for window in context.window_manager.windows:
-            screen = window.screen
-            for area in screen.areas:
-                if area.type == 'VIEW_3D':
-                    with context.temp_override(window=window, area=area):
-                        bpy.ops.object.mode_set(mode="OBJECT")
-
-        return {"FINISHED"}
-
-class Alx_OT_ModePoseSwitch(bpy.types.Operator):
-    """"""
-
-    bl_label = ""
-    bl_idname = "alx.mode_pose_switch"
-
-    DefaultBehaviour : BoolProperty(default=True)
-    PoseActiveArmature : StringProperty()
-
-    @classmethod
-    def poll (self, context):
-        return (context.mode != "PAINT_WEIGHT")
-    
-    def execute(self, context):
-        if (self.DefaultBehaviour is True):
-            for window in context.window_manager.windows:
-                screen = window.screen
-                for area in screen.areas:
-                    if area.type == 'VIEW_3D':
-                        with context.temp_override(window=window, area=area):
-                            for Object in bpy.context.selected_objects:
-                                if Object.type == "ARMATURE":
-                                    bpy.context.view_layer.objects.active = Object
-                                    bpy.ops.object.mode_set(mode="POSE")
-                                    break
-            return {"FINISHED"}
-
-        if (self.DefaultBehaviour == False) and (context.mode != "POSE") and (self.PoseActiveArmature != ""):
-            if (bpy.data.objects[self.PoseActiveArmature].hide_get() == True):
-                bpy.data.objects[self.PoseActiveArmature].hide_set(False)
-
-            if (bpy.data.objects[self.PoseActiveArmature] is not None) and (bpy.data.objects[self.PoseActiveArmature].hide_get() == False):
-                bpy.context.view_layer.objects.active = bpy.data.objects[self.PoseActiveArmature]
-
-
-            if (context.active_object.type == "ARMATURE"):
-                bpy.ops.object.mode_set(mode="POSE")
-        return {"FINISHED"}
-
-class Alx_OT_ModeWeightPaintSwitch(bpy.types.Operator):
-    """"""
-
-    bl_label = ""
-    bl_idname = "alx.mode_weight_paint_switch"
-
-    DefaultBehaviour : BoolProperty(default=True)
-    WeightPaintActiveArmature : StringProperty()
-    WeightPaintActiveObject : StringProperty(options={"HIDDEN"})
-
-    @classmethod
-    def poll (self, context):
-        return (context.mode != "POSE")
-    
-    def execute(self, context):
-        if (self.DefaultBehaviour is True):
-            for window in context.window_manager.windows:
-                screen = window.screen
-                for area in screen.areas:
-                    if area.type == 'VIEW_3D':
-                        with context.temp_override(window=window, area=area):
-
-                            for Object in bpy.context.selected_objects:
-                                if Object.type == "MESH":
-                                    bpy.context.view_layer.objects.active = Object
-                                    bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
-                                    break
-            return {"FINISHED"}
-
-        if (self.DefaultBehaviour is False) and (context.mode != "PAINT_WEIGHT") and (self.WeightPaintActiveArmature != ""):
-            if (bpy.data.objects[self.WeightPaintActiveArmature].hide_get() == True):
-                bpy.data.objects[self.WeightPaintActiveArmature].hide_set(False)
-
-            bpy.data.objects[self.WeightPaintActiveArmature].hide_viewport = False
-
-            bpy.data.objects[self.WeightPaintActiveArmature].select_set(True)
-
-            if (bpy.data.objects[self.WeightPaintActiveArmature] is not None):
-                bpy.context.view_layer.objects.active =  bpy.data.objects[self.WeightPaintActiveObject]
-
-            if (context.active_object.type == "MESH"):
-                bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
-
         return {"FINISHED"}
 
 class Alx_OT_ModifierBevelSwitch(bpy.types.Operator):
@@ -1018,12 +1015,11 @@ class Alx_OT_BoneMatchIKByName(bpy.types.Operator):
 
 AlxClassQueue = [
                 Alx_MT_AlexandriaToolPie,
+                Alx_OT_AutomaticMode,
 
                 Alx_OT_SceneObjectIsolator,
                 Alx_OT_SceneCollectionIsolator,
-                Alx_OT_ModeObjectSwitch,
-                Alx_OT_ModePoseSwitch,
-                Alx_OT_ModeWeightPaintSwitch,
+
 
                 Alx_OT_ModifierBevelSwitch,
                 
