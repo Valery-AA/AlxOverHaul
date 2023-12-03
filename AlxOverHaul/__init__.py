@@ -2,7 +2,7 @@ bl_info = {
     "name" : "AlxOverHaul",
     "author" : "Valery [.V Arhal]",
     "description" : "",
-    "version" : (0, 4, 1),
+    "version" : (0, 4, 2),
     "warning" : "[Heavly Under Development] Minimum Supported BL Version 4.0",
     "category" : "3D View",
     "location" : "[Ctrl Alt A] PieMenu, [Alx 3D] Panel Tab",
@@ -15,12 +15,11 @@ if "bpy" in locals():
         importlib.reload(AlxOverHaul)
 
 import bpy
+import bmesh
 import AlxOverHaul
 
 from bpy.types import Context, Event
 from bpy.props import StringProperty, IntProperty, FloatProperty, BoolProperty, CollectionProperty, EnumProperty, PointerProperty
-
-
 
 class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
     bl_label = "Alexandria Tool Pie"
@@ -29,9 +28,11 @@ class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
     @classmethod
     def poll(cls, context):
         return True
-    
+
     def draw(self, context):
         AlxLayout = self.layout
+
+        HasBeenClosed = False
 
         AlxContextObject = None
         AlxContextArmature = None
@@ -50,66 +51,63 @@ class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
                 AlxContextArmature = bpy.data.objects.get(context.active_object.name)
 
         LBoxMenuSpace = PieUI.box()
-
-        # LBoxMenuSectionR = LBoxMenuSpace.box()
-        # LBoxMenuSectionR.ui_units_x = 10.0
-        # LBoxMenuSectionR.ui_units_y = 10.0
-        # LBoxMenuSectionM = LBoxMenuSpace.box()
-        # LBoxMenuSectionM.ui_units_x = 10.0
-        # LBoxMenuSectionM.ui_units_y = 10.0
-        # LBoxMenuSectionL = LBoxMenuSpace.box()
-        # LBoxMenuSectionL.ui_units_x = 10.0
-        # LBoxMenuSectionL.ui_units_y = 10.0
-
+        # LBoxMenuSection = LBoxMenuSpace.box()
+        # LBoxMenuSection.ui_units_x = 17.75
+        # LBoxMenuSection.ui_units_x = 7.0
 
         RBoxMenuSpace = PieUI.box()
-        RBoxMenuSpace.row().label(text="Poly Modifiers:")
-        BasicDeformingMod = RBoxMenuSpace.row(align=True)
+        RBoxMenuSection = RBoxMenuSpace.box()
+
+        AlxOPS_Armature_ATS = RBoxMenuSection.row().operator(Alx_OT_ArmatureAssignToSelection.bl_idname, text="Assign Armature")
+        #RBoxMenuSection.row().operator(Alx_OT_ArmatureCloneIKPuppet.bl_idname, text="Armature IK Puppet")
+
+        BasicDeformingMod = RBoxMenuSection.row(align=True)
         OT_MBSelection = BasicDeformingMod.operator(Alx_OT_ModifierBevelSelection.bl_idname, text="Bevel")
         OT_MSSelection = BasicDeformingMod.operator(Alx_OT_ModifierSubdivisionSelection.bl_idname, text="SubDiv")
         OT_MWSelection = BasicDeformingMod.operator(Alx_OT_ModifierWeldSelection.bl_idname, text="Weld")
 
         BBoxMenuSpace = PieUI.box().row()
-        BBoxMenuSectionR = BBoxMenuSpace.box()
-        BBoxMenuSectionR.ui_units_x = 12.0
-        BBoxMenuSectionR.ui_units_y = 10.0
+        BBoxMenuSectionL = BBoxMenuSpace.box()
+        BBoxMenuSectionL.ui_units_x = 15.0
+        BBoxMenuSectionL.ui_units_y = 10.0
         BBoxMenuSectionM = BBoxMenuSpace.box()
         BBoxMenuSectionM.ui_units_x = 15.0
         BBoxMenuSectionM.ui_units_y = 10.0
-        BBoxMenuSectionL = BBoxMenuSpace.box()
-        BBoxMenuSectionL.ui_units_x = 12.0
-        BBoxMenuSectionL.ui_units_y = 10.0
+        BBoxMenuSectionR = BBoxMenuSpace.box()
+        BBoxMenuSectionR.ui_units_x = 15.0
+        BBoxMenuSectionR.ui_units_y = 10.0
 
+        BBoxMenuSectionL.prop(bpy.context.scene, "frame_current", text="Frame")
 
         AlxOPS_ModeRow = BBoxMenuSectionM.row(align=True)
-        ALXOPS_DEFMode_OBJECT = AlxOPS_ModeRow.operator(Alx_OT_AutomaticMode.bl_idname, text="OBJECT", icon="OBJECT_DATAMODE")
-        ALXOPS_DEFMode_OBJECT.DefaultBehaviour = True
-        ALXOPS_DEFMode_OBJECT.TargetMode = "OBJECT"
+        AlxOPS_DEFMode_OBJECT = AlxOPS_ModeRow.operator(Alx_OT_AutomaticMode.bl_idname, text="OBJECT", icon="OBJECT_DATAMODE")
+        AlxOPS_DEFMode_OBJECT.DefaultBehaviour = True
+        AlxOPS_DEFMode_OBJECT.TargetMode = "OBJECT"
 
-        ALXOPS_DEFMode_POSE = AlxOPS_ModeRow.operator(Alx_OT_AutomaticMode.bl_idname, text="POSE", icon="ARMATURE_DATA")
-        ALXOPS_DEFMode_POSE.DefaultBehaviour = True
-        ALXOPS_DEFMode_POSE.TargetMode = "POSE"
+        AlxOPS_DEFMode_POSE = AlxOPS_ModeRow.operator(Alx_OT_AutomaticMode.bl_idname, text="POSE", icon="ARMATURE_DATA")
+        AlxOPS_DEFMode_POSE.DefaultBehaviour = True
+        AlxOPS_DEFMode_POSE.TargetMode = "POSE"
 
-        ALXOPS_DEFMode_WEIGHT = AlxOPS_ModeRow.operator(Alx_OT_AutomaticMode.bl_idname, text="WPAINT", icon="WPAINT_HLT")
-        ALXOPS_DEFMode_WEIGHT.DefaultBehaviour = True
-        ALXOPS_DEFMode_WEIGHT.TargetMode = "WEIGHT_PAINT"
+        AlxOPS_DEFMode_WEIGHT = AlxOPS_ModeRow.operator(Alx_OT_AutomaticMode.bl_idname, text="WPAINT", icon="WPAINT_HLT")
+        AlxOPS_DEFMode_WEIGHT.DefaultBehaviour = True
+        AlxOPS_DEFMode_WEIGHT.TargetMode = "WEIGHT_PAINT"
 
         AlxOPS_AutoModeRow = BBoxMenuSectionM.row(align=True)
-        ALXOPS_AutoMode_OBJECT = AlxOPS_AutoModeRow.operator(Alx_OT_AutomaticMode.bl_idname, text="A-OBJECT", icon="OBJECT_DATAMODE")
-        ALXOPS_AutoMode_OBJECT.DefaultBehaviour = False
-        ALXOPS_AutoMode_OBJECT.TargetMode = "OBJECT"
+        AlxOPS_AutoMode_OBJECT = AlxOPS_AutoModeRow.operator(Alx_OT_AutomaticMode.bl_idname, text="A-OBJECT", icon="OBJECT_DATAMODE")
+        AlxOPS_AutoMode_OBJECT.DefaultBehaviour = False
+        AlxOPS_AutoMode_OBJECT.TargetMode = "OBJECT"
 
         if (AlxContextArmature is not None):
-            ALXOPS_AutoMode_POSE = AlxOPS_AutoModeRow.operator(Alx_OT_AutomaticMode.bl_idname, text="A-POSE", icon="ARMATURE_DATA")
-            ALXOPS_AutoMode_POSE.DefaultBehaviour = False
-            ALXOPS_AutoMode_POSE.TargetMode = "POSE"
-            ALXOPS_AutoMode_POSE.TargetArmature = AlxContextArmature.name
+            AlxOPS_AutoMode_POSE = AlxOPS_AutoModeRow.operator(Alx_OT_AutomaticMode.bl_idname, text="A-POSE", icon="ARMATURE_DATA")
+            AlxOPS_AutoMode_POSE.DefaultBehaviour = False
+            AlxOPS_AutoMode_POSE.TargetMode = "POSE"
+            AlxOPS_AutoMode_POSE.TargetArmature = AlxContextArmature.name
 
 
         if  (AlxContextArmature is not None):
-            ALXOPS_AutoMode_WEIGHT = AlxOPS_AutoModeRow.operator(Alx_OT_AutomaticMode.bl_idname, text="A-WPAINT", icon="WPAINT_HLT")
-            ALXOPS_AutoMode_WEIGHT.DefaultBehaviour = False
-            ALXOPS_AutoMode_WEIGHT.TargetMode = "PAINT_WEIGHT"
+            AlxOPS_AutoMode_WEIGHT = AlxOPS_AutoModeRow.operator(Alx_OT_AutomaticMode.bl_idname, text="A-WPAINT", icon="WPAINT_HLT")
+            AlxOPS_AutoMode_WEIGHT.DefaultBehaviour = False
+            AlxOPS_AutoMode_WEIGHT.TargetMode = "PAINT_WEIGHT"
 
             AlxVerifiedContextObject = AlxContextObject
 
@@ -117,23 +115,23 @@ class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
                 for Object in bpy.context.selected_objects:
                     if (Object.type == "MESH") and (Object.find_armature() is not None) and (Object.find_armature() is AlxContextArmature):
                         AlxVerifiedContextObject = Object
-                        ALXOPS_AutoMode_WEIGHT.TargetObject = AlxVerifiedContextObject.name
+                        AlxOPS_AutoMode_WEIGHT.TargetObject = AlxVerifiedContextObject.name
             if (AlxContextObject is not None):
-                ALXOPS_AutoMode_WEIGHT.TargetObject = AlxContextObject.name
-            ALXOPS_AutoMode_WEIGHT.TargetArmature = AlxContextArmature.name
+                AlxOPS_AutoMode_WEIGHT.TargetObject = AlxContextObject.name
+            AlxOPS_AutoMode_WEIGHT.TargetArmature = AlxContextArmature.name
 
-        BBoxMenuSectionL.row().prop(context.scene.render, "engine", text="")
-        BBoxMenuSectionL.row(align=True).prop(context.area.spaces.active.shading, "type", text="", expand=True)
+        BBoxMenuSectionR.row().prop(context.scene.render, "engine", text="")
+        BBoxMenuSectionR.row(align=True).prop(context.area.spaces.active.shading, "type", text="", expand=True)
 
         TBoxMenuSpace = PieUI.box().row()
         TBoxMenuSectionL = TBoxMenuSpace.box()
-        TBoxMenuSectionL.ui_units_x = 10.0
+        TBoxMenuSectionL.ui_units_x = 15.0
         TBoxMenuSectionL.ui_units_y = 10.0
         TBoxMenuSectionM = TBoxMenuSpace.box()
-        TBoxMenuSectionM.ui_units_x = 12.0
+        TBoxMenuSectionM.ui_units_x = 15.0
         TBoxMenuSectionM.ui_units_y = 10.0
         TBoxMenuSectionR = TBoxMenuSpace.box()
-        TBoxMenuSectionR.ui_units_x = 10.0
+        TBoxMenuSectionR.ui_units_x = 15.0
         TBoxMenuSectionR.ui_units_y = 10.0
        
         # Menu Section Left
@@ -192,7 +190,7 @@ class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
         OT_OBJIsolate.IsolatorState = False
         OT_COLIsolate = AlxObjectIsolator.operator(Alx_OT_SceneCollectionIsolator.bl_idname, text="", icon="OUTLINER_COLLECTION")
 
-        if (context.active_object.type == "MESH"):
+        if (context.active_object is not None) and (context.active_object.type == "MESH"):
             AlxObjectSmoothing = TBoxMenuSectionM.row(align=True)
             OT_ShadeS = AlxObjectSmoothing.operator("object.shade_smooth", text="Smooth", emboss=True)
             OT_ShadeAS = AlxObjectSmoothing.operator("object.shade_smooth", text="ASmooth", emboss=True)
@@ -209,11 +207,46 @@ class Alx_MT_AlexandriaToolPie(bpy.types.Menu):
             OT_BMIBN = TBoxMenuSectionR.row().operator(Alx_OT_BoneMatchIKByName.bl_idname, text="Symmetric IK", icon="MOD_MIRROR")
             OT_BMIBN.ActivePoseArmatureObject = AlxContextArmature.name
         
+        PieUI.box()
+        SubPie_SnapBox = PieUI.box()
+        SubPie_SnapBox.operator("wm.call_menu_pie", text = "", icon = "SNAP_ON").name=Alx_MT_SubPieSnapping.bl_idname
+        PieUI.box()
+        PieUI.box()
 
-        PieUI.box()
-        PieUI.box()
-        PieUI.box()
-        PieUI.box()
+
+class Alx_MT_SubPieSnapping(bpy.types.Menu):
+    bl_label = "Alexandria Snapping Sub-Pie"
+    bl_idname = "alx_menu_alexandria_sub_pie_snapping"
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def draw(self, context):
+        AlxLayout = self.layout
+        PieUI = AlxLayout.menu_pie()
+
+        PieUI.prop(context.tool_settings, "use_snap", text="Snap")
+        PieUI.prop(context.tool_settings, "snap_elements_base") 
+
+# class Alx_PT_ArmatureCompoundPanel(bpy.types.Panel):
+#     """"""
+
+#     bl_label = "Alx ARM"
+#     bl_idname = "alx_panel_armature_compound_panel"
+
+#     bl_category = "ALX 3D"
+#     bl_region_type = "UI"
+#     bl_space_type = 'VIEW_3D'
+
+#     bl_options = {'DEFAULT_CLOSED'}
+
+#     @classmethod
+#     def poll(self, context):
+#         return context.mode == "OBJECT"
+    
+#     def draw(self, context):
+#         AlxLayout = self.layout
 
 class Alx_OT_AutomaticMode(bpy.types.Operator):
     """"""
@@ -347,6 +380,111 @@ class Alx_OT_SceneCollectionIsolator(bpy.types.Operator):
 
         self.IsolatorState = not self.IsolatorState
         return {"FINISHED"}
+
+def AlxRetiriveObjectModifier(TargetObejct, TargetType):
+    ModifierTypes = ["ARMATURE"]
+    if (TargetType in ModifierTypes):
+        for Modifier in TargetObejct.modifiers:
+            if (Modifier.type == TargetType):
+                return Modifier
+    return None
+
+class Alx_OT_ArmatureAssignToSelection(bpy.types.Operator):
+    """"""
+
+    bl_label = ""
+    bl_idname = "alx.armature_assign_to_selection"
+    bl_description = "Assigns any [Mesh] in the current selection to the [ACTIVE Armature] that was selected last"
+
+    bl_options = {'REGISTER', 'UNDO'}
+
+    # def UpdateUseAutomaticWeight(self, context):
+    #     if (self.UseAutomaticWeight == True):
+    #         self.UseSingleVxGroup = False
+    #         self.UsePurgeOtherGroups = False
+    #         self.VxGroupName = ""
+
+    # def UpdateUsePreserveExistingGroups(self, context):
+    #     if (self.UsePreserveExistingGroups == True):
+    #         self.UseAutomaticWeight = True
+    #         self.UseSingleVxGroup = False
+    #         self.UsePurgeOtherGroups = False
+    #         self.VxGroupName = ""
+        
+    def UpdateUseSingleVxGroup(self, context):
+        # if (self.UseSingleVxGroup == True):
+        #     self.UseAutomaticWeight = False
+        #     self.UsePreserveExistingGroups = False
+        pass
+
+    # def UpdateUsePurgeOtherGroups(self, context):
+    #     if (self.UsePurgeOtherGroups == True):
+    #         self.UseSingleVxGroup = True
+    #         self.UseAutomaticWeight = False
+    #         self.UsePreserveExistingGroups = False
+
+    def UpdateVxGroupName(self, context):
+        if (self.VxGroupName != ""):
+            self.UseSingleVxGroup = True
+            
+
+    TargetArmature : StringProperty(name="", options={"HIDDEN"})
+    UseParent : BoolProperty(name="Should Parent", default=False)
+
+    #UseAutomaticWeight : BoolProperty(name="Automatic Weights", default=False, update=UpdateUseAutomaticWeight)
+    #UsePreserveExistingGroups : BoolProperty(name="Preserve Existing VxGroups", default=False, update=UpdateUsePreserveExistingGroups)
+
+    UseSingleVxGroup : BoolProperty(name="Single VxGroup", default=False, update=UpdateUseSingleVxGroup)
+    #UsePurgeOtherGroups : BoolProperty(name="Purge Other VxGroups", default=False, update=UpdateUsePurgeOtherGroups)
+    VxGroupName : StringProperty(name="Group", default="", update=UpdateVxGroupName)
+
+    @classmethod
+    def poll(self, context):
+        return True
+
+    def execute(self, context):
+        for window in context.window_manager.windows:
+            screen = window.screen
+            for area in screen.areas:
+                if area.type == 'VIEW_3D':
+                    with context.temp_override(window=window, area=area):
+
+                        if (context.active_object is not None) and (context.active_object.type == "ARMATURE"):
+                            self.TargetArmature = context.active_object.name
+
+                        if (self.TargetArmature != ""):
+                            for SelectedObject in context.selected_objects:
+                                if (SelectedObject.type == "MESH"):
+                                    ArmatureModifier = AlxRetiriveObjectModifier(SelectedObject, "ARMATURE")
+                                    if (ArmatureModifier is None):
+                                        ArmatureModifier = SelectedObject.modifiers.new(name="Armature", type="ARMATURE")
+
+                                    if (ArmatureModifier is not None):
+                                        ArmatureModifier.object = bpy.data.objects.get(self.TargetArmature)
+
+                                    if (self.UseParent == True):
+                                        SelectedObject.parent = bpy.data.objects.get(self.TargetArmature)
+                                        SelectedObject.matrix_parent_inverse = bpy.data.objects.get(self.TargetArmature).matrix_world.inverted()
+
+                                    # if (self.UseAutomaticWeight == True):
+                                    #     bpy.ops.alx.automatic_mode_changer(DefaultBehaviour=False, TargetMode="PAINT_WEIGHT", TargetObject=SelectedObject.name, TargetArmature=self.TargetArmature)
+                                    #     #bpy.ops.paint.weight_from_bones(type='AUTOMATIC')
+
+                                    if (self.UseSingleVxGroup == True):
+                                        if (self.VxGroupName != "") and (self.VxGroupName not in SelectedObject.vertex_groups):
+                                            VxGroup = SelectedObject.vertex_groups.new()
+                                            VxGroup.name = self.VxGroupName
+                                        if (self.VxGroupName != "") and (self.VxGroupName in SelectedObject.vertex_groups):
+                                            VxGroup = SelectedObject.vertex_groups.get(self.VxGroupName)
+                                            
+                                            if (VxGroup is not None):
+                                                VxGroup.add(range(0, len(SelectedObject.data.vertices)), 1.0, 'REPLACE')
+                                                
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self, width=300)
+
 
 class Alx_OT_ModifierBevelSwitch(bpy.types.Operator):
     """"""
@@ -715,9 +853,16 @@ def AlxCloneIKSettings(CheckBone, OppositeBone):
         if (CheckBoneIK is not None) and (OppositeBoneIK is not None):
             if (CheckBoneIK.target is not None):
                 OppositeBoneIK.target = CheckBoneIK.target
-            if (CheckBoneIK.subtarget is not None):
                 if (CheckBoneIK.target.type == "ARMATURE"):
-                    OppositeBoneIK.subtarget = AlxGetBoneNameOpposite(CheckBoneIK.subtarget)
+                    if (CheckBoneIK.subtarget is not None):
+                        OppositeBoneIK.subtarget = AlxGetBoneNameOpposite(CheckBoneIK.subtarget)
+
+            if (CheckBoneIK.pole_target is not None):
+                OppositeBoneIK.pole_target = CheckBoneIK.pole_target
+                if (CheckBoneIK.pole_target.type == "ARMATURE"):
+                    if (CheckBoneIK.pole_subtarget is not None):
+                        OppositeBoneIK.pole_subtarget = AlxGetBoneNameOpposite(CheckBoneIK.pole_subtarget)
+                OppositeBoneIK.pole_angle = (CheckBoneIK.pole_angle + 180)
 
             OppositeBoneIK.chain_count = CheckBoneIK.chain_count
             OppositeBoneIK.use_tail = CheckBoneIK.use_tail
@@ -728,9 +873,18 @@ def AlxCloneIKSettings(CheckBone, OppositeBone):
             if (OppositeBoneIK.target is not None):
                 NewIK.target = OppositeBoneIK.target
 
-                if (OppositeBoneIK.subtarget is not None):
-                    if (OppositeBoneIK.target.type == "ARMATURE"):
+                if (OppositeBoneIK.target.type == "ARMATURE"):
+                    if (OppositeBoneIK.subtarget is not None):
                         NewIK.subtarget = AlxGetBoneNameOpposite(OppositeBoneIK.subtarget)
+
+            if (OppositeBoneIK.pole_target is not None):
+                NewIK.pole_target = OppositeBoneIK.pole_target
+
+                if (OppositeBoneIK.pole_target.type == "ARMATURE"):
+                    if (OppositeBoneIK.pole_subtarget is not None):
+                        NewIK.pole_subtarget = AlxGetBoneNameOpposite(OppositeBoneIK.pole_subtarget)
+
+                NewIK.pole_angle = OppositeBoneIK.pole_angle - 180
 
             NewIK.chain_count = OppositeBoneIK.chain_count
             NewIK.use_tail = OppositeBoneIK.use_tail
@@ -741,9 +895,19 @@ def AlxCloneIKSettings(CheckBone, OppositeBone):
             if (CheckBoneIK.target is not None):
                 NewIK.target = CheckBoneIK.target
 
-                if (CheckBoneIK.subtarget is not None):
-                    if (CheckBoneIK.target.type == "ARMATURE"):
+                if (CheckBoneIK.target.type == "ARMATURE"):
+                    if (CheckBoneIK.subtarget is not None):
                         NewIK.subtarget = AlxGetBoneNameOpposite(CheckBoneIK.subtarget)
+
+            if (CheckBoneIK.pole_target is not None):
+                NewIK.pole_target = CheckBoneIK.pole_target
+
+                if (CheckBoneIK.pole_target.type == "ARMATURE"):
+                    if (CheckBoneIK.pole_subtarget is not None):
+                        NewIK.pole_subtarget = AlxGetBoneNameOpposite(CheckBoneIK.pole_subtarget)
+
+                NewIK.pole_angle = (CheckBoneIK.pole_angle + 180)
+
 
             NewIK.chain_count = CheckBoneIK.chain_count
             NewIK.use_tail = CheckBoneIK.use_tail
@@ -784,6 +948,44 @@ class Alx_OT_BoneMatchIKByName(bpy.types.Operator):
 
 
         return {"FINISHED"}
+
+# class Alx_OT_ArmatureCloneIKPuppet(bpy.types.Operator):
+#     """"""
+
+#     bl_label = ""
+#     bl_idname = "alx.armature_clone_ik_puppet"
+
+#     TargetArmature : bpy.props.StringProperty(name="", options={"HIDDEN"})
+
+#     @classmethod
+#     def poll(self, context):
+#         return context.mode == "OBJECT"
+    
+#     def execute(self, context):
+#         for window in context.window_manager.windows:
+#             screen = window.screen
+#             for area in screen.areas:
+#                 if area.type == 'VIEW_3D':
+#                     with context.temp_override(window=window, area=area):
+
+#                         if (context.active_object is not None) and (context.active_object.type == "ARMATURE"):
+#                             self.TargetArmature = context.active_object.name
+
+#                             if (bpy.data.objects.get(self.TargetArmature) is not None):
+#                                 ArmatureIKPuppet = None
+#                                 if (bpy.data.objects.get(self.TargetArmature + "_IK_Puppet")  is None):
+#                                     ArmatureIKPuppet = bpy.data.objects.new(bpy.data.objects.get(self.TargetArmature).name + "_IK_Puppet", bpy.data.objects.get(self.TargetArmature).data.copy())
+#                                     ArmatureIKPuppet.location = bpy.data.objects.get(self.TargetArmature).location
+#                                     context.collection.objects.link(ArmatureIKPuppet)
+#                                 if (bpy.data.objects.get(self.TargetArmature + "_IK_Puppet")  is not None):
+#                                     ArmatureIKPuppet = bpy.data.objects.get(self.TargetArmature + "_IK_Puppet")
+
+#                                 if (ArmatureIKPuppet is not None):
+#                                     IKPuppetPoseBoneData = bpy.data.objects.get(self.TargetArmature).pose.bones
+#                                     for PoseBone in IKPuppetPoseBoneData:
+#                                         AlxGetIKConstraint(PoseBone)
+
+#         return {"FINISHED"}
 
 # ### Alx Material Property Groups
 # class Alx_Material(bpy.types.PropertyGroup):
@@ -1009,17 +1211,18 @@ class Alx_OT_BoneMatchIKByName(bpy.types.Operator):
 
 # bpy.app.handlers.depsgraph_update_post.append(AlxUpdateActionUI)
 
-
-
-
-
 AlxClassQueue = [
                 Alx_MT_AlexandriaToolPie,
+                Alx_MT_SubPieSnapping,
+                #Alx_PT_ArmatureCompoundPanel,
+
                 Alx_OT_AutomaticMode,
 
                 Alx_OT_SceneObjectIsolator,
                 Alx_OT_SceneCollectionIsolator,
 
+                Alx_OT_ArmatureAssignToSelection,
+                #Alx_OT_ArmatureCloneIKPuppet,
 
                 Alx_OT_ModifierBevelSwitch,
                 
@@ -1062,7 +1265,7 @@ def register():
         kmi = km.keymap_items.new("wm.call_menu_pie", type="A", ctrl=True, alt=True, value="CLICK")
         kmi.properties.name = Alx_MT_AlexandriaToolPie.bl_idname
         addon_keymaps.append((km, kmi))
-
+    
     # bpy.types.Scene.alx_materials = CollectionProperty(type=Alx_Material)
     # bpy.types.Scene.alx_active_material_index = IntProperty()
     # bpy.types.Scene.alx_material_collection_library = CollectionProperty(type=Alx_MaterialCollection)
