@@ -1,4 +1,5 @@
 import bpy
+from AlxOverHaul import AlxPreferences, AlxKeymaps, AlxPanels
 
 AlxAddonKeymaps = []
 
@@ -13,8 +14,10 @@ def AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="", ItemidName="",
             for KeymapItem in DefaultKeyMaps[ConfigSpaceName].keymap_items:
                 if (OperatorID == ""):
                     if (KeymapItem is not None) and (KeymapItem.idname == ItemidName):
-                        KeymapItem.map_type = MapType
-                        KeymapItem.type = Key
+                        if (MapType != ""):
+                            KeymapItem.map_type = MapType
+                        if (Key != ""):
+                            KeymapItem.type = Key
                         KeymapItem.shift = UseShift
                         KeymapItem.ctrl = UseCtrl
                         KeymapItem.alt = UseAlt
@@ -23,8 +26,10 @@ def AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="", ItemidName="",
 
                 if (OperatorID != ""):
                     if (KeymapItem is not None) and (KeymapItem.properties is not None) and (KeymapItem.idname == ItemidName) and (KeymapItem.properties.name == OperatorID):
-                        KeymapItem.map_type = MapType
-                        KeymapItem.type = Key
+                        if (MapType != ""):
+                            KeymapItem.map_type = MapType
+                        if (Key != ""):
+                            KeymapItem.type = Key
                         KeymapItem.shift = UseShift
                         KeymapItem.ctrl = UseCtrl
                         KeymapItem.alt = UseAlt
@@ -35,7 +40,7 @@ def AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="", ItemidName="",
 
 def AlxKeymapRegister(KeymapCallType="", SpaceType="EMPTY", RegionType="WINDOW", ItemidName="", Key="", KeyModifier="", UseShift=False, UseCtrl=False, UseAlt=False, TriggerType="PRESS"):
     """
-    Keymap Call Type: [OPERATOR, PANEL, PIE]
+    Keymap Call Type: [OPERATOR, MENU, PANEL, PIE]
     Region Type: [WINDOW]
     """
     if (ItemidName != ""):
@@ -47,6 +52,8 @@ def AlxKeymapRegister(KeymapCallType="", SpaceType="EMPTY", RegionType="WINDOW",
             CallType = ""
             if (KeymapCallType == "OPERATOR"):
                 CallType = ItemidName
+            if (KeymapCallType == "MENU"):
+                CallType = "wm.call_menu"
             if (KeymapCallType == "PANEL"):
                 CallType = "wm.call_panel"
             if (KeymapCallType == "PIE"):
@@ -68,3 +75,32 @@ def AlxKeymapRegister(KeymapCallType="", SpaceType="EMPTY", RegionType="WINDOW",
                 if (KeymapCallType in ["PANEL", "PIE"]):
                     KeymapItem.properties.name = ItemidName
                 AlxAddonKeymaps.append((Keymap, KeymapItem))
+
+def KeymapCreation():
+    if (AlxPreferences.GetPreferences().View3d_Pan_Use_Shift_GRLess == True):
+        AlxEditKeymaps(ConfigSpaceName="3D View", ItemidName="view3d.move", MapType="KEYBOARD", Key="GRLESS", UseShift=True, Active=True)
+    if (AlxPreferences.GetPreferences().View3d_Pan_Use_Shift_GRLess == False):
+        AlxEditKeymaps(ConfigSpaceName="3D View", ItemidName="view3d.move", MapType="MOUSE", Key="MIDDLEMOUSE", UseShift=True, Active=True)
+
+    if (AlxPreferences.GetPreferences().View3d_Rotate_Use_GRLess == True):
+        AlxEditKeymaps(ConfigSpaceName="3D View", ItemidName="view3d.rotate", MapType="KEYBOARD", Key="GRLESS", Active=True)
+    if (AlxPreferences.GetPreferences().View3d_Rotate_Use_GRLess == False):
+        AlxEditKeymaps(ConfigSpaceName="3D View", ItemidName="view3d.rotate", MapType="MOUSE", Key="MIDDLEMOUSE", Active=True)
+
+    if (AlxPreferences.GetPreferences().View3d_Zoom_Use_GRLess == True):
+        AlxEditKeymaps(ConfigSpaceName="3D View", ItemidName="view3d.zoom", MapType="KEYBOARD", Key="GRLESS", UseCtrl=True, Active=True)
+    if (AlxPreferences.GetPreferences() .View3d_Zoom_Use_GRLess == False):
+        AlxEditKeymaps(ConfigSpaceName="3D View", ItemidName="view3d.zoom", MapType="MOUSE", Key="MIDDLEMOUSE", UseCtrl=True, Active=True)
+
+    AlxKeymapRegister(KeymapCallType="OPERATOR", RegionType="WINDOW", ItemidName="wm.window_fullscreen_toggle", Key="F11", UseAlt=True, TriggerType="CLICK")
+    AlxKeymapRegister(KeymapCallType="OPERATOR", RegionType="WINDOW", ItemidName="scripts.reload", Key="F8", TriggerType="CLICK")
+
+    AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Object Non-modal", ItemidName="object.mode_set", Active=False)
+    AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Image", ItemidName="object.mode_set", Active=False)
+    AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Object Non-modal", ItemidName="view3d.object_mode_pie_or_toggle", Active=False)
+    AlxEditKeymaps(KeyconfigSource="Blender addon", ConfigSpaceName="Object Non-modal", ItemidName="wm.call_menu_pie", OperatorID="MACHIN3_MT_modes_pie", Active=False)
+    AlxKeymapRegister(KeymapCallType="PIE", SpaceType="VIEW_3D", ItemidName=AlxPanels.Alx_MT_UnlockedModesPie.bl_idname, Key="TAB", TriggerType="PRESS")
+
+    AlxKeymapRegister(KeymapCallType="PANEL", RegionType="WINDOW", ItemidName=AlxPanels.Alx_PT_AlexandriaToolPanel.bl_idname, Key="A", UseCtrl=True, UseAlt=True, TriggerType="CLICK")
+    AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="3D View", ItemidName="wm.call_menu_pie", OperatorID="VIEW3D_MT_snap_pie", Active=False)
+    AlxKeymapRegister(KeymapCallType="PANEL", RegionType="WINDOW", ItemidName=AlxPanels.Alx_PT_Scene_GeneralPivot.bl_idname, Key="S", UseShift=True, TriggerType="CLICK")

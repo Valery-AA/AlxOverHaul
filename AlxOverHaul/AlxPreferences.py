@@ -35,3 +35,6 @@ class AlxOverHaulAddonPreferences(bpy.types.AddonPreferences):
         AlxLayout.prop(self, "View3d_Pan_Use_Shift_GRLess", toggle=True)
         AlxLayout.prop(self, "View3d_Rotate_Use_GRLess", toggle=True)
         AlxLayout.prop(self, "View3d_Zoom_Use_GRLess", toggle=True)
+
+def GetPreferences():
+    return bpy.context.preferences.addons[__package__].preferences

@@ -5,9 +5,19 @@ bl_info = {
     "version" : (0, 5, 0),
     "warning" : "[Heavly Under Development] And Subject To Substantial Changes",
     "category" : "3D View",
-    "location" : "[Ctrl Alt A] PieMenu, [Alx 3D] Panel Tab",
+    "location" : "[Ctrl Alt A] Tool Menu, [Shift S] Pivot Menu, [Tab] Mode Compact Menu",
     "blender" : (4, 0, 0)
 }
+
+# python warcrime
+# AddonFiles = ["AlxPreferences", "AlxHandlers", "AlxKeymaps", "AlxOperators", "AlxPanels"]
+# import importlib
+# for AddonFile in AddonFiles:
+#     if (AddonFile not in locals()):
+#         exec(AddonFile + " = importlib.reload(AddonFile)")
+#         importlib.import_module(AddonFile, "AlxOverHaul")
+#     else:
+#         exec(AddonFile + " = importlib.reload(AddonFile)")
 
 if ("AlxKeymaps" not in locals()):
     from AlxOverHaul import AlxKeymaps
@@ -21,11 +31,29 @@ else:
     import importlib
     AlxPreferences = importlib.reload(AlxPreferences)
 
+if ("AlxHandlers" not in locals()):
+    from AlxOverHaul import AlxHandlers
+else:
+    import importlib
+    AlxHandlers = importlib.reload(AlxHandlers)
+
+if ("AlxUtils" not in locals()):
+    from AlxOverHaul import AlxUtils
+else:
+    import importlib
+    AlxUtils = importlib.reload(AlxUtils)
+
 if ("AlxPanels" not in locals()):
     from AlxOverHaul import AlxPanels
 else:
     import importlib
     AlxPanels = importlib.reload(AlxPanels)
+
+if ("AlxOperators" not in locals()):
+    from AlxOverHaul import AlxOperators
+else:
+    import importlib
+    AlxOperators = importlib.reload(AlxOperators)
 
 
 
@@ -48,77 +76,9 @@ from bpy.props import StringProperty, IntProperty, FloatProperty, BoolProperty, 
 
         # AlxOPS_Armature_ATS = MMenuSectionM.row().operator(Alx_OT_ArmatureAssignToSelection.bl_idname, text="Assign Armature")
 
-class Alx_PT_Scene_GeneralPivot(bpy.types.Panel):
-    """"""
-
-    bl_label = ""
-    bl_idname = "alx_panel_scene_general_pivot"
-
-    bl_region_type = "UI"
-    bl_space_type = "VIEW_3D"
-
-    @classmethod
-    def poll(self, context):
-        return True
-    
-    def draw(self, context):
-        AlxLayout = self.layout
-        AlxLayout.ui_units_x = 20.0
-        MenuSection = AlxLayout.box()
-
-        TopRow = MenuSection.row().split(factor=0.5)
-        TopSnapColumn = TopRow.column()
-        TopOrientationColumn = TopRow.column()
 
 
 
-        TopSnapColumn.prop(context.tool_settings, "transform_pivot_point", expand=True)
-        TopOrientationColumn.prop(context.scene.transform_orientation_slots[0], "type", expand=True)
-
-        BottomRow = MenuSection.row().split(factor=0.5)
-        BottomSnapColumn = BottomRow.column()
-        BottomOrientationColumn = BottomRow.column()
-        
-        BottomSnapColumn.prop(context.tool_settings, "use_snap", text="Snap")
-        BottomSnapColumn.prop(context.tool_settings, "snap_target", expand=True)
-        BottomSnapColumn.prop(context.tool_settings, "use_snap_align_rotation")
-        SnapModeRow = BottomSnapColumn.column(align=True)
-        SnapModeRow.prop(context.tool_settings, "use_snap_translate", text="Snap Move", toggle=True)
-        SnapModeRow.prop(context.tool_settings, "use_snap_rotate", text="Snap Rotate", toggle=True)
-        SnapModeRow.prop(context.tool_settings, "use_snap_scale", text="Snap Scale", toggle=True)
-
-        BottomOrientationColumn.prop(context.tool_settings, "snap_elements_base", expand=True)
-        BottomOrientationColumn.prop(context.tool_settings, "snap_elements_individual", expand=True)
-
-def AlxRetrieveContextObject(context):
-    try:
-        if (context is not None):
-            if (context.active_object is not None):
-                if (context.active_object.type == "MESH"):
-                    AlxContextObject = context.active_object
-                    return AlxContextObject
-            for Object in bpy.context.selected_objects:
-                if (Object.type == "MESH") and (Object.find_armature() is not None) and (Object.find_armature() is AlxRetrieveContextArmature(context=context)):
-                    AlxContextObject = Object
-                    return AlxContextObject
-    except:
-        return None
-    return None
-
-def AlxRetrieveContextArmature(context):
-    try:
-        if (context is not None):
-            if (context.active_object is not None):
-                if (context.active_object.type == "MESH"):
-                    if (context.active_object.find_armature() is not None):
-                        AlxContextArmature = context.active_object.find_armature()
-                        return AlxContextArmature
-                if (context.active_object.type == "ARMATURE"):
-                    AlxContextArmature = bpy.data.objects.get(context.active_object.name)
-                    return AlxContextArmature
-    except:
-        return None
-    return None
 
 def AlxRetiriveObjectModifier(TargetObejct, TargetType):
     ModifierTypes = ["ARMATURE"]
@@ -127,234 +87,6 @@ def AlxRetiriveObjectModifier(TargetObejct, TargetType):
             if (Modifier.type == TargetType):
                 return Modifier
     return None
-
-class Alx_MT_UnlockedModesPie(bpy.types.Menu):
-    """"""
-
-    bl_label = ""
-    bl_idname = "alx_menu_unlocked_modes"
-
-    @classmethod
-    def poll(self, context):
-        return True
-    
-    def draw(self, context):
-        AlxLayout = self.layout
-
-        AlxContextObject = AlxRetrieveContextObject(context=context)
-        AlxContextArmature = AlxRetrieveContextArmature(context=context)
-
-        PieUI = AlxLayout.menu_pie()
-
-        AlxOPS_AutoMode_OBJECT = PieUI.operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="A-OBJECT", icon="OBJECT_DATAMODE")
-        AlxOPS_AutoMode_OBJECT.DefaultBehaviour = False
-        AlxOPS_AutoMode_OBJECT.TargetMode = "OBJECT"
-
-        if (context.mode != "POSE") and (AlxContextArmature is not None):
-            AlxOPS_AutoMode_POSE = PieUI.operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="A-POSE", icon="ARMATURE_DATA")
-            AlxOPS_AutoMode_POSE.DefaultBehaviour = False
-            AlxOPS_AutoMode_POSE.TargetMode = "POSE"
-            AlxOPS_AutoMode_POSE.TargetArmature = AlxContextArmature.name
-        else:
-            if (context.mode == "POSE"):
-                PieUI.row().label(text="Currently in Pose")
-            else:
-                PSBox = PieUI.box()
-                if (AlxContextArmature is None):
-                    PSBox.label(text="Context Object Missing [Armature]")
-
-        if (context.mode != "PAINT_WEIGHT") and (AlxContextObject is not None) and (AlxContextArmature is not None):
-            AlxOPS_AutoMode_WEIGHT = PieUI.operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="A-WPAINT", icon="WPAINT_HLT")
-            AlxOPS_AutoMode_WEIGHT.DefaultBehaviour = False
-            AlxOPS_AutoMode_WEIGHT.TargetMode = "PAINT_WEIGHT"
-            AlxOPS_AutoMode_WEIGHT.TargetObject = AlxRetrieveContextObject(context=context).name
-            AlxOPS_AutoMode_WEIGHT.TargetArmature = AlxContextArmature.name
-        else:
-            if (context.mode == "PAINT_WEIGHT"):
-                PieUI.row().label(text="Currently in WPaint")
-            else:
-                WPBox = PieUI.box()
-                if (AlxContextObject is None): 
-                    WPBox.row().label(text="Context Object Missing [Mesh]")
-                if (AlxContextArmature is None):
-                    WPBox.row().label(text="Context Object Missing [Armature]")
-        
-        if (AlxContextObject is not None):
-            VertexMode = PieUI.operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="Edge")
-            VertexMode.DefaultBehaviour = True
-            VertexMode.TargetObject = AlxContextObject.name
-            VertexMode.TargetMode = "EDIT"
-            VertexMode.TargetSubMode = "EDGE"
-
-            VertexMode = PieUI.operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="Vertex")
-            VertexMode.DefaultBehaviour = True
-            VertexMode.TargetObject = AlxContextObject.name
-            VertexMode.TargetMode = "EDIT"
-            VertexMode.TargetSubMode = "VERT"
-            
-            VertexMode = PieUI.operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="Face")
-            VertexMode.DefaultBehaviour = True
-            VertexMode.TargetObject = AlxContextObject.name
-            VertexMode.TargetMode = "EDIT"
-            VertexMode.TargetSubMode = "FACE"
-        else:
-            if (context.active_object is not None) and (context.active_object.type != "MESH"):
-                PieUI.box().row().label(text="Object is not a Mesh")
-                PieUI.box().row().label(text="Object is not a Mesh")
-
-class Alx_OT_Mode_UnlockedModes(bpy.types.Operator):
-    """"""
-
-    bl_label = ""
-    bl_idname = "alx.operator_mode_unlocked_modes"
-    bl_options = {"INTERNAL"}
-
-    DefaultBehaviour : bpy.props.BoolProperty(name="", default=True, options={"HIDDEN"})
-    TargetMode : bpy.props.StringProperty(name="", default="OBJECT", options={"HIDDEN"})
-    TargetSubMode : bpy.props.StringProperty(name="", default="VERT", options={"HIDDEN"})
-    
-    TargetObject : bpy.props.StringProperty(name="", options={"HIDDEN"})
-    TargetArmature : bpy.props.StringProperty(name="", options={"HIDDEN"})
-
-    @classmethod
-    def poll(self, context):
-        return True
-    
-    def execute(self, context):
-        for window in context.window_manager.windows:
-            screen = window.screen
-            for area in screen.areas:
-                if (area.type == 'VIEW_3D'):
-                    with context.temp_override(window=window, area=area):
-
-                        if (self.DefaultBehaviour == True):
-                            match self.TargetMode:
-                                case "OBJECT":
-                                    if (context.mode != "OBJECT"):
-                                        bpy.ops.object.mode_set(mode="OBJECT")
-                                    return {"FINISHED"}
-
-                                case "EDIT":
-                                    if (context.mode not in ["EDIT_CURVE", "EDIT_CURVES", "EDIT_SURFACE", "EDIT_TEXT", "EDIT_ARMATURE", "EDIT_METABALL", "EDIT_LATTICE", "EDIT_GREASE_PENCIL", "EDIT_POINT_CLOUD"]):
-                                        for Object in bpy.context.selected_objects:
-                                            if (Object.type == "MESH"):
-                                                if (self.TargetSubMode in ["VERT", "EDGE", "FACE"]):
-                                                    bpy.context.view_layer.objects.active = Object
-                                                    bpy.ops.object.mode_set_with_submode(mode="EDIT", mesh_select_mode=set([self.TargetSubMode]))
-
-                                    return {"FINISHED"}
-                                case "POSE":
-                                    if (context.mode != "POSE"):
-                                        for Object in bpy.context.selected_objects:
-                                            if (Object.type == "ARMATURE"):
-                                                bpy.context.view_layer.objects.active = Object
-                                                bpy.ops.object.mode_set(mode="POSE")
-                                    return {"FINISHED"}
-                                
-                                case "PAINT_WEIGHT":
-                                    if (context.mode != "PAINT_WEIGHT"):
-                                        for Object in bpy.context.selected_objects:
-                                            if Object.type == "MESH":
-                                                bpy.context.view_layer.objects.active = Object
-                                                bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
-                                    return {"FINISHED"}
-
-                        if (self.DefaultBehaviour == False):
-                            match self.TargetMode:
-                                case "OBJECT":
-                                    if (context.mode != "OBJECT"):
-                                        bpy.ops.object.mode_set(mode="OBJECT")
-                                    return {"FINISHED"}
-
-                                case "POSE":
-                                    if (context.mode != "POSE"):
-                                        if (self.TargetArmature != ""):
-                                            if (bpy.data.objects[self.TargetArmature] is not None):
-                                                
-                                                if (context.mode == "PAINT_WEIGHT"):
-                                                    bpy.ops.object.mode_set(mode="OBJECT")
-
-                                                bpy.data.objects.get(self.TargetArmature).hide_set(False)
-                                                bpy.data.objects.get(self.TargetArmature).hide_viewport = False
-
-                                                if (bpy.data.objects[self.TargetArmature] is not None):
-                                                    bpy.context.view_layer.objects.active = bpy.data.objects.get(self.TargetArmature)
-                                                    if (context.active_object.type == "ARMATURE"):
-                                                        bpy.ops.object.mode_set(mode="POSE")
-                                    return {"FINISHED"}
-                                
-                                case "PAINT_WEIGHT":
-                                    if (context.mode != "PAINT_WEIGHT"):
-                                        if (self.TargetObject != "") and (self.TargetArmature != ""):
-                                            if (bpy.data.objects[self.TargetObject] is not None) and (bpy.data.objects[self.TargetArmature] is not None):
-
-                                                if (context.mode == "POSE"):
-                                                    bpy.ops.object.mode_set(mode="OBJECT")
-                                                
-                                                bpy.data.objects.get(self.TargetArmature).hide_set(False)
-                                                bpy.data.objects.get(self.TargetArmature).hide_viewport = False
-
-                                                bpy.data.objects.get(self.TargetArmature).select_set(True)
-
-                                                bpy.context.view_layer.objects.active = bpy.data.objects.get(self.TargetObject)
-
-                                                if (context.active_object.type == "MESH"):
-                                                    bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
-                                    return {"FINISHED"}
-
-        return {"FINISHED"}
-
-class Alx_OT_Scene_VisibilityIsolator(bpy.types.Operator):
-    """"""
-
-    bl_label = ""
-    bl_idname = "alx.scene_visibility_isolator"
-    bl_options = {"INTERNAL"}
-
-    TargetVisibility : BoolProperty(name="", default=False, options={"HIDDEN"})
-    UseObject : BoolProperty(name="", default=False, options={"HIDDEN"})
-    UseCollection : BoolProperty(name="", default=False, options={"HIDDEN"})
-
-    @classmethod
-    def poll(self, context):
-        return True
-    
-    def execute(self, context):
-        for window in context.window_manager.windows:
-            screen = window.screen
-            for area in screen.areas:
-                if area.type == 'VIEW_3D':
-                    with context.temp_override(window=window, area=area):
-
-                        TargetType = []
-                        for Target in context.scene.alx_addon_properties.SceneIsolatorVisibilityTarget:
-                            TargetType.append(Target)
-                            
-                        
-                        if (context.active_object is not None):
-                            if (self.UseObject == True):
-                                ObjectSelection = []
-                                for Object in context.selected_objects:
-                                    if (Object is not None):
-                                        ObjectSelection.append(Object.name)
-
-                                for Object in bpy.data.objects:
-                                    if (Object is not None ) and (Object.name not in ObjectSelection):
-                                        if ("VIEWPORT" in TargetType):
-                                            Object.hide_viewport = not self.TargetVisibility
-                                        if ("RENDER" in TargetType):
-                                            Object.hide_render = not self.TargetVisibility
-
-                            if (self.UseCollection == True):
-                                ActiveCollection = bpy.data.objects[bpy.context.view_layer.objects.active.name].users_collection[0]
-                                for collection in bpy.data.collections:
-                                    if (collection is not ActiveCollection) and (collection is not ActiveCollection) and (ActiveCollection not in collection.children_recursive):
-                                        if ("VIEWPORT" in TargetType):
-                                            collection.hide_viewport = not self.TargetVisibility
-                                        if ("RENDER" in TargetType):
-                                            collection.hide_render = not self.TargetVisibility
-        return {"FINISHED"}
-
 
 
 # class Alx_OT_Scene_FrameChange(bpy.types.Operator):
@@ -466,54 +198,7 @@ class Alx_OT_ArmatureAssignToSelection(bpy.types.Operator):
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self, width=300)
 
-class Alx_OT_ModifierHideOnSelected(bpy.types.Operator):
-    """"""
 
-    bl_label = ""
-    bl_idname = "alx.modifier_selection_visibility"
-
-    ShowModiferEdit : BoolProperty(name="Show Edit:", default=True)
-    ShowModiferViewport : BoolProperty(name="Show Viewport:", default=True)
-    ShowModiferRender : BoolProperty(name="Show Render:", default=True)
-
-    BevelMod : BoolProperty(name="Bevel", default=False)
-    SubdivisionMod : BoolProperty(name="Subdivision", default=False)
-    SolidifyMod : BoolProperty(name="Solidify", default=False)
-
-    @classmethod
-    def poll(cls, context):
-        return True
-
-    def execute(self, context):
-
-        for window in context.window_manager.windows:
-            screen = window.screen
-            for area in screen.areas:
-                if area.type == 'VIEW_3D':
-                    with context.temp_override(window=window, area=area):
-
-                        ModifiersList = []
-
-                        if (self.BevelMod == True):
-                            ModifiersList.append("BEVEL")
-                        if (self.SubdivisionMod == True):
-                            ModifiersList.append("SUBSURF")
-                        if (self.SolidifyMod == True):
-                            ModifiersList.append("SOLIDIFY")
-
-                        for Object in bpy.context.selected_objects:
-                            if (Object is not None) and (len(Object.modifiers) != 0) and (Object.type in ["MESH", "ARMATURE", "CURVE"]):
-                                ObjectModfiers = getattr(Object, "modifiers", [])
-
-                                for ObjectModifier in ObjectModfiers:
-                                    if (ObjectModifier is not None) and (ObjectModifier.type in ModifiersList):
-                                        ObjectModifier.show_in_editmode = self.ShowModiferEdit
-                                        ObjectModifier.show_viewport = self.ShowModiferViewport
-                                        ObjectModifier.show_render = self.ShowModiferRender                
-        return {"FINISHED"}
-    
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self, width=300)
 
 class Alx_OT_ModifierBevelSelection(bpy.types.Operator):
     """"""
@@ -590,71 +275,7 @@ class Alx_OT_ModifierBevelSelection(bpy.types.Operator):
     def invoke(self, context, event):
         return context.window_manager.invoke_props_popup(self, event)
 
-class Alx_OT_ModifierSubdivisionSelection(bpy.types.Operator):
-    """"""
 
-    bl_label = ""
-    bl_idname = "alx.modifier_subdivision_selection"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    UseSimple : BoolProperty(name="Simple", default=False)
-    ViewportLevel : IntProperty(name="Viewport", default=1)
-    RenderLevel : IntProperty(name="Render", default=1)
-    Complex : BoolProperty(name="Complex", default=True)
-
-    @classmethod
-    def poll(cls, context):
-        return True
-    
-    def execute(self, context):
-        for window in context.window_manager.windows:
-            screen = window.screen
-            for area in screen.areas:
-                if area.type == 'VIEW_3D':
-                    with context.temp_override(window=window, area=area):
-
-                        for SelObj in bpy.context.selected_objects:
-
-                            HasModifier = False
-
-                            if (SelObj.type == "MESH"):
-                                ObjMODs = SelObj.modifiers
-                                
-                                for ObjMOD in ObjMODs:
-                                
-                                    if (ObjMOD.type == "SUBSURF"):
-                                        HasModifier = True
-
-                                        match self.UseSimple:
-                                            case True:
-                                                ObjMOD.subdivision_type = "SIMPLE"
-
-                                            case False:
-                                                ObjMOD.subdivision_type = "CATMULL_CLARK"
-
-                                        ObjMOD.levels = self.ViewportLevel
-                                        ObjMOD.render_levels = self.RenderLevel
-                                        ObjMOD.show_only_control_edges = not self.Complex
-
-                                if (HasModifier == False):    
-
-                                    SubDivMod = SelObj.modifiers.new("Subdivision Surface", "SUBSURF")
-                    
-                                    match self.UseSimple:
-                                        case True:
-                                            SubDivMod.subdivision_type = "SIMPLE"
-                                        case False:
-                                            SubDivMod.subdivision_type = "CATMULL_CLARK"
-
-                                    SubDivMod.levels = self.ViewportLevel
-                                    SubDivMod.render_levels = self.RenderLevel
-                                    SubDivMod.show_only_control_edges = not self.Complex
-
-        return {"FINISHED"}
-    
-
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_popup(self, event)
 
 class Alx_OT_ModifierWeldSelection(bpy.types.Operator):
     """"""
@@ -1252,36 +873,6 @@ class AlxAddonProperties(bpy.types.PropertyGroup):
 
 
 
-# @bpy.app.handlers.persistent
-# def AlxAddonKeymapHandler(self, context):
-
-#     DisableKeymaps = ["object.mode_set", "view3d.object_mode_pie_or_toggle", "wm.call_menu_pie"]
-#     DisableProps = ["MACHIN3_MT_modes_pie"]
-#     AlxDeactivateDefaultKeymaps(KeymapList=DisableKeymaps, PropNameList=DisableProps, ConfigSpaceName="Object Non-modal", Active=False)
-
-#     AlxKeymapRegister(KeymapCallType="OPERATOR", RegionType="WINDOW", ItemidName="wm.window_fullscreen_toggle", Key="F11", UseAlt=True, TriggerType="CLICK")
-#     AlxKeymapRegister(KeymapCallType="OPERATOR", RegionType="WINDOW", ItemidName=Alx_OT_ScriptReload.bl_idname, Key="F8", TriggerType="CLICK")
-
-#     #AlxEditDefaultKeymap(ConfigSpaceName="Object Non-modal", ItemidName="view3d.object_mode_pie_or_toggle", Active=False)
-#     AlxKeymapRegister(KeymapCallType="PIE", SpaceType="VIEW_3D", ItemidName=Alx_MT_UnlockedModesPie.bl_idname, Key="TAB", TriggerType="PRESS")
-
-#     AlxKeymapRegister(KeymapCallType="PANEL", RegionType="WINDOW", ItemidName=Alx_PT_Scene_GeneralPivot.bl_idname, Key="S", UseShift=True, TriggerType="CLICK")
-#     #AlxKeymapRegister(KeymapCallType="PANEL", RegionType="WINDOW", ItemidName=Alx_PT_AlexandriaToolPanel.bl_idname, Key="A", UseCtrl=True, UseAlt=True, TriggerType="CLICK")
-
-#     if (AlxOverHaulAddonSettings.View3d_Pan_Use_Shift_GRLess == True):
-#         AlxEditDefaultKeymap(ConfigSpaceName="3D View", ItemidName="view3d.move", MapType="KEYBOARD", Key="GRLESS", UseShift=True, Active=True)
-#     if (AlxOverHaulAddonSettings.View3d_Pan_Use_Shift_GRLess == False):
-#         AlxEditDefaultKeymap(ConfigSpaceName="3D View", ItemidName="view3d.move", MapType="MOUSE", Key="MIDDLEMOUSE", UseShift=True, Active=True)
-
-#     if (AlxOverHaulAddonSettings.View3d_Rotate_Use_GRLess == True):
-#         AlxEditDefaultKeymap(ConfigSpaceName="3D View", ItemidName="view3d.rotate", MapType="KEYBOARD", Key="GRLESS", Active=True)
-#     if (AlxOverHaulAddonSettings.View3d_Rotate_Use_GRLess == False):
-#         AlxEditDefaultKeymap(ConfigSpaceName="3D View", ItemidName="view3d.rotate", MapType="MOUSE", Key="MIDDLEMOUSE", Active=True)
-
-#     if (AlxOverHaulAddonSettings.View3d_Zoom_Use_GRLess == True):
-#         AlxEditDefaultKeymap(ConfigSpaceName="3D View", ItemidName="view3d.zoom", MapType="KEYBOARD", Key="GRLESS", UseCtrl=True, Active=True)
-#     if (AlxOverHaulAddonSettings.View3d_Zoom_Use_GRLess == False):
-#         AlxEditDefaultKeymap(ConfigSpaceName="3D View", ItemidName="view3d.zoom", MapType="MOUSE", Key="MIDDLEMOUSE", UseCtrl=True, Active=True)
 
 class Alx_OT_ScriptReload(bpy.types.Operator):
     """"""
@@ -1302,35 +893,44 @@ AlxClassQueue = [
                 AlxPreferences.AlxOverHaulAddonPreferences,
                 AlxAddonProperties,
 
-                #AlxPanels.Alx_PT_AlexandriaToolPanel,
-                Alx_PT_Scene_GeneralPivot,
-                Alx_MT_UnlockedModesPie,
+                AlxPanels.Alx_PT_AlexandriaToolPanel,
+                AlxPanels.Alx_PT_Scene_GeneralPivot,
+                AlxPanels.Alx_MT_UnlockedModesPie,
 
-                Alx_OT_Mode_UnlockedModes,
-                Alx_OT_Scene_VisibilityIsolator,
-                Alx_OT_ModifierHideOnSelected,
+                AlxOperators.Alx_OT_Mode_UnlockedModes,
+                AlxOperators.Alx_OT_Scene_VisibilityIsolator,
+                AlxOperators.Alx_OT_ModifierHideOnSelected,
 
                 Alx_OT_ArmatureAssignToSelection,
                 
                 Alx_OT_ModifierBevelSelection,
-                Alx_OT_ModifierSubdivisionSelection,
+                #AlxOperators.Alx_OT_ModifierSubdivisionSelection,
                 Alx_OT_ModifierWeldSelection,
 
                 Alx_OT_VertexGroupCleanEmpty,
                 Alx_OT_BoneMatchIKByName,
                 ]
 
-
+bpy.app.handlers.load_post.append(AlxHandlers.AlxAddonKeymapHandler)
 
 def register():
     for AlxQCls in AlxClassQueue:
         bpy.utils.register_class(AlxQCls)
 
+    AlxKeymaps.KeymapCreation()
     bpy.types.Scene.alx_addon_properties = PointerProperty(type=AlxAddonProperties)
+
+    bpy.context.preferences.use_preferences_save = True
 
 def unregister():
     for AlxQCls in AlxClassQueue:
         bpy.utils.unregister_class(AlxQCls)
+
+    for km, kmi in AlxKeymaps.AlxAddonKeymaps:
+        km.keymap_items.remove(kmi)
+    AlxKeymaps.AlxAddonKeymaps.clear()
+
+    bpy.app.handlers.load_post.remove(AlxHandlers.AlxAddonKeymapHandler)
 
 if __name__ == "__main__":
     register()
@@ -1342,9 +942,7 @@ if __name__ == "__main__":
     #bpy.app.handlers.depsgraph_update_post.append(AlxMaterialRegisterChanges)
     #bpy.msgbus.subscribe_rna(key=(bpy.types.Object, "material_slots"), owner="owner", args=(), notify=AlxMaterialRegisterChanges)
 
-    # for km, kmi in addon_keymaps:
-    #     km.keymap_items.remove(kmi)
-    # addon_keymaps.clear()
+    
     
     # del bpy.types.Scene.alx_materials
     # del bpy.types.Scene.alx_active_material_index
