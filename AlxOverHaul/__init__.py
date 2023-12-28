@@ -58,8 +58,6 @@ else:
 
 
 import bpy
-from bpy.types import Context, Event
-from bpy.props import StringProperty, IntProperty, FloatProperty, BoolProperty, CollectionProperty, EnumProperty, PointerProperty
 
 # multi version support
 #if (0, 0, 0) > bpy.app.version:
@@ -80,13 +78,7 @@ from bpy.props import StringProperty, IntProperty, FloatProperty, BoolProperty, 
 
 
 
-def AlxRetiriveObjectModifier(TargetObejct, TargetType):
-    ModifierTypes = ["ARMATURE"]
-    if (TargetType in ModifierTypes):
-        for Modifier in TargetObejct.modifiers:
-            if (Modifier.type == TargetType):
-                return Modifier
-    return None
+
 
 
 # class Alx_OT_Scene_FrameChange(bpy.types.Operator):
@@ -102,103 +94,6 @@ def AlxRetiriveObjectModifier(TargetObejct, TargetType):
 #     def execute(self, context):
 
 
-class Alx_OT_ArmatureAssignToSelection(bpy.types.Operator):
-    """"""
-
-    bl_label = ""
-    bl_idname = "alx.armature_assign_to_selection"
-    bl_description = "Assigns any [Mesh] in the current selection to the [ACTIVE Armature] that was selected last"
-
-    bl_options = {'REGISTER', 'UNDO'}
-
-    # def UpdateUseAutomaticWeight(self, context):
-    #     if (self.UseAutomaticWeight == True):
-    #         self.UseSingleVxGroup = False
-    #         self.UsePurgeOtherGroups = False
-    #         self.VxGroupName = ""
-
-    # def UpdateUsePreserveExistingGroups(self, context):
-    #     if (self.UsePreserveExistingGroups == True):
-    #         self.UseAutomaticWeight = True
-    #         self.UseSingleVxGroup = False
-    #         self.UsePurgeOtherGroups = False
-    #         self.VxGroupName = ""
-        
-    def UpdateUseSingleVxGroup(self, context):
-        # if (self.UseSingleVxGroup == True):
-        #     self.UseAutomaticWeight = False
-        #     self.UsePreserveExistingGroups = False
-        pass
-
-    # def UpdateUsePurgeOtherGroups(self, context):
-    #     if (self.UsePurgeOtherGroups == True):
-    #         self.UseSingleVxGroup = True
-    #         self.UseAutomaticWeight = False
-    #         self.UsePreserveExistingGroups = False
-
-    def UpdateVxGroupName(self, context):
-        if (self.VxGroupName != ""):
-            self.UseSingleVxGroup = True
-            
-
-    TargetArmature : StringProperty(name="", options={"HIDDEN"})
-    UseParent : BoolProperty(name="Should Parent", default=False)
-
-    #UseAutomaticWeight : BoolProperty(name="Automatic Weights", default=False, update=UpdateUseAutomaticWeight)
-    #UsePreserveExistingGroups : BoolProperty(name="Preserve Existing VxGroups", default=False, update=UpdateUsePreserveExistingGroups)
-
-    UseSingleVxGroup : BoolProperty(name="Single VxGroup", default=False, update=UpdateUseSingleVxGroup)
-    #UsePurgeOtherGroups : BoolProperty(name="Purge Other VxGroups", default=False, update=UpdateUsePurgeOtherGroups)
-    VxGroupName : StringProperty(name="Group", default="", update=UpdateVxGroupName)
-
-    @classmethod
-    def poll(self, context):
-        return True
-
-    def execute(self, context):
-        for window in context.window_manager.windows:
-            screen = window.screen
-            for area in screen.areas:
-                if area.type == 'VIEW_3D':
-                    with context.temp_override(window=window, area=area):
-
-                        if (context.active_object is not None) and (context.active_object.type == "ARMATURE"):
-                            self.TargetArmature = context.active_object.name
-
-                        if (self.TargetArmature != ""):
-                            for SelectedObject in context.selected_objects:
-                                if (SelectedObject.type == "MESH"):
-                                    ArmatureModifier = AlxRetiriveObjectModifier(SelectedObject, "ARMATURE")
-                                    if (ArmatureModifier is None):
-                                        ArmatureModifier = SelectedObject.modifiers.new(name="Armature", type="ARMATURE")
-
-                                    if (ArmatureModifier is not None):
-                                        ArmatureModifier.object = bpy.data.objects.get(self.TargetArmature)
-
-                                    if (self.UseParent == True):
-                                        SelectedObject.parent = bpy.data.objects.get(self.TargetArmature)
-                                        SelectedObject.matrix_parent_inverse = bpy.data.objects.get(self.TargetArmature).matrix_world.inverted()
-
-                                    # if (self.UseAutomaticWeight == True):
-                                    #     bpy.ops.alx.automatic_mode_changer(DefaultBehaviour=False, TargetMode="PAINT_WEIGHT", TargetObject=SelectedObject.name, TargetArmature=self.TargetArmature)
-                                    #     #bpy.ops.paint.weight_from_bones(type='AUTOMATIC')
-
-                                    if (self.UseSingleVxGroup == True):
-                                        if (self.VxGroupName != "") and (self.VxGroupName not in SelectedObject.vertex_groups):
-                                            VxGroup = SelectedObject.vertex_groups.new()
-                                            VxGroup.name = self.VxGroupName
-                                        if (self.VxGroupName != "") and (self.VxGroupName in SelectedObject.vertex_groups):
-                                            VxGroup = SelectedObject.vertex_groups.get(self.VxGroupName)
-                                            
-                                            if (VxGroup is not None):
-                                                VxGroup.add(range(0, len(SelectedObject.data.vertices)), 1.0, 'REPLACE')
-                                                
-        return {"FINISHED"}
-
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self, width=300)
-
-
 
 class Alx_OT_ModifierBevelSelection(bpy.types.Operator):
     """"""
@@ -207,10 +102,10 @@ class Alx_OT_ModifierBevelSelection(bpy.types.Operator):
     bl_idname = "alx.modifier_bevel_selection"
     bl_options = {'REGISTER', 'UNDO'}
 
-    Segments : IntProperty(name="Segments", default=1, min=1)
-    Width : FloatProperty(name="Width", default=0.01000, unit="LENGTH", min=0.0)
-    UseWeight : BoolProperty(name="Use Weight", default=True)
-    HardenNormals : BoolProperty(name="Harden Normals", default=True)
+    Segments : bpy.props.IntProperty(name="Segments", default=1, min=1)
+    Width : bpy.props.FloatProperty(name="Width", default=0.01000, unit="LENGTH", min=0.0)
+    UseWeight : bpy.props.BoolProperty(name="Use Weight", default=True)
+    HardenNormals : bpy.props.BoolProperty(name="Harden Normals", default=True)
 
     @classmethod
     def poll(cls, context):
@@ -284,10 +179,10 @@ class Alx_OT_ModifierWeldSelection(bpy.types.Operator):
     bl_idname = "alx.modifier_weld_selection"
     bl_options = {'REGISTER', 'UNDO'}
 
-    UseMergeAll : BoolProperty(name="Merge All", default=True)
-    UseMergeOnlyLooseEdges : BoolProperty(name="Only Loose Edges", default=True)
+    UseMergeAll : bpy.props.BoolProperty(name="Merge All", default=True)
+    UseMergeOnlyLooseEdges : bpy.props.BoolProperty(name="Only Loose Edges", default=True)
 
-    MergeDistance : FloatProperty(name="Distance", default=0.00100, unit="LENGTH", min=0.0)
+    MergeDistance : bpy.props.FloatProperty(name="Distance", default=0.00100, unit="LENGTH", min=0.0)
 
     @classmethod
     def poll(cls, context):
@@ -349,7 +244,7 @@ class Alx_OT_VertexGroupCleanEmpty(bpy.types.Operator):
     bl_label = ""
     bl_idname = "alx.vertex_group_clean_empty"
 
-    VertexDataObject : StringProperty(options={"HIDDEN"})
+    VertexDataObject : bpy.props.StringProperty(options={"HIDDEN"})
 
     @classmethod
     def poll(self, context):
@@ -374,209 +269,6 @@ class Alx_OT_VertexGroupCleanEmpty(bpy.types.Operator):
                     bpy.data.objects.get(self.VertexDataObject).vertex_groups.remove(VGroup)
         return{"FINISHED"}
 
-def AlxGetBoneAlwaysLeft(Bone, Armature):
-    LeftBone = ""
-    if (len(Bone.name) != 0) and (len(Bone.name) > 2):
-        if (Bone.name[-2] == "."):
-            
-            match Bone.name[-1]:
-                case "R":
-                    LeftBone = Bone.name[0:-1] + "L"
-                case "L":
-                    LeftBone = Bone.name[0:-1] + "L"
-                case "r":
-                    LeftBone = Bone.name[0:-1] + "l"
-                case "l":
-                    OppositeBoneName = Bone.name[0:-1] + "l"
-
-    return bpy.data.objects.get(Armature).pose.bones.get(LeftBone)
-
-def AlxGetBoneOpposite(Bone, Armature):
-    OppositeBoneName = ""
-    if (len(Bone.name) != 0) and (len(Bone.name) > 2):
-        if (Bone.name[-2] == "."):
-            
-            match Bone.name[-1]:
-                case "R":
-                    OppositeBoneName = Bone.name[0:-1] + "L"
-                case "L":
-                    OppositeBoneName = Bone.name[0:-1] + "R"
-                case "r":
-                    OppositeBoneName = Bone.name[0:-1] + "l"
-                case "l":
-                    OppositeBoneName = Bone.name[0:-1] + "r"
-
-    return bpy.data.objects.get(Armature).pose.bones.get(OppositeBoneName)
-
-def AlxGetBoneNameOpposite(BoneName):
-    OppositeBoneName = ""
-    if (len(BoneName) != 0) and (len(BoneName) > 2):
-        if (BoneName[-2] == "."):
-            
-            match BoneName[-1]:
-                case "R":
-                    OppositeBoneName = BoneName[0:-1] + "L"
-                case "L":
-                    OppositeBoneName = BoneName[0:-1] + "R"
-                case "r":
-                    OppositeBoneName = BoneName[0:-1] + "l"
-                case "l":
-                    OppositeBoneName = BoneName[0:-1] + "r"
-    return OppositeBoneName
-
-def AlxGetIKConstraint(Bone):
-    for Constraint in Bone.constraints:
-        if (Constraint.type == "IK"):
-            return Constraint
-
-def AlxCloneIKBoneLimitOnChain(IKHead, Armature):
-    i = 0
-    if (AlxGetIKConstraint(IKHead) is not None):
-        ChainLength = AlxGetIKConstraint(IKHead).chain_count
-        ParentOnChain = None
-
-        IKHeadOpposite = AlxGetBoneOpposite(IKHead, Armature)
-
-        IKHeadOpposite.use_ik_limit_x = IKHead.use_ik_limit_x
-        IKHeadOpposite.ik_min_x = IKHead.ik_min_x
-        IKHeadOpposite.ik_max_x = IKHead.ik_max_x
-
-        IKHeadOpposite.use_ik_limit_y = IKHead.use_ik_limit_y
-        IKHeadOpposite.ik_min_y = IKHead.ik_min_y
-        IKHeadOpposite.ik_max_y = IKHead.ik_max_y
-
-        IKHeadOpposite.use_ik_limit_z = IKHead.use_ik_limit_z
-        IKHeadOpposite.ik_min_z = IKHead.ik_max_z * -1
-        IKHeadOpposite.ik_max_z = IKHead.ik_min_z * -1
-
-        ParentOnChain = IKHead
-        ParentOnChainOpposite = AlxGetBoneOpposite(IKHead, Armature)
-        if (ParentOnChain is not None) and (ParentOnChainOpposite is not None):
-            while i < ChainLength:
-                if (i < 0): break
-
-                ParentOnChainOpposite.use_ik_limit_x = ParentOnChain.use_ik_limit_x
-                ParentOnChainOpposite.ik_min_x = ParentOnChain.ik_min_x
-                ParentOnChainOpposite.ik_max_x = ParentOnChain.ik_max_x
-
-
-                ParentOnChainOpposite.use_ik_limit_y = ParentOnChain.use_ik_limit_y
-                ParentOnChainOpposite.ik_min_y = ParentOnChain.ik_min_y
-                ParentOnChainOpposite.ik_max_y = ParentOnChain.ik_max_y
-
-                ParentOnChainOpposite.use_ik_limit_z = ParentOnChain.use_ik_limit_z
-                ParentOnChainOpposite.ik_min_z = ParentOnChain.ik_max_z * -1
-                ParentOnChainOpposite.ik_max_z = ParentOnChain.ik_min_z * -1
-
-                ParentOnChain = ParentOnChain.parent
-                ParentOnChainOpposite = ParentOnChainOpposite.parent
-                i += 1
-
-def AlxCloneIKSettings(CheckBone, OppositeBone):
-    if (CheckBone is not None) and (OppositeBone is not None):
-        CheckBoneIK = AlxGetIKConstraint(CheckBone)
-        OppositeBoneIK = AlxGetIKConstraint(OppositeBone)
-
-
-
-        if (CheckBoneIK is not None) and (OppositeBoneIK is not None):
-            if (CheckBoneIK.target is not None):
-                OppositeBoneIK.target = CheckBoneIK.target
-                if (CheckBoneIK.target.type == "ARMATURE"):
-                    if (CheckBoneIK.subtarget is not None):
-                        OppositeBoneIK.subtarget = AlxGetBoneNameOpposite(CheckBoneIK.subtarget)
-
-            if (CheckBoneIK.pole_target is not None):
-                OppositeBoneIK.pole_target = CheckBoneIK.pole_target
-                if (CheckBoneIK.pole_target.type == "ARMATURE"):
-                    if (CheckBoneIK.pole_subtarget is not None):
-                        OppositeBoneIK.pole_subtarget = AlxGetBoneNameOpposite(CheckBoneIK.pole_subtarget)
-                OppositeBoneIK.pole_angle = (CheckBoneIK.pole_angle + 180)
-
-            OppositeBoneIK.chain_count = CheckBoneIK.chain_count
-            OppositeBoneIK.use_tail = CheckBoneIK.use_tail
-
-        if (CheckBoneIK is None) and (OppositeBoneIK is not None):
-            NewIK = CheckBone.constraints.new("IK")
-
-            if (OppositeBoneIK.target is not None):
-                NewIK.target = OppositeBoneIK.target
-
-                if (OppositeBoneIK.target.type == "ARMATURE"):
-                    if (OppositeBoneIK.subtarget is not None):
-                        NewIK.subtarget = AlxGetBoneNameOpposite(OppositeBoneIK.subtarget)
-
-            if (OppositeBoneIK.pole_target is not None):
-                NewIK.pole_target = OppositeBoneIK.pole_target
-
-                if (OppositeBoneIK.pole_target.type == "ARMATURE"):
-                    if (OppositeBoneIK.pole_subtarget is not None):
-                        NewIK.pole_subtarget = AlxGetBoneNameOpposite(OppositeBoneIK.pole_subtarget)
-
-                NewIK.pole_angle = OppositeBoneIK.pole_angle - 180
-
-            NewIK.chain_count = OppositeBoneIK.chain_count
-            NewIK.use_tail = OppositeBoneIK.use_tail
-
-        if (CheckBoneIK is not None) and (OppositeBoneIK is None):
-            NewIK = OppositeBone.constraints.new("IK")
-
-            if (CheckBoneIK.target is not None):
-                NewIK.target = CheckBoneIK.target
-
-                if (CheckBoneIK.target.type == "ARMATURE"):
-                    if (CheckBoneIK.subtarget is not None):
-                        NewIK.subtarget = AlxGetBoneNameOpposite(CheckBoneIK.subtarget)
-
-            if (CheckBoneIK.pole_target is not None):
-                NewIK.pole_target = CheckBoneIK.pole_target
-
-                if (CheckBoneIK.pole_target.type == "ARMATURE"):
-                    if (CheckBoneIK.pole_subtarget is not None):
-                        NewIK.pole_subtarget = AlxGetBoneNameOpposite(CheckBoneIK.pole_subtarget)
-
-                NewIK.pole_angle = (CheckBoneIK.pole_angle + 180)
-
-
-            NewIK.chain_count = CheckBoneIK.chain_count
-            NewIK.use_tail = CheckBoneIK.use_tail
-
-class Alx_OT_BoneMatchIKByName(bpy.types.Operator):
-    """"""
-
-    bl_label = ""
-    bl_idname = "alx.bone_match_ik_by_name"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    ActivePoseArmatureObject : StringProperty(options={"HIDDEN"})
-
-    @classmethod
-    def poll(self, context):
-        return (context.mode == "POSE")
-
-    def execute(self, context):
-        for window in context.window_manager.windows:
-            screen = window.screen
-            for area in screen.areas:
-                if area.type == 'VIEW_3D':
-                    with context.temp_override(window=window, area=area):
-
-                        if (bpy.data.objects.get(self.ActivePoseArmatureObject).type == "ARMATURE"):
-                            PoseBoneData = bpy.data.objects.get(self.ActivePoseArmatureObject).pose.bones
-
-                            CorrectPairBones = []
-
-                            for PoseBone in PoseBoneData:
-                                if (PoseBone.name[-2] == ".") and (PoseBone.name[0:-2] not in CorrectPairBones):
-                                    CorrectPairBones.append(PoseBone.name[0:-2])
-                                    PoseBoneLeft = AlxGetBoneAlwaysLeft(PoseBone, self.ActivePoseArmatureObject)
-                                    OppositeBoneLeft = AlxGetBoneOpposite(AlxGetBoneAlwaysLeft(PoseBone, self.ActivePoseArmatureObject), self.ActivePoseArmatureObject)
-                                    
-                                    AlxCloneIKSettings(PoseBoneLeft, OppositeBoneLeft)
-                                    AlxCloneIKBoneLimitOnChain(PoseBoneLeft, self.ActivePoseArmatureObject)
-
-
-        return {"FINISHED"}
 
 # class Alx_OT_ArmatureCloneIKPuppet(bpy.types.Operator):
 #     """"""
@@ -846,9 +538,6 @@ class Alx_OT_BoneMatchIKByName(bpy.types.Operator):
 
 
 
-class AlxAddonProperties(bpy.types.PropertyGroup):
-    """"""
-    SceneIsolatorVisibilityTarget : EnumProperty(name="Isolator Visibility Target", options={'ENUM_FLAG'}, items=[("VIEWPORT", "Viewport", "", 1), ("RENDER", "Render", "", 2)])
 
 # class AlxOverHaulAddonSettings(bpy.types.PropertyGroup):
 #     """"""
@@ -890,35 +579,40 @@ class Alx_OT_ScriptReload(bpy.types.Operator):
 
 AlxClassQueue = [
                 Alx_OT_ScriptReload,
+                AlxPreferences.AlxAddonProperties,
                 AlxPreferences.AlxOverHaulAddonPreferences,
-                AlxAddonProperties,
+                
 
                 AlxPanels.Alx_PT_AlexandriaToolPanel,
-                AlxPanels.Alx_PT_Scene_GeneralPivot,
                 AlxPanels.Alx_MT_UnlockedModesPie,
+                AlxPanels.Alx_PT_Scene_GeneralPivot,
 
                 AlxOperators.Alx_OT_Mode_UnlockedModes,
+                AlxOperators.Alx_OT_Scene_UnlockedSnapping,
                 AlxOperators.Alx_OT_Scene_VisibilityIsolator,
                 AlxOperators.Alx_OT_ModifierHideOnSelected,
 
-                Alx_OT_ArmatureAssignToSelection,
+
+                AlxOperators.Alx_OT_Armature_AssignToSelection,
+                AlxOperators.Alx_OT_Armature_MatchIKByMirroredName,
+
                 
                 Alx_OT_ModifierBevelSelection,
                 #AlxOperators.Alx_OT_ModifierSubdivisionSelection,
                 Alx_OT_ModifierWeldSelection,
-
                 Alx_OT_VertexGroupCleanEmpty,
-                Alx_OT_BoneMatchIKByName,
                 ]
 
 bpy.app.handlers.load_post.append(AlxHandlers.AlxAddonKeymapHandler)
+
+
 
 def register():
     for AlxQCls in AlxClassQueue:
         bpy.utils.register_class(AlxQCls)
 
     AlxKeymaps.KeymapCreation()
-    bpy.types.Scene.alx_addon_properties = PointerProperty(type=AlxAddonProperties)
+    bpy.types.Scene.alx_addon_properties = bpy.props.PointerProperty(type=AlxPreferences.AlxAddonProperties) 
 
     bpy.context.preferences.use_preferences_save = True
 
