@@ -160,7 +160,7 @@ class Alx_OT_Scene_VisibilityIsolator(bpy.types.Operator):
             SceneCollectionContext = [Object.users_collection[0] for Object in context.selected_objects if (Object.users_collection[0] is not None)]
 
             IsolatorSelectionSet = [Object for Object in context.scene.objects if ((Object is not None) and (len(context.selected_objects) != 0) and (Object not in context.selected_objects))]
-            IsolatorCollectionSet = [Collection for Collection in context.collection.children_recursive for SceneCollection in SceneCollectionContext if (SceneCollection is not Collection) and (SceneCollection not in Collection.children_recursive)]
+            IsolatorCollectionSet = [Collection for Collection in bpy.data.collections for SceneCollection in SceneCollectionContext if (SceneCollection is not Collection) and (SceneCollection not in Collection.children_recursive)]
 
             if (self.UseObject == True):
                 try:
@@ -271,7 +271,8 @@ class Alx_OT_Armature_AssignToSelection(bpy.types.Operator):
             for SelectedObject in context.selected_objects:
                 if (Armature is None) and (SelectedObject.type == "ARMATURE"):
                     Armature = SelectedObject
-
+                    
+            for SelectedObject in context.selected_objects:
                 if (Armature is not None):
                     if (SelectedObject.type == "MESH"):
                         ArmatureModifier = AlxUtils.AlxRetiriveObjectModifier(SelectedObject, "ARMATURE")
