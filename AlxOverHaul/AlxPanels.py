@@ -63,16 +63,25 @@ class Alx_PT_AlexandriaToolPanel(bpy.types.Panel):
         #     TMenuSectionL.row(align=True).prop(context.tool_settings, "vertex_group_user", expand=True)
         #     TMenuSectionL.row().prop(context.tool_settings, "use_auto_normalize", text="Auto Normalize", icon="MOD_VERTEX_WEIGHT")
 
+
         TMenuSectionL = LMenuColumnSpace.row().box()
 
+        AlxOPS_Modifier_VisibilityControl = TMenuSectionL.row().operator(AlxOperators.Alx_OT_ModifierHideOnSelected.bl_idname, text="Modifier Visibility", emboss=True)
+        AlxOPS_Armature_AutoAssign = TMenuSectionL.row().operator(AlxOperators.Alx_OT_Armature_AssignToSelection.bl_idname, text="Assign Armature", emboss=True)
+        if (AlxUtils.AlxRetrieveContextArmature(context) is not None):
+            AlxOPS_Armature_MatchIKByMirroredName = TMenuSectionL.row().operator(AlxOperators.Alx_OT_Armature_MatchIKByMirroredName.bl_idname, text="Mirror Armature IK", emboss=True)
+            AlxOPS_Armature_MatchIKByMirroredName.ActivePoseArmatureObject = AlxUtils.AlxRetrieveContextArmature(context).name
+
+        TMenuSectionR = MMenuColumnSpace.row().box()
+
         if (AlxContextArmature is not None):
-            TMenuSectionL.row().prop(bpy.data.armatures.get(AlxContextArmature.data.name), "pose_position", expand=True)
+            TMenuSectionR.row().prop(bpy.data.armatures.get(AlxContextArmature.data.name), "pose_position", expand=True)
         else:
-            TMenuSectionL.row().label(text="Mesh Has No Armature")
+            TMenuSectionR.row().label(text="Mesh Has No Armature")
 
         AddonProperties = context.scene.alx_addon_properties
-        TMenuSectionL.row().prop(AddonProperties, "SceneIsolatorVisibilityTarget", expand=True)
-        AlxOPS_OBJECT_Isolator = TMenuSectionL.row().split(factor=0.25, align=True)
+        TMenuSectionR.row().prop(AddonProperties, "SceneIsolatorVisibilityTarget", expand=True)
+        AlxOPS_OBJECT_Isolator = TMenuSectionR.row().split(factor=0.25, align=True)
         AlxOPS_OBJECT_Isolator_Isolate = AlxOPS_OBJECT_Isolator.operator(AlxOperators.Alx_OT_Scene_VisibilityIsolator.bl_idname, text="Isolate", icon="OBJECT_DATA", emboss=True)
         AlxOPS_OBJECT_Isolator_Isolate.TargetVisibility = False
         AlxOPS_OBJECT_Isolator_Isolate.UseObject = True
@@ -93,7 +102,7 @@ class Alx_PT_AlexandriaToolPanel(bpy.types.Panel):
         AlxOPS_COLLECTION_Isolator_ShowAll.UseObject = False
         AlxOPS_COLLECTION_Isolator_ShowAll.UseCollection = True
 
-        AlxOverlayShading = TMenuSectionL.row().split(factor=0.20, align=True)
+        AlxOverlayShading = TMenuSectionR.row().split(factor=0.20, align=True)
         AlxOverlayShading.prop(context.space_data.overlay, "show_overlays", text="", icon="OVERLAY")
         AlxOverlayShading.prop(context.area.spaces.active.shading, "show_xray", text="Mesh", icon="XRAY")
         AlxOverlayShading.prop(context.space_data.overlay, "show_xray_bone", text="Bone", icon="XRAY")
@@ -101,16 +110,12 @@ class Alx_PT_AlexandriaToolPanel(bpy.types.Panel):
         AlxOverlayShading.prop(context.space_data.overlay, "show_wireframes", text="", icon="MOD_WIREFRAME")
 
         if (context.active_object is not None) and (context.active_object.type == "MESH"):
-            AlxObjectSmoothing = TMenuSectionL.row().split(factor=0.33, align=True)
+            AlxObjectSmoothing = TMenuSectionR.row().split(factor=0.33, align=True)
             ShadeSmooth = AlxObjectSmoothing.operator("object.shade_smooth", text="Smooth", emboss=True)
             ShadeSmoothAuto = AlxObjectSmoothing.operator("object.shade_smooth", text="Auto Smooth", emboss=True)
             ShadeSmoothAuto.use_auto_smooth = True
             AlxObjectSmoothing.operator("object.shade_flat", text="Flat", emboss=True)
 
-        TMenuSectionM = MMenuColumnSpace.row().box()
-
-        AlxOPS_Modifier_VisibilityControl = TMenuSectionM.row().operator(AlxOperators.Alx_OT_ModifierHideOnSelected.bl_idname, text="Modifier Visibility", emboss=True)
-        AlxOPS_Armature_AutoAssign = TMenuSectionM.row().operator(AlxOperators.Alx_OT_Armature_AssignToSelection.bl_idname, text="Assign Armature", emboss=True)
 
 
         TMenuSectionR = RMenuColumnSpace.row().box()
@@ -129,12 +134,19 @@ class Alx_PT_AlexandriaToolPanel(bpy.types.Panel):
             CyclesSampleRow = TMenuSectionR.row(align=True)
             CyclesSampleRow.prop(context.scene.cycles, "preview_samples", text="Viewport")
             CyclesSampleRow.prop(context.scene.cycles, "samples", text="Render")
-            CyclesSampleRow.prop(context.scene.cycles, "taa_render_samples", text="Render")
 
         FrameRow = TMenuSectionR.row(align=True)
         FrameRow.prop(bpy.context.scene, "frame_current", text="Frame")
         FrameRow.prop(bpy.context.scene, "frame_start", text="Start")
         FrameRow.prop(bpy.context.scene, "frame_end", text="End")
+
+        if (context.scene.render.engine == "BLENDER_EEVEE") or (context.scene.render.engine == "CYCLES"):
+            HDRIRow = TMenuSectionR.row()
+            if (context.area.spaces.active.shading.type == "SOLID"):
+                HDRIRow.prop(context.area.spaces.active.shading, "light")
+            if (context.area.spaces.active.shading.light != "FLAT"):
+                HDRIRow.prop(context.area.spaces.active.shading, "studio_light")
+
 
 class Alx_MT_UnlockedModesPie(bpy.types.Menu):
     """"""

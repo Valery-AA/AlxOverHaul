@@ -1,7 +1,7 @@
 bl_info = {
     "name" : "AlxOverHaul",
     "author" : "Valeria Bosco[Valy Arhal]",
-    "description" : "",
+    "description" : "For proper functionality [Blender] keymaps preset shoudl be used, [Blender 27x and Industry Compatible] will result in severe keymap conflicts",
     "version" : (0, 5, 0),
     "warning" : "[Heavly Under Development] And Subject To Substantial Changes",
     "category" : "3D View",
@@ -591,6 +591,7 @@ AlxClassQueue = [
                 AlxOperators.Alx_OT_Scene_UnlockedSnapping,
                 AlxOperators.Alx_OT_Scene_VisibilityIsolator,
                 AlxOperators.Alx_OT_ModifierHideOnSelected,
+                AlxOperators.Alx_OT_Camera_MultiTool,
 
 
                 AlxOperators.Alx_OT_Armature_AssignToSelection,
@@ -612,7 +613,9 @@ def register():
         bpy.utils.register_class(AlxQCls)
 
     AlxKeymaps.KeymapCreation()
-    bpy.types.Scene.alx_addon_properties = bpy.props.PointerProperty(type=AlxPreferences.AlxAddonProperties) 
+    bpy.types.Scene.alx_addon_properties = bpy.props.PointerProperty(type=AlxPreferences.AlxAddonProperties)
+    bpy.types.Scene.alx_scene_isolator_visibility_object_list = []
+    bpy.types.Scene.alx_scene_isolator_visibility_collection_list = []
 
     bpy.context.preferences.use_preferences_save = True
 
