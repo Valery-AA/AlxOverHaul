@@ -579,10 +579,10 @@ class Alx_OT_ScriptReload(bpy.types.Operator):
 
 AlxClassQueue = [
                 Alx_OT_ScriptReload,
+                AlxPreferences.AlxModManagerProperties,
                 AlxPreferences.AlxAddonProperties,
                 AlxPreferences.AlxOverHaulAddonPreferences,
                 
-
                 AlxPanels.Alx_PT_AlexandriaToolPanel,
                 AlxPanels.Alx_MT_UnlockedModesPie,
                 AlxPanels.Alx_PT_Scene_GeneralPivot,
@@ -590,9 +590,10 @@ AlxClassQueue = [
                 AlxOperators.Alx_OT_Mode_UnlockedModes,
                 AlxOperators.Alx_OT_Scene_UnlockedSnapping,
                 AlxOperators.Alx_OT_Scene_VisibilityIsolator,
-                AlxOperators.Alx_OT_ModifierHideOnSelected,
+                AlxOperators.Alx_OT_Modifier_HideOnSelected,
                 AlxOperators.Alx_OT_Camera_MultiTool,
 
+                AlxOperators.Alx_OT_Mesh_BoundaryMultiTool,
 
                 AlxOperators.Alx_OT_Armature_AssignToSelection,
                 AlxOperators.Alx_OT_Armature_MatchIKByMirroredName,
@@ -613,6 +614,7 @@ def register():
         bpy.utils.register_class(AlxQCls)
 
     AlxKeymaps.KeymapCreation()
+    bpy.types.Scene.alx_mod_manager_properties = bpy.props.PointerProperty(type=AlxPreferences.AlxModManagerProperties)
     bpy.types.Scene.alx_addon_properties = bpy.props.PointerProperty(type=AlxPreferences.AlxAddonProperties)
     bpy.types.Scene.alx_scene_isolator_visibility_object_list = []
     bpy.types.Scene.alx_scene_isolator_visibility_collection_list = []

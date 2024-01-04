@@ -1,4 +1,6 @@
 import bpy
+import bmesh
+from bpy.types import Context, Event
 
 from AlxOverHaul import AlxPreferences, AlxUtils
 
@@ -212,6 +214,89 @@ class Alx_OT_Scene_VisibilityIsolator(bpy.types.Operator):
 
         return {"FINISHED"}
     
+class Alx_OT_Mesh_BoundaryMultiTool(bpy.types.Operator):
+    """"""
+
+    bl_label = ""
+    bl_idname = "alx.operator_mesh_boundary_multi_tool"
+
+    KeepDividingEdges : bpy.props.BoolProperty(name="Keep Non-Boundary", default=False)
+
+    UseCrease : bpy.props.BoolProperty(name="Crease", default=False)
+    UsePin : bpy.props.BoolProperty(name="Use as Pin", default=False)
+    
+
+    @classmethod
+    def poll(self, context):
+        return context.area.type == "VIEW_3D"
+    
+    def execute(self, context):
+        ContextMesh = None
+        ContextBMesh = None
+
+        if (context.mode == "EDIT_MESH") and (context.edit_object.type == "MESH"):
+            ContextMesh = context.edit_object.data
+            ContextBMesh = bmesh.from_edit_mesh(context.edit_object.data)
+
+            if (ContextBMesh is not None):
+                BoundaryVertex = []
+                BoundaryEdge = []
+                DividingNonBoundaryEdge = []
+                for SelectionItem in ContextBMesh.select_history:
+                    if (SelectionItem is not None) and (SelectionItem.__class__ is bmesh.types.BMFace):
+                        NonBoundaryEdge = []
+
+                        for Edge in SelectionItem.edges:
+                            if (Edge.is_boundary == True):
+                                BoundaryVertex.extend([Vertex for Vertex in Edge.verts if (Vertex not in BoundaryVertex)])
+                                if (Edge not in BoundaryEdge):
+                                    BoundaryEdge.append(Edge)
+
+                        for Vertex in BoundaryVertex:
+                            for Edge in Vertex.link_edges:
+                                if (Edge.is_boundary == False):
+                                    if (Edge not in NonBoundaryEdge):
+                                        NonBoundaryEdge.append(Edge)
+                                    if (Edge in NonBoundaryEdge):
+                                        DividingNonBoundaryEdge.append(Edge)
+
+                if (self.UsePin == True):
+                    PinGroup = None
+
+                    for VxGroup in context.edit_object.vertex_groups:
+                        if (PinGroup is None) and (VxGroup.name.lower() == "pin"):
+                            PinGroup = VxGroup
+                    else:
+                        if (PinGroup is None):
+                            PinGroup = context.edit_object.vertex_groups.new(name="Pin")
+
+                    if (PinGroup is not None):
+                        PinGroup.name = "Pin"
+
+                    AddVertex = [Vertex.index for Vertex in BoundaryVertex]
+                    if (self.KeepDividingEdges == False):
+                        RemoveVertex = [Vertex.index for Edge in DividingNonBoundaryEdge for Vertex in Edge.verts]
+
+                if(self.UseCrease == True):
+                    CreaseLayer = ContextBMesh.edges.layers.float.get('crease_edge', None)
+                    for CreaseEdge in BoundaryEdge:
+                        ContextBMesh.edges[CreaseEdge.index][CreaseLayer] = 1.0
+                    bmesh.update_edit_mesh(ContextMesh, loop_triangles=False)
+
+                bpy.ops.object.mode_set(mode="OBJECT")
+                if (self.UsePin):
+                    PinGroup.add(index=AddVertex, weight=1.0, type="REPLACE")
+                    if (self.KeepDividingEdges == False):
+                        PinGroup.remove(index=RemoveVertex)
+                bpy.ops.object.mode_set(mode="EDIT")
+
+        
+
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self, width=300)
+
 class Alx_OT_Armature_AssignToSelection(bpy.types.Operator):
     """"""
 
@@ -344,7 +429,22 @@ class Alx_OT_Armature_MatchIKByMirroredName(bpy.types.Operator):
         
         return {"FINISHED"}
 
-class Alx_OT_ModifierHideOnSelected(bpy.types.Operator):
+class Alx_OT_Modifier_ManageOnSelected(bpy.types.Operator):
+    """"""
+
+    bl_label = ""
+    bl_idname = ""
+    bl_options = {"INTERNAL", "REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(self, context):
+        return context.area.type == "VIEW_3D"
+
+    def execute(self, context):
+        bpy.ops.wm.call_panel()
+        return {"FINISHED"}
+
+class Alx_OT_Modifier_HideOnSelected(bpy.types.Operator):
     """"""
 
     bl_label = ""

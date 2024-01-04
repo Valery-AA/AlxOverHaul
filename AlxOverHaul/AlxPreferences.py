@@ -2,6 +2,16 @@ import bpy
 
 from AlxOverHaul import AlxKeymaps
 
+class AlxModManagerProperties(bpy.types.PropertyGroup):
+    """"""
+    MODSubdivision : bpy.props.BoolProperty(name="Subdivision", default=False)
+    MODSubdivision_type : bpy.props.EnumProperty(name="SubD Type", options={'ENUM_FLAG'}, items=[("CATMULL", "Smooth", "", 1), ("Simple", "Collapse", "", 2)])
+    MODSubdivision_viewport_level : bpy.props.IntProperty(name="Viewport Resolution")
+    MODSubdivision_render_level : bpy.props.IntProperty(name="Render Resolution")
+    MODSubdivision_optimal_wireframe : bpy.props.BoolProperty(name="Optimal WireFrame", default=True)
+    MODSubdivision_use_mesh_crease : bpy.props.BoolProperty(name="Use Mesh Creases", default=True)
+    MODSubdivision_use_mesh_custom_normals : bpy.props.BoolProperty(name="Use Mesh Custom Normals", default=False)
+
 class AlxAddonProperties(bpy.types.PropertyGroup):
     """"""
     SceneIsolatorVisibilityTarget : bpy.props.EnumProperty(name="SceneIsolatorVisibilityTarget", options={'ENUM_FLAG'}, items=[("VIEWPORT", "Viewport", "", 1), ("RENDER", "Render", "", 2)])

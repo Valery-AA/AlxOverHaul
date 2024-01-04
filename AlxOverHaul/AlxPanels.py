@@ -66,22 +66,24 @@ class Alx_PT_AlexandriaToolPanel(bpy.types.Panel):
 
         TMenuSectionL = LMenuColumnSpace.row().box()
 
-        AlxOPS_Modifier_VisibilityControl = TMenuSectionL.row().operator(AlxOperators.Alx_OT_ModifierHideOnSelected.bl_idname, text="Modifier Visibility", emboss=True)
+        TMenuSectionL.row().operator(AlxOperators.Alx_OT_Mesh_BoundaryMultiTool.bl_idname, text="Pin Boundary", emboss=True)
+
+        AlxOPS_Modifier_VisibilityControl = TMenuSectionL.row().operator(AlxOperators.Alx_OT_Modifier_HideOnSelected.bl_idname, text="Modifier Visibility", emboss=True)
         AlxOPS_Armature_AutoAssign = TMenuSectionL.row().operator(AlxOperators.Alx_OT_Armature_AssignToSelection.bl_idname, text="Assign Armature", emboss=True)
         if (AlxUtils.AlxRetrieveContextArmature(context) is not None):
             AlxOPS_Armature_MatchIKByMirroredName = TMenuSectionL.row().operator(AlxOperators.Alx_OT_Armature_MatchIKByMirroredName.bl_idname, text="Mirror Armature IK", emboss=True)
             AlxOPS_Armature_MatchIKByMirroredName.ActivePoseArmatureObject = AlxUtils.AlxRetrieveContextArmature(context).name
 
-        TMenuSectionR = MMenuColumnSpace.row().box()
+        TMenuSectionM = MMenuColumnSpace.row().box()
 
         if (AlxContextArmature is not None):
-            TMenuSectionR.row().prop(bpy.data.armatures.get(AlxContextArmature.data.name), "pose_position", expand=True)
+            TMenuSectionM.row().prop(bpy.data.armatures.get(AlxContextArmature.data.name), "pose_position", expand=True)
         else:
-            TMenuSectionR.row().label(text="Mesh Has No Armature")
+            TMenuSectionM.row().label(text="Mesh Has No Armature")
 
         AddonProperties = context.scene.alx_addon_properties
-        TMenuSectionR.row().prop(AddonProperties, "SceneIsolatorVisibilityTarget", expand=True)
-        AlxOPS_OBJECT_Isolator = TMenuSectionR.row().split(factor=0.25, align=True)
+        TMenuSectionM.row().prop(AddonProperties, "SceneIsolatorVisibilityTarget", expand=True)
+        AlxOPS_OBJECT_Isolator = TMenuSectionM.row().split(factor=0.25, align=True)
         AlxOPS_OBJECT_Isolator_Isolate = AlxOPS_OBJECT_Isolator.operator(AlxOperators.Alx_OT_Scene_VisibilityIsolator.bl_idname, text="Isolate", icon="OBJECT_DATA", emboss=True)
         AlxOPS_OBJECT_Isolator_Isolate.TargetVisibility = False
         AlxOPS_OBJECT_Isolator_Isolate.UseObject = True
@@ -102,21 +104,24 @@ class Alx_PT_AlexandriaToolPanel(bpy.types.Panel):
         AlxOPS_COLLECTION_Isolator_ShowAll.UseObject = False
         AlxOPS_COLLECTION_Isolator_ShowAll.UseCollection = True
 
-        AlxOverlayShading = TMenuSectionR.row().split(factor=0.20, align=True)
+        AlxOverlayShading = TMenuSectionM.row().split(factor=0.20, align=True)
         AlxOverlayShading.prop(context.space_data.overlay, "show_overlays", text="", icon="OVERLAY")
         AlxOverlayShading.prop(context.area.spaces.active.shading, "show_xray", text="Mesh", icon="XRAY")
         AlxOverlayShading.prop(context.space_data.overlay, "show_xray_bone", text="Bone", icon="XRAY")
         AlxOverlayShading.prop(context.space_data.overlay, "show_retopology", text="", icon="MESH_GRID")
         AlxOverlayShading.prop(context.space_data.overlay, "show_wireframes", text="", icon="MOD_WIREFRAME")
+        
+        if (context.active_object is not None) and (context.active_object.type == "MESH"):
+            AlxObjectSmoothing = TMenuSectionM.row().split(factor=0.25, align=True)
+            ShadeSmooth = AlxObjectSmoothing.operator("object.shade_smooth", text="Smooth", emboss=True)
+            ShadeSmoothAuto = AlxObjectSmoothing.operator("object.shade_smooth", text="A-Smooth", emboss=True)
+            ShadeSmoothAuto.use_auto_smooth = True
+            AlxObjectSmoothing.prop(context.active_object.data, "auto_smooth_angle", text="A-S", toggle=True)
+            AlxObjectSmoothing.operator("object.shade_flat", text="Flat", emboss=True)
+            
 
         if (context.active_object is not None) and (context.active_object.type == "MESH"):
-            AlxObjectSmoothing = TMenuSectionR.row().split(factor=0.33, align=True)
-            ShadeSmooth = AlxObjectSmoothing.operator("object.shade_smooth", text="Smooth", emboss=True)
-            ShadeSmoothAuto = AlxObjectSmoothing.operator("object.shade_smooth", text="Auto Smooth", emboss=True)
-            ShadeSmoothAuto.use_auto_smooth = True
-            AlxObjectSmoothing.operator("object.shade_flat", text="Flat", emboss=True)
-
-
+            TMenuSectionM.row().prop(context.active_object, "show_wire", text="Wire", toggle=True)
 
         TMenuSectionR = RMenuColumnSpace.row().box()
 
@@ -146,7 +151,8 @@ class Alx_PT_AlexandriaToolPanel(bpy.types.Panel):
                 HDRIRow.prop(context.area.spaces.active.shading, "light")
             if (context.area.spaces.active.shading.light != "FLAT"):
                 HDRIRow.prop(context.area.spaces.active.shading, "studio_light")
-
+            if (context.area.spaces.active.shading.type == "SOLID"):
+                TMenuSectionR.row().prop(context.area.spaces.active.shading, "color_type", expand=True)
 
 class Alx_MT_UnlockedModesPie(bpy.types.Menu):
     """"""
@@ -309,3 +315,19 @@ class Alx_PT_Scene_GeneralPivot(bpy.types.Panel):
                         SnapCurRes = SnapMenuSection.row().operator(AlxOperators.Alx_OT_Scene_UnlockedSnapping.bl_idname, text="Reset Cursor")
                         SnapCurRes.SourceSnapping = "RESET"
                         SnapCurRes.TargetSnapping = "SCENE_CURSOR"
+
+class Alx_PT_Modifier_ModManager(bpy.types.Panel):
+    """"""
+
+    bl_label = ""
+    bl_idname = "alx_panel_modifier_mod_manager"
+
+    bl_region_type = "UI"
+    bl_space_type = "VIEW_3D"
+
+    @classmethod
+    def poll(self, context):
+        return True
+    
+    def draw(self, context):
+        pass
