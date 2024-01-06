@@ -214,6 +214,38 @@ class Alx_OT_Scene_VisibilityIsolator(bpy.types.Operator):
 
         return {"FINISHED"}
     
+class Alx_OT_Object_PropertiesEditOnSelection(bpy.types.Operator):
+    """"""
+
+    bl_label = ""
+    bl_idname = "alx.operator_object_properties_edit_on_selection"
+
+    UseOperatorInvoke : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"})
+
+    @classmethod
+    def poll(self, context):
+        return context.area.type == "VIEW_3D"
+
+    def execute(self, context):
+        pass
+        # try:
+        #     context.selected_objects[0]
+        #     OldSelection = context.selected_objects
+        #     if (OldSelection != context.selected_objects):
+
+
+        #     for SelectedObject in context.selected_objects:
+        #         if (SelectedObject.type == "MESH"):
+        #             SelectedObject.show_wire = self.UseShowWire
+        #             SelectedObject.show_in_front = self.UseShowInFront
+
+        # except:
+        #     pass
+        # return {"FINISHED"}
+    
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self, width=300)
+
 class Alx_OT_Mesh_BoundaryMultiTool(bpy.types.Operator):
     """"""
 

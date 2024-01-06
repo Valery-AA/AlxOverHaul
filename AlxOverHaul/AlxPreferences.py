@@ -17,6 +17,7 @@ class AlxAddonProperties(bpy.types.PropertyGroup):
     SceneIsolatorVisibilityTarget : bpy.props.EnumProperty(name="SceneIsolatorVisibilityTarget", options={'ENUM_FLAG'}, items=[("VIEWPORT", "Viewport", "", 1), ("RENDER", "Render", "", 2)])
     
 
+
 class AlxOverHaulAddonPreferences(bpy.types.AddonPreferences):
     """"""
 

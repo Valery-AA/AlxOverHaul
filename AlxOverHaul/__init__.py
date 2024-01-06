@@ -532,58 +532,18 @@ class Alx_OT_VertexGroupCleanEmpty(bpy.types.Operator):
 
 # bpy.app.handlers.depsgraph_update_post.append(AlxUpdateActionUI)
 
-
-
-
-
-
-
-
-# class AlxOverHaulAddonSettings(bpy.types.PropertyGroup):
-#     """"""
-
-#     def PropertyUpdate(self, context):
-#         if (self.View3d_Pan_Use_Shift_GRLess == True):
-#             AlxEditDefaultKeymap(ConfigSpaceName="3D View", ItemidName="view3d.move", MapType="KEYBOARD", Key="GRLESS", UseShift=True, Active=True)
-#         if (self.View3d_Pan_Use_Shift_GRLess == False):
-#             AlxEditDefaultKeymap(ConfigSpaceName="3D View", ItemidName="view3d.move", MapType="MOUSE", Key="MIDDLEMOUSE", UseShift=True, Active=True)
-
-#         if (self.View3d_Rotate_Use_GRLess == True):
-#             AlxEditDefaultKeymap(ConfigSpaceName="3D View", ItemidName="view3d.rotate", MapType="KEYBOARD", Key="GRLESS", Active=True)
-#         if (self.View3d_Rotate_Use_GRLess == False):
-#             AlxEditDefaultKeymap(ConfigSpaceName="3D View", ItemidName="view3d.rotate", MapType="MOUSE", Key="MIDDLEMOUSE", Active=True)
-
-#         if (self.View3d_Zoom_Use_GRLess == True):
-#             AlxEditDefaultKeymap(ConfigSpaceName="3D View", ItemidName="view3d.zoom", MapType="KEYBOARD", Key="GRLESS", UseCtrl=True, Active=True)
-#         if (self.View3d_Zoom_Use_GRLess == False):
-#             AlxEditDefaultKeymap(ConfigSpaceName="3D View", ItemidName="view3d.zoom", MapType="MOUSE", Key="MIDDLEMOUSE", UseCtrl=True, Active=True)
-
-
-
-
-
-
-class Alx_OT_ScriptReload(bpy.types.Operator):
-    """"""
-
-    bl_label = ""
-    bl_idname = "alx.script_reload"
-
-    @classmethod
-    def poll(self, context):
-        return
-    
-    def execute(self, context):
-        bpy.ops.script.reload()
-        return {"FINISHED"}
-
 AlxClassQueue = [
-                Alx_OT_ScriptReload,
                 AlxPreferences.AlxModManagerProperties,
                 AlxPreferences.AlxAddonProperties,
                 AlxPreferences.AlxOverHaulAddonPreferences,
                 
+                AlxPanels.ObjectPropertiesListItem,
+                AlxPanels.Alx_UL_Object_PropertiesList,
+
                 AlxPanels.Alx_PT_AlexandriaToolPanel,
+                AlxPanels.Alx_PT_Scene_SubPanel,
+                AlxPanels.Alx_PT_Object_SubPanel,
+                AlxPanels.Alx_PT_Modifier_SubPanel,
                 AlxPanels.Alx_MT_UnlockedModesPie,
                 AlxPanels.Alx_PT_Scene_GeneralPivot,
 
@@ -593,6 +553,7 @@ AlxClassQueue = [
                 AlxOperators.Alx_OT_Modifier_HideOnSelected,
                 AlxOperators.Alx_OT_Camera_MultiTool,
 
+                AlxOperators.Alx_OT_Object_PropertiesEditOnSelection,
                 AlxOperators.Alx_OT_Mesh_BoundaryMultiTool,
 
                 AlxOperators.Alx_OT_Armature_AssignToSelection,
@@ -606,8 +567,7 @@ AlxClassQueue = [
                 ]
 
 bpy.app.handlers.load_post.append(AlxHandlers.AlxAddonKeymapHandler)
-
-
+bpy.app.handlers.depsgraph_update_post.append(AlxHandlers.AlxUpdateSceneSelectionObjectList)
 
 def register():
     for AlxQCls in AlxClassQueue:
@@ -616,6 +576,10 @@ def register():
     AlxKeymaps.KeymapCreation()
     bpy.types.Scene.alx_mod_manager_properties = bpy.props.PointerProperty(type=AlxPreferences.AlxModManagerProperties)
     bpy.types.Scene.alx_addon_properties = bpy.props.PointerProperty(type=AlxPreferences.AlxAddonProperties)
+
+    bpy.types.Scene.alx_object_selection_properties = bpy.props.CollectionProperty(type=AlxPanels.ObjectPropertiesListItem)
+    bpy.types.Scene.alx_object_selection_properties_index = bpy.props.IntProperty(default=0)
+
     bpy.types.Scene.alx_scene_isolator_visibility_object_list = []
     bpy.types.Scene.alx_scene_isolator_visibility_collection_list = []
 
