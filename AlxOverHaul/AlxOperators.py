@@ -113,7 +113,52 @@ class Alx_OT_Scene_UnlockedSnapping(bpy.types.Operator):
             
             if (self.TargetSnapping == "SCENE_CURSOR"):
                 if (context.active_object is not None):
-                    context.scene.cursor.location = context.active_object.location
+                    if (context.mode == "OBJECT"):
+                        context.scene.cursor.location = context.active_object.location
+                    if (context.mode == "EDIT_MESH"):
+                        ContextBmesh = bmesh.from_edit_mesh(context.active_object.data)
+
+                        try:
+                            ContextBmesh.select_history[1]
+
+                            UniqueVertex = []
+                            SelectionVx_X = []
+                            SelectionVx_Y = []
+                            SelectionVx_Z = []
+                            for SelectedItem in ContextBmesh.select_history:
+                                if (SelectedItem.__class__ is bmesh.types.BMVert):
+                                    if (SelectedItem not in UniqueVertex):
+                                        UniqueVertex.append(SelectedItem)
+
+                                        SelectionVx_X.append(SelectedItem.co.x)
+                                        SelectionVx_Y.append(SelectedItem.co.y)
+                                        SelectionVx_Z.append(SelectedItem.co.z)
+
+                                if (SelectedItem.__class__ is bmesh.types.BMEdge) or (SelectedItem.__class__ is bmesh.types.BMFace):
+                                    for Vertex in SelectedItem.verts:
+                                        if Vertex not in UniqueVertex:
+                                            UniqueVertex.append(Vertex)
+
+                                            SelectionVx_X.append(Vertex.co.x)
+                                            SelectionVx_Y.append(Vertex.co.y)
+                                            SelectionVx_Z.append(Vertex.co.z)
+
+                            print(UniqueVertex)
+
+                            AverageX = sum(SelectionVx_X) / len(SelectionVx_X)
+                            print(AverageX)
+                            AverageY = sum(SelectionVx_Y) / len(SelectionVx_Y)
+                            print(AverageY)
+                            AverageZ = sum(SelectionVx_Z) / len(SelectionVx_Z)
+                            print(AverageZ)
+
+                            AverageCoordinates = [AverageX, AverageY, AverageZ]
+                            context.scene.cursor.location = AverageCoordinates
+
+                        except:
+                            pass
+                            
+
                 return {"FINISHED"}
 
         if (self.SourceSnapping == "SCENE_CURSOR"):
@@ -434,32 +479,60 @@ class Alx_OT_Armature_MatchIKByMirroredName(bpy.types.Operator):
     """"""
 
     bl_label = ""
-    bl_idname = "alx.bone_match_ik_by_name"
+    bl_idname = "alx.bone_match_ik_by_mirrored_name"
+
+    bl_description = "Requires [Pose Mode] Mirrors IK Data from the source side to the opposite"
+
     bl_options = {"INTERNAL", "REGISTER", "UNDO"}
 
-    ActivePoseArmatureObject : bpy.props.StringProperty(options={"HIDDEN"})
+    SourceSide : bpy.props.EnumProperty(name="Mirror From", default=1, items=[("LEFT", "Left", "", 1), ("RIGHT", "Right", "", 2)])
 
     @classmethod
     def poll(self, context):
-        return (context.area.type == "VIEW_3D") and (context.mode == "POSE")
+        return context.area.type == "VIEW_3D"
 
     def execute(self, context):
+        if (context.active_object is not None) and (context.active_object.type == "ARMATURE") and (context.mode == "POSE"):
 
-        if (bpy.data.objects.get(self.ActivePoseArmatureObject) is not None) and (bpy.data.objects.get(self.ActivePoseArmatureObject).type == "ARMATURE"):
-            PoseBoneData = bpy.data.objects.get(self.ActivePoseArmatureObject).pose.bones
+            ContextArmature = context.active_object
 
-            CorrectPairBones = []
+            if (ContextArmature is not None):
 
-            for PoseBone in PoseBoneData:
-                if (PoseBone.name[-2] == ".") and (PoseBone.name[0:-2] not in CorrectPairBones):
-                    CorrectPairBones.append(PoseBone.name[0:-2])
-                    PoseBoneLeft = AlxUtils.AlxGetBoneAlwaysLeft(PoseBone, self.ActivePoseArmatureObject)
-                    OppositeBoneLeft = AlxUtils.AlxGetBoneOpposite(AlxUtils.AlxGetBoneAlwaysLeft(PoseBone, self.ActivePoseArmatureObject), self.ActivePoseArmatureObject)
+                PoseBoneData = ContextArmature.pose.bones
+
+                SymmetricPairBones = []
+                SymmetricUniqueBones = []
+                
+                if (self.SourceSide == "LEFT"):
+                    SymmetricPairBones = [PoseBone for PoseBone in PoseBoneData if ((PoseBone.name[-1].lower() == "l"))]
+                
+                if (self.SourceSide == "RIGHT"):
+                    SymmetricPairBones = [PoseBone for PoseBone in PoseBoneData if ((PoseBone.name[-1].lower() == "r"))]
+                
+                for PoseBone in SymmetricPairBones:
+                    if (PoseBone not in SymmetricUniqueBones):
+                        SymmetricUniqueBones.append(PoseBone)
+
+                for UniquePoseBone in SymmetricUniqueBones:
+                    ContextPoseBone = None
+                    ContextOppositeBone = None
+
+                    if (self.SourceSide == "LEFT"):
+                        ContextPoseBone = AlxUtils.AlxGetBoneAlwaysLeft(UniquePoseBone, ContextArmature)
+                        ContextOppositeBone = AlxUtils.AlxGetBoneOpposite(AlxUtils.AlxGetBoneAlwaysLeft(UniquePoseBone, ContextArmature), ContextArmature)
                     
-                    AlxUtils.AlxCloneIKSettings(PoseBoneLeft, OppositeBoneLeft)
-                    AlxUtils.AlxCloneIKBoneLimitOnChain(PoseBoneLeft, self.ActivePoseArmatureObject)
+                    if (self.SourceSide == "RIGHT"):
+                        ContextPoseBone = AlxUtils.AlxGetBoneAlwaysRight(UniquePoseBone, ContextArmature)
+                        ContextOppositeBone = AlxUtils.AlxGetBoneOpposite(AlxUtils.AlxGetBoneAlwaysRight(UniquePoseBone, ContextArmature), ContextArmature)
+
+                    if (ContextPoseBone is not None) and (ContextOppositeBone is not None):
+                        AlxUtils.AlxCloneIKSettings(ContextPoseBone, ContextOppositeBone)
+                        AlxUtils.AlxCloneIKBoneLimitOnChain(ContextPoseBone, ContextArmature)
         
         return {"FINISHED"}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self, width=300)
 
 class Alx_OT_Modifier_ManageOnSelected(bpy.types.Operator):
     """"""
@@ -531,3 +604,38 @@ class Alx_OT_Camera_MultiTool(bpy.types.Operator):
     def execute(self, context):
         print("")
         return {"FINISHED"}
+    
+class Alx_OT_Mesh_EditAttributes(bpy.types.Operator):
+    """"""
+
+    bl_label = ""
+    bl_idname = "alx.operator_mesh_edit_attributes"
+
+    AttributeName : bpy.props.StringProperty(name="Attribute Name", default="")
+    AttributeType : bpy.props.EnumProperty(name="Attribute Type", default=1, items=[("color", "Color", "", 1), ("integer", "Integer", "", 2)])
+    ColorValue : bpy.props.FloatVectorProperty(name="Color", subtype="COLOR", size=4, default=[0.0,0.0,0.0,0.0], min=0.0, max=1.0)
+
+    @classmethod
+    def poll(self, context):
+        return context.area.type == "VIEW_3D"
+    
+    def execute(self, context):
+        if (context.edit_object is not None):
+            if (context.mode == "EDIT_MESH") and (context.edit_object.type == "MESH"):
+                ContextMesh = context.edit_object.data
+                ContextBMesh = bmesh.from_edit_mesh(context.edit_object.data)
+
+                SelectedVertex = [Vertex.index for Vertex in ContextBMesh.verts if Vertex.select == True]
+
+                bpy.ops.object.mode_set(mode="OBJECT")
+                ContextAttribute = ContextMesh.attributes.get(self.AttributeName)
+                if (ContextAttribute is not None):
+                    for Vertex in SelectedVertex:
+                        ContextAttribute.data[Vertex].color = self.ColorValue
+                bpy.ops.object.mode_set(mode="EDIT")
+
+    
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self, width=300)

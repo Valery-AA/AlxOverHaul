@@ -40,7 +40,7 @@ def AlxRetiriveObjectModifier(TargetObejct, TargetType):
 
 def AlxGetBoneAlwaysLeft(Bone, Armature):
     LeftBone = ""
-    if (len(Bone.name) != 0) and (len(Bone.name) > 2):
+    if (len(Bone.name) > 2):
         if (Bone.name[-2] == "."):
             
             match Bone.name[-1]:
@@ -51,13 +51,31 @@ def AlxGetBoneAlwaysLeft(Bone, Armature):
                 case "r":
                     LeftBone = Bone.name[0:-1] + "l"
                 case "l":
-                    OppositeBoneName = Bone.name[0:-1] + "l"
+                    LeftBone = Bone.name[0:-1] + "l"
 
-    return bpy.data.objects.get(Armature).pose.bones.get(LeftBone)
+
+    return Armature.pose.bones.get(LeftBone)
+
+def AlxGetBoneAlwaysRight(Bone, Armature):
+    RightBone = ""
+    if (len(Bone.name) > 2):
+        if (Bone.name[-2] == "."):
+            
+            match Bone.name[-1]:
+                case "R":
+                    RightBone = Bone.name[0:-1] + "R"
+                case "L":
+                    RightBone = Bone.name[0:-1] + "R"
+                case "r":
+                    RightBone = Bone.name[0:-1] + "r"
+                case "l":
+                    RightBone = Bone.name[0:-1] + "r"
+
+    return Armature.pose.bones.get(RightBone)
 
 def AlxGetBoneOpposite(Bone, Armature):
     OppositeBoneName = ""
-    if (len(Bone.name) != 0) and (len(Bone.name) > 2):
+    if (Bone is not None) and (len(Bone.name) > 2):
         if (Bone.name[-2] == "."):
             
             match Bone.name[-1]:
@@ -70,7 +88,7 @@ def AlxGetBoneOpposite(Bone, Armature):
                 case "l":
                     OppositeBoneName = Bone.name[0:-1] + "r"
 
-    return bpy.data.objects.get(Armature).pose.bones.get(OppositeBoneName)
+    return Armature.pose.bones.get(OppositeBoneName)
 
 def AlxGetBoneNameOpposite(BoneName):
     OppositeBoneName = ""
@@ -93,10 +111,30 @@ def AlxGetIKConstraint(Bone):
         if (Constraint.type == "IK"):
             return Constraint
 
+def AlxInvertPoleAngle(Angle):
+    CorrectedAngle = Angle * (180 / 3.14)
+    if (CorrectedAngle == 0):
+        return 180.0 * (3.14 / 180)
+    if (CorrectedAngle == 180):
+        return 0.0 * (3.14 / 180)
+    if (CorrectedAngle  == -180):
+        return 0.0 * (3.14 / 180)
+    if(CorrectedAngle > 0) and (CorrectedAngle < 180):
+        Value = (180.0 - abs(CorrectedAngle))
+        return Value * (3.14 / 180)
+    if(CorrectedAngle < 0) and (CorrectedAngle > -180):
+        Value = (-180.0 + abs(CorrectedAngle))
+        return Value * (3.14 / 180)
+    return 0.0
+
 def AlxCloneIKBoneLimitOnChain(IKHead, Armature):
     i = 0
-    if (AlxGetIKConstraint(IKHead) is not None):
-        ChainLength = AlxGetIKConstraint(IKHead).chain_count
+
+    if (IKHead is not None) and (AlxGetIKConstraint(IKHead) is not None):
+        if (AlxGetIKConstraint(IKHead).use_tail == False):
+            ChainLength = AlxGetIKConstraint(IKHead).chain_count + 1
+        else:
+            ChainLength = AlxGetIKConstraint(IKHead).chain_count
         ParentOnChain = None
 
         IKHeadOpposite = AlxGetBoneOpposite(IKHead, Armature)
@@ -141,8 +179,6 @@ def AlxCloneIKSettings(CheckBone, OppositeBone):
         CheckBoneIK = AlxGetIKConstraint(CheckBone)
         OppositeBoneIK = AlxGetIKConstraint(OppositeBone)
 
-
-
         if (CheckBoneIK is not None) and (OppositeBoneIK is not None):
             if (CheckBoneIK.target is not None):
                 OppositeBoneIK.target = CheckBoneIK.target
@@ -155,13 +191,20 @@ def AlxCloneIKSettings(CheckBone, OppositeBone):
                 if (CheckBoneIK.pole_target.type == "ARMATURE"):
                     if (CheckBoneIK.pole_subtarget is not None):
                         OppositeBoneIK.pole_subtarget = AlxGetBoneNameOpposite(CheckBoneIK.pole_subtarget)
-                OppositeBoneIK.pole_angle = (CheckBoneIK.pole_angle + 180)
+                OppositeBoneIK.pole_angle = AlxInvertPoleAngle(CheckBoneIK.pole_angle)
 
             OppositeBoneIK.chain_count = CheckBoneIK.chain_count
             OppositeBoneIK.use_tail = CheckBoneIK.use_tail
+            OppositeBoneIK.use_stretch = CheckBoneIK.use_stretch
 
         if (CheckBoneIK is None) and (OppositeBoneIK is not None):
             NewIK = CheckBone.constraints.new("IK")
+
+            try:
+                CheckBone.constraints.move(CheckBone.constraints.find(NewIK.name), OppositeBone.constraints.find(OppositeBoneIK.name))
+
+            except:
+                pass
 
             if (OppositeBoneIK.target is not None):
                 NewIK.target = OppositeBoneIK.target
@@ -177,13 +220,20 @@ def AlxCloneIKSettings(CheckBone, OppositeBone):
                     if (OppositeBoneIK.pole_subtarget is not None):
                         NewIK.pole_subtarget = AlxGetBoneNameOpposite(OppositeBoneIK.pole_subtarget)
 
-                NewIK.pole_angle = OppositeBoneIK.pole_angle - 180
+                NewIK.pole_angle = AlxInvertPoleAngle(CheckBoneIK.pole_angle)
 
             NewIK.chain_count = OppositeBoneIK.chain_count
             NewIK.use_tail = OppositeBoneIK.use_tail
+            NewIK.use_stretch = OppositeBoneIK.use_stretch
 
         if (CheckBoneIK is not None) and (OppositeBoneIK is None):
             NewIK = OppositeBone.constraints.new("IK")
+
+            try:
+                OppositeBone.constraints.move(OppositeBone.constraints.find(NewIK.name), CheckBone.constraints.find(CheckBoneIK.name))
+
+            except:
+                pass
 
             if (CheckBoneIK.target is not None):
                 NewIK.target = CheckBoneIK.target
@@ -199,12 +249,12 @@ def AlxCloneIKSettings(CheckBone, OppositeBone):
                     if (CheckBoneIK.pole_subtarget is not None):
                         NewIK.pole_subtarget = AlxGetBoneNameOpposite(CheckBoneIK.pole_subtarget)
 
-                NewIK.pole_angle = (CheckBoneIK.pole_angle + 180)
+                NewIK.pole_angle = AlxInvertPoleAngle(CheckBoneIK.pole_angle)
 
 
             NewIK.chain_count = CheckBoneIK.chain_count
             NewIK.use_tail = CheckBoneIK.use_tail
-
+            NewIK.use_stretch = CheckBoneIK.use_stretch
 
 
 

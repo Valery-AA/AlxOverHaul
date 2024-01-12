@@ -8,6 +8,11 @@ class ObjectPropertiesListItem(bpy.types.PropertyGroup):
     name : bpy.props.StringProperty()
     ObjectPointer : bpy.props.PointerProperty(type=bpy.types.Object)
 
+class ObjectModifiersListItem(bpy.types.PropertyGroup):
+    """"""
+    name : bpy.props.StringProperty()
+    ObjectPointer : bpy.props.PointerProperty(type=bpy.types.Object)
+
 class Alx_UL_Object_PropertiesList(bpy.types.UIList):
     """"""
 
@@ -18,7 +23,7 @@ class Alx_UL_Object_PropertiesList(bpy.types.UIList):
         UISplit = ItemBox.row().split(factor=0.5, align=False)
 
         NameRow = UISplit.row()
-        PropertiesRow = UISplit.row().split(factor=0.33, align=True)
+        PropertiesRow = UISplit.row().split(factor=0.25, align=True)
 
         NameRow.prop(item.ObjectPointer, "name", text="", emboss=True)
         PropertiesRow.prop(item.ObjectPointer, "show_name", text="", icon="SORTALPHA", emboss=True)
@@ -26,7 +31,6 @@ class Alx_UL_Object_PropertiesList(bpy.types.UIList):
         if (item.ObjectPointer.type == "MESH"):
             PropertiesRow.prop(item.ObjectPointer, "show_wire", text="", icon="MOD_WIREFRAME", emboss=True)
         PropertiesRow.prop(item.ObjectPointer, "show_in_front", text="", icon="OBJECT_HIDDEN", emboss=True)
-        
 
 class Alx_PT_AlexandriaToolPanel(bpy.types.Panel):
     bl_label = "Alexandria Tool Panel"
@@ -51,10 +55,7 @@ class Alx_PT_AlexandriaToolPanel(bpy.types.Panel):
 
 
         LMenuColumnSpace = AlexandriaToolPanel.box()
-        MMenuColumnSpace = AlexandriaToolPanel.box()
         RMenuColumnSpace = AlexandriaToolPanel.box()
-
-
 
         TMenuSectionL = LMenuColumnSpace.row().box()
         TMenuSectionL.scale_x = 2.0
@@ -131,9 +132,15 @@ class Alx_PT_AlexandriaToolPanel(bpy.types.Panel):
                 HDRIRow.prop(context.area.spaces.active.shading, "studio_light")
             if (context.area.spaces.active.shading.type == "SOLID"):
                 TMenuSectionR.row().prop(context.area.spaces.active.shading, "color_type", expand=True)
+ 
 
-        MMenuSectionM = MMenuColumnSpace.row().box()
-        PropertySplit = MMenuSectionM.row()
+
+        MMenuSectionL = LMenuColumnSpace.row().box()
+
+        PropertySplit = MMenuSectionL.row()
+
+        ObjectPropertyColumn = PropertySplit.column()
+        ObjectPropertyColumn.template_list(Alx_UL_Object_PropertiesList.bl_idname, list_id="", dataptr=context.scene, propname="alx_object_selection_properties", active_dataptr=context.scene, active_propname="alx_object_selection_properties_index")
 
         ScenePropertyColumn = PropertySplit.column()
         ScenePropertyColumn.scale_x = 1
@@ -155,8 +162,8 @@ class Alx_PT_AlexandriaToolPanel(bpy.types.Panel):
             if (context.active_object.type == "ARMATURE"):
                 ScenePropertyColumn.label(text="Pose:")
                 AlxPoseMirror = ScenePropertyColumn.row(align=True)
-                AlxPoseMirror.prop(context.active_object.pose, "use_mirror_x", text="X Mirror")
-                AlxPoseMirror.prop(context.active_object.pose, "use_mirror_relative", text="Local Mirror")
+                AlxPoseMirror.prop(context.active_object.pose, "use_mirror_x", text="X Mirror", toggle=True)
+                AlxPoseMirror.prop(context.active_object.pose, "use_mirror_relative", text="Local Mirror", toggle=True)
                 ScenePropertyColumn.row().prop(context.active_object.pose, "use_auto_ik", text="Auto IK", icon="CON_KINEMATIC")
 
         if (context.active_object is not None):
@@ -171,8 +178,8 @@ class Alx_PT_AlexandriaToolPanel(bpy.types.Panel):
                 ScenePropertyColumn.row(align=True).prop(context.tool_settings, "vertex_group_user", expand=True)
                 ScenePropertyColumn.row().prop(context.tool_settings, "use_auto_normalize", text="Auto Normalize", icon="MOD_VERTEX_WEIGHT")
 
-        ObjectPropertyColumn = PropertySplit.column()
-        ObjectPropertyColumn.template_list(Alx_UL_Object_PropertiesList.bl_idname, list_id="", dataptr=context.scene, propname="alx_object_selection_properties", active_dataptr=context.scene, active_propname="alx_object_selection_properties_index")
+        MMenuSectionR = RMenuColumnSpace.row().box()
+        MMenuSectionR.row().operator(AlxOperators.Alx_OT_Armature_MatchIKByMirroredName.bl_idname, text="Symmetrize IK")
 
 class Alx_PT_Scene_SubPanel(bpy.types.Panel):
     """"""

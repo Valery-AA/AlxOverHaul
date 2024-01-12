@@ -2,7 +2,7 @@ bl_info = {
     "name" : "AlxOverHaul",
     "author" : "Valeria Bosco[Valy Arhal]",
     "description" : "For proper functionality [Blender] keymaps preset shoudl be used, [Blender 27x and Industry Compatible] will result in severe keymap conflicts",
-    "version" : (0, 5, 0),
+    "version" : (0, 5, 2),
     "warning" : "[Heavly Under Development] And Subject To Substantial Changes",
     "category" : "3D View",
     "location" : "[Ctrl Alt A] Tool Menu, [Shift S] Pivot Menu, [Tab] Mode Compact Menu",
@@ -533,7 +533,6 @@ class Alx_OT_VertexGroupCleanEmpty(bpy.types.Operator):
 # bpy.app.handlers.depsgraph_update_post.append(AlxUpdateActionUI)
 
 AlxClassQueue = [
-                AlxPreferences.AlxModManagerProperties,
                 AlxPreferences.AlxAddonProperties,
                 AlxPreferences.AlxOverHaulAddonPreferences,
                 
@@ -550,6 +549,10 @@ AlxClassQueue = [
                 AlxOperators.Alx_OT_Mode_UnlockedModes,
                 AlxOperators.Alx_OT_Scene_UnlockedSnapping,
                 AlxOperators.Alx_OT_Scene_VisibilityIsolator,
+                AlxOperators.Alx_OT_Mesh_EditAttributes,
+
+
+
                 AlxOperators.Alx_OT_Modifier_HideOnSelected,
                 AlxOperators.Alx_OT_Camera_MultiTool,
 
@@ -574,7 +577,6 @@ def register():
         bpy.utils.register_class(AlxQCls)
 
     AlxKeymaps.KeymapCreation()
-    bpy.types.Scene.alx_mod_manager_properties = bpy.props.PointerProperty(type=AlxPreferences.AlxModManagerProperties)
     bpy.types.Scene.alx_addon_properties = bpy.props.PointerProperty(type=AlxPreferences.AlxAddonProperties)
 
     bpy.types.Scene.alx_object_selection_properties = bpy.props.CollectionProperty(type=AlxPanels.ObjectPropertiesListItem)
