@@ -2,22 +2,12 @@ bl_info = {
     "name" : "AlxOverHaul",
     "author" : "Valeria Bosco[Valy Arhal]",
     "description" : "For proper functionality [Blender] keymaps preset shoudl be used, [Blender 27x and Industry Compatible] will result in severe keymap conflicts",
-    "version" : (0, 5, 2),
+    "version" : (0, 5, 4),
     "warning" : "[Heavly Under Development] And Subject To Substantial Changes",
     "category" : "3D View",
     "location" : "[Ctrl Alt A] Tool Menu, [Shift S] Pivot Menu, [Tab] Mode Compact Menu",
     "blender" : (4, 0, 0)
 }
-
-# python warcrime
-# AddonFiles = ["AlxPreferences", "AlxHandlers", "AlxKeymaps", "AlxOperators", "AlxPanels"]
-# import importlib
-# for AddonFile in AddonFiles:
-#     if (AddonFile not in locals()):
-#         exec(AddonFile + " = importlib.reload(AddonFile)")
-#         importlib.import_module(AddonFile, "AlxOverHaul")
-#     else:
-#         exec(AddonFile + " = importlib.reload(AddonFile)")
 
 if ("AlxKeymaps" not in locals()):
     from AlxOverHaul import AlxKeymaps
@@ -59,215 +49,38 @@ else:
 
 import bpy
 
-# multi version support
-#if (0, 0, 0) > bpy.app.version:
 
 
-
-        # if (context.mode == "POSE") and (AlxContextArmature is not None):
-        #     AlxOPS_Armature_SymIK = MMenuSectionM.row().operator(Alx_OT_BoneMatchIKByName.bl_idname, text="Symmetric IK", icon="MOD_MIRROR")
-        #     AlxOPS_Armature_SymIK.ActivePoseArmatureObject = AlxContextArmature.name
-
-        # if (context.mode == "OBJECT") and (AlxContextObject is not None):
-        #     AlxOPS_Armature_VxClean = MMenuSectionM.row().operator(Alx_OT_VertexGroupCleanEmpty.bl_idname, text="Clean VxGroups", emboss=True)
-        #     AlxOPS_Armature_VxClean.VertexDataObject = AlxContextObject.name
-
-        # AlxOPS_Armature_ATS = MMenuSectionM.row().operator(Alx_OT_ArmatureAssignToSelection.bl_idname, text="Assign Armature")
-
-
-
-
-
-
-
-
-# class Alx_OT_Scene_FrameChange(bpy.types.Operator):
+# class Alx_OT_VertexGroupCleanEmpty(bpy.types.Operator):
 #     """"""
 
 #     bl_label = ""
-#     bl_idname = "alx.scene_frame_change"
+#     bl_idname = "alx.vertex_group_clean_empty"
+
+#     VertexDataObject : bpy.props.StringProperty(options={"HIDDEN"})
 
 #     @classmethod
 #     def poll(self, context):
 #         return True
     
 #     def execute(self, context):
+#         if (self.VertexDataObject != "") and (bpy.data.objects.get(self.VertexDataObject) is not None):
+#             for VGroup in bpy.data.objects.get(self.VertexDataObject).vertex_groups:
+#                 i = 0
+#                 HasAtLeastOneVertex = False
+#                 while i < len(bpy.data.objects.get(self.VertexDataObject).data.vertices):
+#                     if(i < 0): break
+#                     try:
+#                         VGroup.weight(i)
+#                     except:
+#                         pass
 
-
-
-class Alx_OT_ModifierBevelSelection(bpy.types.Operator):
-    """"""
-
-    bl_label = ""
-    bl_idname = "alx.modifier_bevel_selection"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    Segments : bpy.props.IntProperty(name="Segments", default=1, min=1)
-    Width : bpy.props.FloatProperty(name="Width", default=0.01000, unit="LENGTH", min=0.0)
-    UseWeight : bpy.props.BoolProperty(name="Use Weight", default=True)
-    HardenNormals : bpy.props.BoolProperty(name="Harden Normals", default=True)
-
-    @classmethod
-    def poll(cls, context):
-        return True
-    
-    def execute(self, context):
-
-        for window in context.window_manager.windows:
-            screen = window.screen
-            for area in screen.areas:
-                if area.type == 'VIEW_3D':
-                    with context.temp_override(window=window, area=area):
-
-                        for SelObj in bpy.context.selected_objects:
-
-                            HasModifier = False
-
-                            if (SelObj.type == "MESH"):
-                                ObjMODs = SelObj.modifiers
-                                
-                                for ObjMOD in ObjMODs:
-                                
-                                    if (ObjMOD.type == "BEVEL"):
-                                        HasModifier = True
-
-                                        ObjMOD.segments = self.Segments
-                                        ObjMOD.width = self.Width
-                
-                                        match self.UseWeight:
-
-                                            case True:
-                                                ObjMOD.limit_method = "WEIGHT"
-
-                                            case False:
-                                                ObjMOD.limit_method = "ANGLE"
-                                                ObjMOD.angle_limit = 30 * (3.14/180)
-
-                                        ObjMOD.miter_outer = "MITER_ARC"
-                                        ObjMOD.harden_normals = self.HardenNormals
-
-                                if (HasModifier == False):        
-                                
-                                    BevelMod = SelObj.modifiers.new("Bevel", "BEVEL")
-                                    BevelMod.segments = self.Segments
-                                    BevelMod.width = self.Width
-
-                                    match self.UseWeight:
-
-                                        case True:
-                                            BevelMod.limit_method = "WEIGHT"
-
-                                        case False:
-                                            BevelMod.limit_method = "ANGLE"
-                                            BevelMod.angle_limit = 30 * (3.14/180)
-
-                                    BevelMod.miter_outer = "MITER_ARC"
-                                    BevelMod.harden_normals = self.HardenNormals
-
-        return {"FINISHED"}
-    
-
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_popup(self, event)
-
-
-
-class Alx_OT_ModifierWeldSelection(bpy.types.Operator):
-    """"""
-
-    bl_label = ""
-    bl_idname = "alx.modifier_weld_selection"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    UseMergeAll : bpy.props.BoolProperty(name="Merge All", default=True)
-    UseMergeOnlyLooseEdges : bpy.props.BoolProperty(name="Only Loose Edges", default=True)
-
-    MergeDistance : bpy.props.FloatProperty(name="Distance", default=0.00100, unit="LENGTH", min=0.0)
-
-    @classmethod
-    def poll(cls, context):
-        return True
-    
-    def execute(self, context):
-
-        for window in context.window_manager.windows:
-            screen = window.screen
-            for area in screen.areas:
-                if area.type == 'VIEW_3D':
-                    with context.temp_override(window=window, area=area):
-
-                        for SelObj in bpy.context.selected_objects:
-
-                            HasModifier = False
-
-                            if (SelObj.type == "MESH"):
-                                ObjMODs = SelObj.modifiers
-                                
-                                for ObjMOD in ObjMODs:
-                                
-                                    if (ObjMOD.type == "WELD"):
-                                        HasModifier = True
-
-                                        match self.UseMergeAll:
-                                            case True:
-                                                ObjMOD.mode = "ALL"
-
-                                            case False:
-                                                ObjMOD.mode = "CONNECTED"
-                                                ObjMOD.loose_edges = self.UseMergeOnlyLooseEdges
-
-                                        ObjMOD.merge_threshold = self.MergeDistance
-
-                                if (HasModifier == False):    
-                                    WeldMod = SelObj.modifiers.new("Weld", "WELD")
-            
-                                    match self.UseMergeAll:
-                                        case True:
-                                            WeldMod.mode = "ALL"
-
-                                        case False:
-                                            WeldMod.mode = "CONNECTED"
-                                            WeldMod.loose_edges = self.UseMergeOnlyLooseEdges
-
-                                    WeldMod.merge_threshold = self.MergeDistance
-            
-            return {"FINISHED"}
-                        
-
-
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_popup(self, event)
-
-class Alx_OT_VertexGroupCleanEmpty(bpy.types.Operator):
-    """"""
-
-    bl_label = ""
-    bl_idname = "alx.vertex_group_clean_empty"
-
-    VertexDataObject : bpy.props.StringProperty(options={"HIDDEN"})
-
-    @classmethod
-    def poll(self, context):
-        return True
-    
-    def execute(self, context):
-        if (self.VertexDataObject != "") and (bpy.data.objects.get(self.VertexDataObject) is not None):
-            for VGroup in bpy.data.objects.get(self.VertexDataObject).vertex_groups:
-                i = 0
-                HasAtLeastOneVertex = False
-                while i < len(bpy.data.objects.get(self.VertexDataObject).data.vertices):
-                    if(i < 0): break
-                    try:
-                        VGroup.weight(i)
-                    except:
-                        pass
-
-                    else:
-                        HasAtLeastOneVertex = True    
-                    i += 1
-                if(HasAtLeastOneVertex == False):
-                    bpy.data.objects.get(self.VertexDataObject).vertex_groups.remove(VGroup)
-        return{"FINISHED"}
+#                     else:
+#                         HasAtLeastOneVertex = True    
+#                     i += 1
+#                 if(HasAtLeastOneVertex == False):
+#                     bpy.data.objects.get(self.VertexDataObject).vertex_groups.remove(VGroup)
+#         return{"FINISHED"}
 
 
 # class Alx_OT_ArmatureCloneIKPuppet(bpy.types.Operator):
@@ -532,6 +345,20 @@ class Alx_OT_VertexGroupCleanEmpty(bpy.types.Operator):
 
 # bpy.app.handlers.depsgraph_update_post.append(AlxUpdateActionUI)
 
+    # bpy.types.Scene.alx_materials = CollectionProperty(type=Alx_Material)
+    # bpy.types.Scene.alx_active_material_index = IntProperty()
+    # bpy.types.Scene.alx_material_collection_library = CollectionProperty(type=Alx_MaterialCollection)
+
+    #bpy.app.handlers.depsgraph_update_post.append(AlxMaterialRegisterChanges)
+    #bpy.msgbus.subscribe_rna(key=(bpy.types.Object, "material_slots"), owner="owner", args=(), notify=AlxMaterialRegisterChanges)
+
+    
+    
+    # del bpy.types.Scene.alx_materials
+    # del bpy.types.Scene.alx_active_material_index
+
+
+
 AlxClassQueue = [
                 AlxPreferences.AlxAddonProperties,
                 AlxPreferences.AlxOverHaulAddonPreferences,
@@ -540,41 +367,29 @@ AlxClassQueue = [
                 AlxPanels.Alx_UL_Object_PropertiesList,
 
                 AlxPanels.Alx_PT_AlexandriaToolPanel,
-                AlxPanels.Alx_PT_Scene_SubPanel,
-                AlxPanels.Alx_PT_Object_SubPanel,
-                AlxPanels.Alx_PT_Modifier_SubPanel,
                 AlxPanels.Alx_MT_UnlockedModesPie,
                 AlxPanels.Alx_PT_Scene_GeneralPivot,
 
                 AlxOperators.Alx_OT_Mode_UnlockedModes,
                 AlxOperators.Alx_OT_Scene_UnlockedSnapping,
                 AlxOperators.Alx_OT_Scene_VisibilityIsolator,
+
+                AlxOperators.Alx_OT_Modifier_ManageOnSelected,
                 AlxOperators.Alx_OT_Mesh_EditAttributes,
 
-
-
-                AlxOperators.Alx_OT_Modifier_HideOnSelected,
-                AlxOperators.Alx_OT_Camera_MultiTool,
-
-                AlxOperators.Alx_OT_Object_PropertiesEditOnSelection,
-                AlxOperators.Alx_OT_Mesh_BoundaryMultiTool,
-
-                AlxOperators.Alx_OT_Armature_AssignToSelection,
-                AlxOperators.Alx_OT_Armature_MatchIKByMirroredName,
-
                 
-                Alx_OT_ModifierBevelSelection,
-                #AlxOperators.Alx_OT_ModifierSubdivisionSelection,
-                Alx_OT_ModifierWeldSelection,
-                Alx_OT_VertexGroupCleanEmpty,
+
+                AlxOperators.Alx_OT_Armature_MatchIKByMirroredName,
                 ]
 
-bpy.app.handlers.load_post.append(AlxHandlers.AlxAddonKeymapHandler)
-bpy.app.handlers.depsgraph_update_post.append(AlxHandlers.AlxUpdateSceneSelectionObjectList)
+
 
 def register():
     for AlxQCls in AlxClassQueue:
         bpy.utils.register_class(AlxQCls)
+
+    bpy.app.handlers.load_post.append(AlxHandlers.AlxAddonKeymapHandler)
+    bpy.app.handlers.depsgraph_update_post.append(AlxHandlers.AlxUpdateSceneSelectionObjectList)
 
     AlxKeymaps.KeymapCreation()
     bpy.types.Scene.alx_addon_properties = bpy.props.PointerProperty(type=AlxPreferences.AlxAddonProperties)
@@ -595,19 +410,11 @@ def unregister():
         km.keymap_items.remove(kmi)
     AlxKeymaps.AlxAddonKeymaps.clear()
 
+    del bpy.types.Scene.alx_addon_properties
+
     bpy.app.handlers.load_post.remove(AlxHandlers.AlxAddonKeymapHandler)
+    bpy.app.handlers.depsgraph_update_post.remove(AlxHandlers.AlxUpdateSceneSelectionObjectList)
 
 if __name__ == "__main__":
     register()
 
-    # bpy.types.Scene.alx_materials = CollectionProperty(type=Alx_Material)
-    # bpy.types.Scene.alx_active_material_index = IntProperty()
-    # bpy.types.Scene.alx_material_collection_library = CollectionProperty(type=Alx_MaterialCollection)
-
-    #bpy.app.handlers.depsgraph_update_post.append(AlxMaterialRegisterChanges)
-    #bpy.msgbus.subscribe_rna(key=(bpy.types.Object, "material_slots"), owner="owner", args=(), notify=AlxMaterialRegisterChanges)
-
-    
-    
-    # del bpy.types.Scene.alx_materials
-    # del bpy.types.Scene.alx_active_material_index

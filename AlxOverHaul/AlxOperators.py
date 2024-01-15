@@ -1,6 +1,5 @@
 import bpy
 import bmesh
-from bpy.types import Context, Event
 
 from AlxOverHaul import AlxPreferences, AlxUtils
 
@@ -13,7 +12,8 @@ class Alx_OT_Mode_UnlockedModes(bpy.types.Operator):
 
     DefaultBehaviour : bpy.props.BoolProperty(name="", default=True, options={"HIDDEN"})
     TargetMode : bpy.props.StringProperty(name="", default="OBJECT", options={"HIDDEN"})
-    TargetSubMode : bpy.props.StringProperty(name="", default="VERT", options={"HIDDEN"})
+    TargetType : bpy.props.StringProperty(name="", default="", options={"HIDDEN"})
+    TargetSubMode : bpy.props.StringProperty(name="", default="", options={"HIDDEN"})
     
     TargetObject : bpy.props.StringProperty(name="", options={"HIDDEN"})
     TargetArmature : bpy.props.StringProperty(name="", options={"HIDDEN"})
@@ -31,15 +31,44 @@ class Alx_OT_Mode_UnlockedModes(bpy.types.Operator):
                     return {"FINISHED"}
 
                 case "EDIT":
-                    if (context.mode not in ["EDIT_CURVE", "EDIT_CURVES", "EDIT_SURFACE", "EDIT_TEXT", "EDIT_METABALL", "EDIT_LATTICE", "EDIT_GREASE_PENCIL", "EDIT_POINT_CLOUD"]) and (len(context.selected_objects) != 0):
+                    if (len(context.selected_objects) != 0):
                         for Object in context.selected_objects:
-                            if (Object.type == "MESH"):
-                                if (self.TargetSubMode in ["VERT", "EDGE", "FACE"]):
+                            if (Object is not None):
+                                if (Object.type == "MESH") and (self.TargetType == "MESH") and (self.TargetSubMode in ["VERT", "EDGE", "FACE"]):
                                     bpy.context.view_layer.objects.active = Object
                                     bpy.ops.object.mode_set_with_submode(mode="EDIT", mesh_select_mode=set([self.TargetSubMode]))
-                            if (Object.type in ["ARMATURE", "CURVE"]):
-                                bpy.context.view_layer.objects.active = Object
-                                bpy.ops.object.mode_set(mode="EDIT")
+
+                                if (Object.type == "ARMATURE") and (self.TargetType == "ARMATURE") and (self.TargetSubMode == ""):
+                                    bpy.context.view_layer.objects.active = Object
+                                    bpy.ops.object.mode_set(mode="EDIT")
+
+                                if (Object.type == "CURVE") and (self.TargetType == "CURVE") and (self.TargetSubMode == ""):
+                                    bpy.context.view_layer.objects.active = Object
+                                    bpy.ops.object.mode_set(mode="EDIT")
+
+                                if (Object.type == "SURFACE") and (self.TargetType == "SURFACE") and (self.TargetSubMode == ""):
+                                    bpy.context.view_layer.objects.active = Object
+                                    bpy.ops.object.mode_set(mode="EDIT")
+
+                                if (Object.type == "META") and (self.TargetType == "META") and (self.TargetSubMode == ""):
+                                    bpy.context.view_layer.objects.active = Object
+                                    bpy.ops.object.mode_set(mode="EDIT")
+
+                                if (Object.type == "FONT") and (self.TargetType == "FONT") and (self.TargetSubMode == ""):
+                                    bpy.context.view_layer.objects.active = Object
+                                    bpy.ops.object.mode_set(mode="EDIT")
+
+                                if (Object.type == "GPENCIL") and (self.TargetType == "GPENCIL") and (self.TargetSubMode in ["POINT", "STROKE", "SEGMENT"]):
+                                    bpy.context.view_layer.objects.active = Object
+                                    bpy.ops.object.mode_set(mode="EDIT_GPENCIL")
+
+                                    context.scene.tool_settings.gpencil_selectmode_edit = self.TargetSubMode
+
+                                if (Object.type == "LATTICE") and (self.TargetType == "LATTICE") and (self.TargetSubMode == ""):
+                                    bpy.context.view_layer.objects.active = Object
+                                    bpy.ops.object.mode_set(mode="EDIT")
+                                else:
+                                    print(self.TargetSubMode)
 
                     return {"FINISHED"}
                 
@@ -258,35 +287,33 @@ class Alx_OT_Scene_VisibilityIsolator(bpy.types.Operator):
                         pass
 
         return {"FINISHED"}
-    
-class Alx_OT_Object_PropertiesEditOnSelection(bpy.types.Operator):
+
+class Alx_OT_Modifier_ManageOnSelected(bpy.types.Operator):
     """"""
 
     bl_label = ""
-    bl_idname = "alx.operator_object_properties_edit_on_selection"
+    bl_idname = "alx.operator_modifier_manage_on_selected"
+    bl_options = {"INTERNAL", "REGISTER", "UNDO"}
 
-    UseOperatorInvoke : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"})
+    UseCreateDuplicate : bpy.props.BoolProperty(name="Create Duplicates", default=False)
+    ModifierTypeSelection : bpy.props.EnumProperty(name="Modifiers Type", options={'ENUM_FLAG'}, items=AlxUtils.AlxModifierEnumItemsPreset)
 
     @classmethod
     def poll(self, context):
         return context.area.type == "VIEW_3D"
 
     def execute(self, context):
-        pass
-        # try:
-        #     context.selected_objects[0]
-        #     OldSelection = context.selected_objects
-        #     if (OldSelection != context.selected_objects):
+        for Object in context.selected_objects:
+            if (Object is not None):
+                for ModType in self.ModifierTypeSelection:
+                    if (self.UseCreateDuplicate == False):
+                        if (AlxUtils.AlxRetiriveObjectModifier(Object, ModType) is None):
+                            Object.modifiers.new(name="", type=ModType)
 
+                    if (self.UseCreateDuplicate == True):
+                        Object.modifiers.new(name="", type=ModType)
 
-        #     for SelectedObject in context.selected_objects:
-        #         if (SelectedObject.type == "MESH"):
-        #             SelectedObject.show_wire = self.UseShowWire
-        #             SelectedObject.show_in_front = self.UseShowInFront
-
-        # except:
-        #     pass
-        # return {"FINISHED"}
+        return {"FINISHED"}
     
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self, width=300)
@@ -373,6 +400,62 @@ class Alx_OT_Mesh_BoundaryMultiTool(bpy.types.Operator):
 
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self, width=300)
+
+class Alx_OT_Mesh_EditAttributes(bpy.types.Operator):
+    """"""
+
+    bl_label = ""
+    bl_idname = "alx.operator_mesh_edit_attributes"
+
+    AttributeName : bpy.props.StringProperty(name="Attribute Name", default="")
+    CreateMissingAttribute : bpy.props.BoolProperty(name="Create Missing Attribute")
+    AttributeDomainType : bpy.props.EnumProperty(name="Attribute Type", default=0, items=[("POINT", "Vertex", ""), ("EDGE", "Edge", "")])
+    AttributeType : bpy.props.EnumProperty(name="Attribute Type", default=0, items=[("FLOAT_COLOR", "Float Color", "")])
+    ColorValue : bpy.props.FloatVectorProperty(name="Color", subtype="COLOR", size=4, default=[0.0,0.0,0.0,0.0], min=0.0, max=1.0)
+
+    @classmethod
+    def poll(self, context):
+        return context.area.type == "VIEW_3D" and context.mode == "EDIT_MESH"
+    
+    def execute(self, context):
+        if (context.edit_object is not None):
+            if (context.mode == "EDIT_MESH") and (context.edit_object.type == "MESH"):
+                ContextMesh = context.edit_object.data
+                ContextBMesh = bmesh.from_edit_mesh(context.edit_object.data)
+
+                SelectedVertex = [Vertex.index for Vertex in ContextBMesh.verts if Vertex.select == True]
+
+                bpy.ops.object.mode_set(mode="OBJECT")
+
+                ContextAttribute = None
+
+                if (self.CreateMissingAttribute == False):
+                    ContextAttribute = ContextMesh.attributes.get(self.AttributeName)
+                if (self.CreateMissingAttribute == True):
+                    if (ContextMesh.attributes.get(self.AttributeName) is None):
+                        ContextMesh.attributes.new(name=self.AttributeName, type=self.AttributeType, domain=self.AttributeDomainType)
+
+                if (ContextAttribute is not None):
+                    if (self.AttributeDomainType == "POINT"):
+                        for Vertex in SelectedVertex:
+
+                            if (self.AttributeType == "FLOAT_COLOR"):
+                                ContextAttribute.data[Vertex].color = self.ColorValue
+
+                    bpy.ops.object.mode_set(mode="EDIT")
+
+    
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self, width=300)
+
+
+
+
+
+
+
 
 class Alx_OT_Armature_AssignToSelection(bpy.types.Operator):
     """"""
@@ -489,7 +572,7 @@ class Alx_OT_Armature_MatchIKByMirroredName(bpy.types.Operator):
 
     @classmethod
     def poll(self, context):
-        return context.area.type == "VIEW_3D"
+        return context.area.type == "VIEW_3D" and context.mode == "POSE"
 
     def execute(self, context):
         if (context.active_object is not None) and (context.active_object.type == "ARMATURE") and (context.mode == "POSE"):
@@ -534,21 +617,6 @@ class Alx_OT_Armature_MatchIKByMirroredName(bpy.types.Operator):
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self, width=300)
 
-class Alx_OT_Modifier_ManageOnSelected(bpy.types.Operator):
-    """"""
-
-    bl_label = ""
-    bl_idname = ""
-    bl_options = {"INTERNAL", "REGISTER", "UNDO"}
-
-    @classmethod
-    def poll(self, context):
-        return context.area.type == "VIEW_3D"
-
-    def execute(self, context):
-        bpy.ops.wm.call_panel()
-        return {"FINISHED"}
-
 class Alx_OT_Modifier_HideOnSelected(bpy.types.Operator):
     """"""
 
@@ -590,52 +658,4 @@ class Alx_OT_Modifier_HideOnSelected(bpy.types.Operator):
     
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self, width=300)
-    
-class Alx_OT_Camera_MultiTool(bpy.types.Operator):
-    """"""
-
-    bl_label = ""
-    bl_idname = "alx.camera_multi_tool"
-
-    @classmethod
-    def poll(self, context):
-        return context.area.type == "VIEW_3D"
-    
-    def execute(self, context):
-        print("")
-        return {"FINISHED"}
-    
-class Alx_OT_Mesh_EditAttributes(bpy.types.Operator):
-    """"""
-
-    bl_label = ""
-    bl_idname = "alx.operator_mesh_edit_attributes"
-
-    AttributeName : bpy.props.StringProperty(name="Attribute Name", default="")
-    AttributeType : bpy.props.EnumProperty(name="Attribute Type", default=1, items=[("color", "Color", "", 1), ("integer", "Integer", "", 2)])
-    ColorValue : bpy.props.FloatVectorProperty(name="Color", subtype="COLOR", size=4, default=[0.0,0.0,0.0,0.0], min=0.0, max=1.0)
-
-    @classmethod
-    def poll(self, context):
-        return context.area.type == "VIEW_3D"
-    
-    def execute(self, context):
-        if (context.edit_object is not None):
-            if (context.mode == "EDIT_MESH") and (context.edit_object.type == "MESH"):
-                ContextMesh = context.edit_object.data
-                ContextBMesh = bmesh.from_edit_mesh(context.edit_object.data)
-
-                SelectedVertex = [Vertex.index for Vertex in ContextBMesh.verts if Vertex.select == True]
-
-                bpy.ops.object.mode_set(mode="OBJECT")
-                ContextAttribute = ContextMesh.attributes.get(self.AttributeName)
-                if (ContextAttribute is not None):
-                    for Vertex in SelectedVertex:
-                        ContextAttribute.data[Vertex].color = self.ColorValue
-                bpy.ops.object.mode_set(mode="EDIT")
-
-    
-        return {"FINISHED"}
-
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self, width=300)
+   

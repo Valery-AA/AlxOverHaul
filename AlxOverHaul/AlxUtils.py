@@ -1,5 +1,7 @@
 import bpy
 
+AlxModifierEnumItemsPreset = []
+
 def AlxRetrieveContextObject(context):
     try:
         if (context is not None):
@@ -31,7 +33,7 @@ def AlxRetrieveContextArmature(context):
     return None
 
 def AlxRetiriveObjectModifier(TargetObejct, TargetType):
-    ModifierTypes = ["ARMATURE"]
+    ModifierTypes = ["MIRROR", "SUBSURF", "SHRINKWRAP", "ARMATURE"]
     if (TargetType in ModifierTypes):
         for Modifier in TargetObejct.modifiers:
             if (Modifier.type == TargetType):
