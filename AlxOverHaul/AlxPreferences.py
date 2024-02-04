@@ -1,11 +1,7 @@
 import bpy
 
-from AlxOverHaul import AlxKeymaps
+from AlxOverHaul import AlxPanels, AlxOperators, AlxKeymaps
 
-class AlxAddonProperties(bpy.types.PropertyGroup):
-    """"""
-    SceneIsolatorVisibilityTarget : bpy.props.EnumProperty(name="SceneIsolatorVisibilityTarget", options={'ENUM_FLAG'}, items=[("VIEWPORT", "Viewport", "", 1), ("RENDER", "Render", "", 2)])
-    
 
 
 class AlxOverHaulAddonPreferences(bpy.types.AddonPreferences):
@@ -35,6 +31,8 @@ class AlxOverHaulAddonPreferences(bpy.types.AddonPreferences):
     View3d_Rotate_Use_GRLess : bpy.props.BoolProperty(name="Alx Preset: Change View3D Rotate", description="Replace [Middle-Mouse] with [GRLess] for 3D View Rotation", update=UPDATE_View3d_Rotate_Use_GRLess)
     View3d_Zoom_Use_GRLess : bpy.props.BoolProperty(name="Alx Preset: Change View3D Zoom", description="Replace [Ctrl + Middle-Mouse] with [Ctrl + GRLess] for 3D View Zoom", update=UPDATE_View3d_Zoom_Use_GRLess)
 
+    EnableStanfordExportSubmodule : bpy.props.BoolProperty(name="Enable Stanford Batch Exporter BL(3.x)", description="Enables Stanford .ply Batch Exporter Submodule, works only in Blender Version 3.x Verified on 3.6", default=False)
+
     def draw(self, context):
         AlxLayout = self.layout
 
@@ -42,5 +40,5 @@ class AlxOverHaulAddonPreferences(bpy.types.AddonPreferences):
         AlxLayout.prop(self, "View3d_Rotate_Use_GRLess", toggle=True)
         AlxLayout.prop(self, "View3d_Zoom_Use_GRLess", toggle=True)
 
-def GetPreferences():
+def AlxGetPreferences():
     return bpy.context.preferences.addons[__package__].preferences

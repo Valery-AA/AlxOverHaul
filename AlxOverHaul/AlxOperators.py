@@ -1,7 +1,130 @@
 import bpy
 import bmesh
 
-from AlxOverHaul import AlxPreferences, AlxUtils
+# change working area to type bpy.context.area.type = "VIEW_3D"
+
+class Alx_OT_Scene_VisibilityIsolator(bpy.types.Operator):
+    """"""
+
+    bl_label = ""
+    bl_idname = "alx.operator_scene_visibility_isolator"
+    bl_options = {"INTERNAL"}
+
+    TargetVisibility : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"})
+    Panik : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"})
+
+    @classmethod
+    def poll(self, context):
+        return context.area.type == "VIEW_3D"
+
+    def execute(self, context):
+        SelectedVisibility = context.scene.alx_addon_properties.scene_isolator_visibility_target
+        SelectedType = context.scene.alx_addon_properties.scene_isolator_type_target
+
+        if (len(SelectedVisibility) != 0) and (len(SelectedType) != 0):
+            VisibilityType = []
+            TargetType = []
+            VisibilityType = [visibility for visibility in SelectedVisibility]
+            TargetType = [type for type in SelectedType]
+
+            try:
+                VisibilityType[0]
+                TargetType[0]
+
+                if (self.Panik == True):
+                    if ("OBJECT" in TargetType):
+                        for Object in bpy.data.objects:
+                            if (Object is not None):
+                                if ("VIEWPORT" in VisibilityType):
+                                    Object.hide_viewport = False
+                                if ("RENDER" in VisibilityType):
+                                    Object.hide_render = False
+
+                    if ("COLLECTION" in TargetType): 
+                        for Collection in bpy.data.collections:
+                            if ("VIEWPORT" in VisibilityType):
+                                Collection.hide_viewport = False
+                            if ("RENDER" in VisibilityType):
+                                Collection.hide_render = False
+                    return {"FINISHED"}
+            except:
+                pass
+        try:
+            VisibilityType = []
+            TargetType = []
+            VisibilityType = [visibility for visibility in SelectedVisibility]
+            TargetType = [type for type in SelectedType]
+
+            try:
+                VisibilityType[0]
+                TargetType[0]
+
+                IsolatorObjects = []
+                ObjectsCollections = []
+                IsolatorCollection = []
+                try:
+                    context.selected_objects[0]
+                    IsolatorObjects = [Object for Object in context.scene.objects if ((Object is not None) and (Object not in context.selected_objects))]
+                    ObjectsCollections = [Object.users_collection[0] for Object in context.selected_objects]
+                    IsolatorCollection = [Collection for ObjectCollection in ObjectsCollections for Collection in bpy.data.collections if (ObjectCollection != Collection) and (ObjectCollection not in Collection.children_recursive)]
+                except:
+                    pass
+                print("Object %s" % ObjectsCollections)
+                print("Isolator %s" % IsolatorCollection)
+
+                if ("OBJECT" in TargetType):
+                    try:
+                        IsolatorObjects[0]
+                        bpy.types.Scene.alx_scene_isolator_visibility_object_list = IsolatorObjects
+
+                        for Object in IsolatorObjects:
+                            if (Object is not None):
+                                if ("VIEWPORT" in VisibilityType):
+                                    Object.hide_viewport = not self.TargetVisibility
+                                if ("RENDER" in VisibilityType):
+                                    Object.hide_render = not self.TargetVisibility
+                    except:
+                        try:
+                            context.scene.alx_scene_isolator_visibility_object_list[0]
+
+                            for Object in context.scene.alx_scene_isolator_visibility_object_list:
+                                if (Object is not None):
+                                    if ("VIEWPORT" in VisibilityType):
+                                        Object.hide_viewport = not self.TargetVisibility
+                                    if ("RENDER" in VisibilityType):
+                                        Object.hide_render = not self.TargetVisibility
+                        except:
+                            pass
+
+                if ("COLLECTION" in TargetType): 
+                    try:
+                        
+                        IsolatorCollection[0]
+                        bpy.types.Scene.alx_scene_isolator_visibility_collection_list = IsolatorCollection
+
+                        for Collection in IsolatorCollection:
+                            if ("VIEWPORT" in VisibilityType):
+                                Collection.hide_viewport = not self.TargetVisibility
+                            if ("RENDER" in VisibilityType):
+                                Collection.hide_render = not self.TargetVisibility
+                    except:
+                        try:
+                            context.scene.alx_scene_isolator_visibility_collection_list[0]
+
+                            for Collection in bpy.types.Scene.alx_scene_isolator_visibility_collection_list:
+                                if ("VIEWPORT" in VisibilityType):
+                                    Collection.hide_viewport = not self.TargetVisibility
+                                if ("RENDER" in VisibilityType):
+                                    Collection.hide_render = not self.TargetVisibility
+                        except:
+                            pass
+            except:
+                pass
+
+        except Exception as error:
+            print(error)
+
+        return {"FINISHED"}
 
 class Alx_OT_Mode_UnlockedModes(bpy.types.Operator):
     """"""
@@ -19,7 +142,7 @@ class Alx_OT_Mode_UnlockedModes(bpy.types.Operator):
     TargetArmature : bpy.props.StringProperty(name="", options={"HIDDEN"})
 
     @classmethod
-    def poll(self, context):
+    def poll(self, context: bpy.types.Context):
         return (context.area.type == "VIEW_3D")
     
     def execute(self, context):
@@ -67,8 +190,6 @@ class Alx_OT_Mode_UnlockedModes(bpy.types.Operator):
                                 if (Object.type == "LATTICE") and (self.TargetType == "LATTICE") and (self.TargetSubMode == ""):
                                     bpy.context.view_layer.objects.active = Object
                                     bpy.ops.object.mode_set(mode="EDIT")
-                                else:
-                                    print(self.TargetSubMode)
 
                     return {"FINISHED"}
                 
@@ -114,178 +235,27 @@ class Alx_OT_Mode_UnlockedModes(bpy.types.Operator):
 
         return {"FINISHED"}
 
-class Alx_OT_Scene_UnlockedSnapping(bpy.types.Operator):
+class Alx_OT_UI_SimpleDesigner(bpy.types.Operator):
     """"""
 
     bl_label = ""
-    bl_idname = "alx.operator_scene_unlocked_snapping"
+    bl_idname = "alx.operator_ui_simple_designer"
     bl_options = {"INTERNAL"}
 
-    SourceSnapping : bpy.props.StringProperty(name="", default="NONE", options={"HIDDEN"})
-    TargetSnapping : bpy.props.StringProperty(name="", default="NONE", options={"HIDDEN"})
-    SubTargetSnapping : bpy.props.StringProperty(name="", default="NONE", options={"HIDDEN"})
-
-    ShouldOffset : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"})
+    AreaTypeTarget : bpy.props.EnumProperty(default="VIEW_3D", items=
+                                            [
+                                            ("VIEW_3D", "Viewport", "", 1),
+                                            ("OUTLINER", "Outliner", "", 1<<1),
+                                            ("PROPERTIES", "Properties", "", 1<<2),
+                                            ])
 
     @classmethod
-    def poll(self, context):
-        return context.area.type == "VIEW_3D"
+    def poll(self, context: bpy.types.Context):
+        return True
     
     def execute(self, context):
-        if (self.SourceSnapping == "ACTIVE"):
-            if (self.TargetSnapping == "SELECTED"):
-                if (len(context.selected_objects) != 0):
-                    for Object in context.selected_objects:
-                        if (context.active_object is not None) and (Object is not context.active_object):
-                            Object.location = context.active_object.location
-                return {"FINISHED"}
-            
-            if (self.TargetSnapping == "SCENE_CURSOR"):
-                if (context.active_object is not None):
-                    if (context.mode == "OBJECT"):
-                        context.scene.cursor.location = context.active_object.location
-                    if (context.mode == "EDIT_MESH"):
-                        ContextBmesh = bmesh.from_edit_mesh(context.active_object.data)
-
-                        try:
-                            ContextBmesh.select_history[1]
-
-                            UniqueVertex = []
-                            SelectionVx_X = []
-                            SelectionVx_Y = []
-                            SelectionVx_Z = []
-                            for SelectedItem in ContextBmesh.select_history:
-                                if (SelectedItem.__class__ is bmesh.types.BMVert):
-                                    if (SelectedItem not in UniqueVertex):
-                                        UniqueVertex.append(SelectedItem)
-
-                                        SelectionVx_X.append(SelectedItem.co.x)
-                                        SelectionVx_Y.append(SelectedItem.co.y)
-                                        SelectionVx_Z.append(SelectedItem.co.z)
-
-                                if (SelectedItem.__class__ is bmesh.types.BMEdge) or (SelectedItem.__class__ is bmesh.types.BMFace):
-                                    for Vertex in SelectedItem.verts:
-                                        if Vertex not in UniqueVertex:
-                                            UniqueVertex.append(Vertex)
-
-                                            SelectionVx_X.append(Vertex.co.x)
-                                            SelectionVx_Y.append(Vertex.co.y)
-                                            SelectionVx_Z.append(Vertex.co.z)
-
-                            print(UniqueVertex)
-
-                            AverageX = sum(SelectionVx_X) / len(SelectionVx_X)
-                            print(AverageX)
-                            AverageY = sum(SelectionVx_Y) / len(SelectionVx_Y)
-                            print(AverageY)
-                            AverageZ = sum(SelectionVx_Z) / len(SelectionVx_Z)
-                            print(AverageZ)
-
-                            AverageCoordinates = [AverageX, AverageY, AverageZ]
-                            context.scene.cursor.location = AverageCoordinates
-
-                        except:
-                            pass
-                            
-
-                return {"FINISHED"}
-
-        if (self.SourceSnapping == "SCENE_CURSOR"):
-            if (self.TargetSnapping == "SELECTED"):
-                if (self.SubTargetSnapping == "OBJECT"):
-                    if (len(context.selected_objects) != 0):
-                        for Object in context.selected_objects:
-                                Object.location = context.scene.cursor.location
-                if (self.SubTargetSnapping == "ORIGIN"):
-                    if (len(context.selected_objects) != 0):
-                        for Object in context.selected_objects:
-                            bpy.context.view_layer.objects.active = Object
-                            bpy.ops.object.origin_set(type="ORIGIN_CURSOR")
-
-                    
-
-                    return {"FINISHED"}
-        
-        if (self.SourceSnapping == "RESET"):
-            if (self.TargetSnapping == "SCENE_CURSOR"):
-                context.scene.cursor.location = [0.0, 0.0, 0.0]
-                return {"FINISHED"}
-
-            return {"FINISHED"}
-
-        return {"FINISHED"}
-
-class Alx_OT_Scene_VisibilityIsolator(bpy.types.Operator):
-    """"""
-
-    bl_label = ""
-    bl_idname = "alx.operator_scene_visibility_isolator"
-    bl_options = {"INTERNAL"}
-
-    TargetVisibility : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"})
-    UseObject : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"})
-    UseCollection : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"})
-
-    @classmethod
-    def poll(self, context):
-        return context.area.type == "VIEW_3D"
-
-    def execute(self, context):
-        if (len(context.scene.alx_addon_properties.SceneIsolatorVisibilityTarget) != 0):
-            TargetType = set(Target for Target in context.scene.alx_addon_properties.SceneIsolatorVisibilityTarget)
-            SceneCollectionContext = [Object.users_collection[0] for Object in context.selected_objects if (Object.users_collection[0] is not None)]
-
-            IsolatorSelectionSet = [Object for Object in context.scene.objects if ((Object is not None) and (len(context.selected_objects) != 0) and (Object not in context.selected_objects))]
-            IsolatorCollectionSet = [Collection for Collection in bpy.data.collections for SceneCollection in SceneCollectionContext if (SceneCollection is not Collection) and (SceneCollection not in Collection.children_recursive)]
-
-            if (self.UseObject == True):
-                try:
-                    IsolatorSelectionSet[0]
-
-                    bpy.types.Scene.alx_scene_isolator_visibility_object_list = IsolatorSelectionSet
-
-                    if (self.UseObject == True):
-                        for Object in IsolatorSelectionSet:
-                            if (Object is not None):
-                                if ("VIEWPORT" in TargetType):
-                                    Object.hide_viewport = not self.TargetVisibility
-                                if ("RENDER" in TargetType):
-                                    Object.hide_render = not self.TargetVisibility
-                except:
-                    try:
-                        if (self.UseObject == True):
-                            context.scene.alx_scene_isolator_visibility_object_list[0]
-                            for Object in context.scene.alx_scene_isolator_visibility_object_list:
-                                if (Object is not None):
-                                    if ("VIEWPORT" in TargetType):
-                                        Object.hide_viewport = not self.TargetVisibility
-                                    if ("RENDER" in TargetType):
-                                        Object.hide_render = not self.TargetVisibility
-                    except:
-                        pass
-
-            if (self.UseCollection == True):
-                try:
-                    IsolatorCollectionSet[0]
-
-                    bpy.types.Scene.alx_scene_isolator_visibility_collection_list = IsolatorCollectionSet
-
-                    for Collection in IsolatorCollectionSet:
-                        if ("VIEWPORT" in TargetType):
-                            Collection.hide_viewport = not self.TargetVisibility
-                        if ("RENDER" in TargetType):
-                            Collection.hide_render = not self.TargetVisibility
-                except:
-                    try:
-                        bpy.types.Scene.alx_scene_isolator_visibility_collection_list[0]
-                        for Collection in bpy.types.Scene.alx_scene_isolator_visibility_collection_list:
-                            if ("VIEWPORT" in TargetType):
-                                Collection.hide_viewport = not self.TargetVisibility
-                            if ("RENDER" in TargetType):
-                                Collection.hide_render = not self.TargetVisibility
-                    except:
-                        pass
-
+        if (context.area is not None):
+            context.area.type = self.AreaTypeTarget
         return {"FINISHED"}
 
 class Alx_OT_Modifier_ManageOnSelected(bpy.types.Operator):
@@ -296,7 +266,6 @@ class Alx_OT_Modifier_ManageOnSelected(bpy.types.Operator):
     bl_options = {"INTERNAL", "REGISTER", "UNDO"}
 
     UseCreateDuplicate : bpy.props.BoolProperty(name="Create Duplicates", default=False)
-    ModifierTypeSelection : bpy.props.EnumProperty(name="Modifiers Type", options={'ENUM_FLAG'}, items=AlxUtils.AlxModifierEnumItemsPreset)
 
     @classmethod
     def poll(self, context):
@@ -305,13 +274,29 @@ class Alx_OT_Modifier_ManageOnSelected(bpy.types.Operator):
     def execute(self, context):
         for Object in context.selected_objects:
             if (Object is not None):
-                for ModType in self.ModifierTypeSelection:
+                for ModType in ModTypeList:
+                    Modifier = None
+
                     if (self.UseCreateDuplicate == False):
                         if (AlxUtils.AlxRetiriveObjectModifier(Object, ModType) is None):
-                            Object.modifiers.new(name="", type=ModType)
+                            Modifier = Object.modifiers.new(name="", type=ModType)
 
                     if (self.UseCreateDuplicate == True):
-                        Object.modifiers.new(name="", type=ModType)
+                        Modifier = Object.modifiers.new(name="", type=ModType)
+
+                    if (Modifier is not None):
+                        Object.modifiers.move(Object.modifiers.find(Modifier.name), ModTypeList.index(ModType))
+
+                        match ModType:
+                            case "BEVEL":
+                                Modifier.width = 0.002
+                                Modifier.segments = 2
+                                Modifier.miter_outer = "MITER_ARC"
+                                Modifier.harden_normals = True
+                            
+                            case "SUBSURF":
+                                Modifier.render_levels = 1
+                                Modifier.quality = 6
 
         return {"FINISHED"}
     
@@ -409,52 +394,148 @@ class Alx_OT_Mesh_EditAttributes(bpy.types.Operator):
 
     AttributeName : bpy.props.StringProperty(name="Attribute Name", default="")
     CreateMissingAttribute : bpy.props.BoolProperty(name="Create Missing Attribute")
+    ShouldDeleteAttribute : bpy.props.BoolProperty(name="Delete Attribute", default=False)
     AttributeDomainType : bpy.props.EnumProperty(name="Attribute Type", default=0, items=[("POINT", "Vertex", ""), ("EDGE", "Edge", "")])
     AttributeType : bpy.props.EnumProperty(name="Attribute Type", default=0, items=[("FLOAT_COLOR", "Float Color", "")])
-    ColorValue : bpy.props.FloatVectorProperty(name="Color", subtype="COLOR", size=4, default=[0.0,0.0,0.0,0.0], min=0.0, max=1.0)
+    ColorValue : bpy.props.FloatVectorProperty(name="Color", subtype="COLOR", size=4, default=[0.0, 0.0, 0.0, 1.0], min=0.0, max=1.0)
 
     @classmethod
     def poll(self, context):
         return context.area.type == "VIEW_3D" and context.mode == "EDIT_MESH"
     
     def execute(self, context):
-        if (context.edit_object is not None):
-            if (context.mode == "EDIT_MESH") and (context.edit_object.type == "MESH"):
-                ContextMesh = context.edit_object.data
-                ContextBMesh = bmesh.from_edit_mesh(context.edit_object.data)
+        try:            
+            context.selected_objects[0]
+            MeshSelection = [Object.data for Object in context.selected_objects if (Object is not None) and (Object.type == "MESH")]
 
-                SelectedVertex = [Vertex.index for Vertex in ContextBMesh.verts if Vertex.select == True]
+            if (context.mode == "EDIT_MESH"):
 
-                bpy.ops.object.mode_set(mode="OBJECT")
+                for MeshObject in MeshSelection:
+                    ContextBMesh = bmesh.from_edit_mesh(MeshObject)
 
-                ContextAttribute = None
+                    SelectedVertex = [Vertex.index for Vertex in ContextBMesh.verts if Vertex.select == True]
 
-                if (self.CreateMissingAttribute == False):
-                    ContextAttribute = ContextMesh.attributes.get(self.AttributeName)
-                if (self.CreateMissingAttribute == True):
-                    if (ContextMesh.attributes.get(self.AttributeName) is None):
-                        ContextMesh.attributes.new(name=self.AttributeName, type=self.AttributeType, domain=self.AttributeDomainType)
+                    bpy.ops.object.mode_set(mode="OBJECT")
 
-                if (ContextAttribute is not None):
-                    if (self.AttributeDomainType == "POINT"):
-                        for Vertex in SelectedVertex:
+                    ContextAttribute = MeshObject.attributes.get(self.AttributeName)
 
-                            if (self.AttributeType == "FLOAT_COLOR"):
-                                ContextAttribute.data[Vertex].color = self.ColorValue
+                    if (ContextAttribute is None):
+                        if (self.CreateMissingAttribute == True):
+                            ContextAttribute = MeshObject.attributes.new(name=self.AttributeName, type=self.AttributeType, domain=self.AttributeDomainType)
+
+                    if (ContextAttribute is not None):
+                        if (self.ShouldDeleteAttribute == True):
+                            MeshObject.attributes.remove(ContextAttribute)
+
+                        if (self.AttributeDomainType == "POINT"):
+                            for Vertex in SelectedVertex:
+                                if (self.AttributeType == "FLOAT_COLOR"):
+                                    ContextAttribute.data[Vertex].color = self.ColorValue
 
                     bpy.ops.object.mode_set(mode="EDIT")
-
+        except Exception as e:
+            print(e)
     
         return {"FINISHED"}
 
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self, width=300)
 
+class Alx_OT_Scene_UnlockedSnapping(bpy.types.Operator):
+    """"""
 
+    bl_label = ""
+    bl_idname = "alx.operator_scene_unlocked_snapping"
+    bl_options = {"INTERNAL"}
 
+    SourceSnapping : bpy.props.StringProperty(name="", default="NONE", options={"HIDDEN"})
+    TargetSnapping : bpy.props.StringProperty(name="", default="NONE", options={"HIDDEN"})
+    SubTargetSnapping : bpy.props.StringProperty(name="", default="NONE", options={"HIDDEN"})
 
+    ShouldOffset : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"})
 
+    @classmethod
+    def poll(self, context):
+        return context.area.type == "VIEW_3D"
+    
+    def execute(self, context):
+        if (self.SourceSnapping == "ACTIVE"):
+            if (self.TargetSnapping == "SELECTED"):
+                if (len(context.selected_objects) != 0):
+                    for Object in context.selected_objects:
+                        if (context.active_object is not None) and (Object is not context.active_object):
+                            Object.location = context.active_object.location
+                return {"FINISHED"}
+            
+            if (self.TargetSnapping == "SCENE_CURSOR"):
+                if (context.active_object is not None):
+                    if (context.mode == "OBJECT"):
+                        context.scene.cursor.location = context.active_object.location
+                    if (context.mode == "EDIT_MESH"):
+                        ContextBmesh = bmesh.from_edit_mesh(context.active_object.data)
 
+                        try:
+                            ContextBmesh.select_history[1]
+
+                            UniqueVertex = []
+                            SelectionVx_X = []
+                            SelectionVx_Y = []
+                            SelectionVx_Z = []
+                            for SelectedItem in ContextBmesh.select_history:
+                                if (SelectedItem.__class__ is bmesh.types.BMVert):
+                                    if (SelectedItem not in UniqueVertex):
+                                        UniqueVertex.append(SelectedItem)
+
+                                        SelectionVx_X.append(SelectedItem.co.x)
+                                        SelectionVx_Y.append(SelectedItem.co.y)
+                                        SelectionVx_Z.append(SelectedItem.co.z)
+
+                                if (SelectedItem.__class__ is bmesh.types.BMEdge) or (SelectedItem.__class__ is bmesh.types.BMFace):
+                                    for Vertex in SelectedItem.verts:
+                                        if Vertex not in UniqueVertex:
+                                            UniqueVertex.append(Vertex)
+
+                                            SelectionVx_X.append(Vertex.co.x)
+                                            SelectionVx_Y.append(Vertex.co.y)
+                                            SelectionVx_Z.append(Vertex.co.z)
+
+                            AverageX = sum(SelectionVx_X) / len(SelectionVx_X)
+                            AverageY = sum(SelectionVx_Y) / len(SelectionVx_Y)
+                            AverageZ = sum(SelectionVx_Z) / len(SelectionVx_Z)
+
+                            AverageCoordinates = [AverageX, AverageY, AverageZ]
+                            context.scene.cursor.location = AverageCoordinates
+
+                        except:
+                            pass
+                            
+
+                return {"FINISHED"}
+
+        if (self.SourceSnapping == "SCENE_CURSOR"):
+            if (self.TargetSnapping == "SELECTED"):
+                if (self.SubTargetSnapping == "OBJECT"):
+                    if (len(context.selected_objects) != 0):
+                        for Object in context.selected_objects:
+                                Object.location = context.scene.cursor.location
+                if (self.SubTargetSnapping == "ORIGIN"):
+                    if (len(context.selected_objects) != 0):
+                        for Object in context.selected_objects:
+                            bpy.context.view_layer.objects.active = Object
+                            bpy.ops.object.origin_set(type="ORIGIN_CURSOR")
+
+                    
+
+                    return {"FINISHED"}
+        
+        if (self.SourceSnapping == "RESET"):
+            if (self.TargetSnapping == "SCENE_CURSOR"):
+                context.scene.cursor.location = [0.0, 0.0, 0.0]
+                return {"FINISHED"}
+
+            return {"FINISHED"}
+
+        return {"FINISHED"}
 
 
 class Alx_OT_Armature_AssignToSelection(bpy.types.Operator):

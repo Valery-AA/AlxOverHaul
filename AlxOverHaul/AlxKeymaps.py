@@ -1,17 +1,27 @@
 import bpy
-from AlxOverHaul import AlxPreferences, AlxKeymaps, AlxPanels
+import time
+from AlxOverHaul import AlxPreferences, AlxPanels
+
+
 
 AlxAddonKeymaps = []
 
 def AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="", ItemidName="", OperatorID="", MapType="", Key="", UseShift=False, UseCtrl=False, UseAlt=False, TriggerType="PRESS", Active=False):
     """KeyconfigSource : [Blender, Blender addon, Blender user]"""
     if (KeyconfigSource != "") and (ConfigSpaceName != ""):
-        WindowManager = bpy.context.window_manager
-        DefaultKeyConfigs = WindowManager.keyconfigs[KeyconfigSource]
-        DefaultKeyMaps = DefaultKeyConfigs.keymaps
-
         try:
-            for KeymapItem in DefaultKeyMaps[ConfigSpaceName].keymap_items:
+            WindowManager = bpy.context.window_manager
+            match KeyconfigSource:
+                case "Blender":
+                    DefaultKeyConfigs = WindowManager.keyconfigs.default
+                case "Blender addon":
+                    DefaultKeyConfigs = WindowManager.keyconfigs.addon
+                case "Blender user":
+                    DefaultKeyConfigs = WindowManager.keyconfigs.user
+
+            DefaultKeyMaps = DefaultKeyConfigs.keymaps
+            KeymapItems = DefaultKeyMaps[ConfigSpaceName].keymap_items
+            for KeymapItem in KeymapItems:
                 if (OperatorID == ""):
                     if (KeymapItem is not None) and (KeymapItem.idname == ItemidName):
                         if (MapType != ""):
@@ -35,7 +45,8 @@ def AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="", ItemidName="",
                         KeymapItem.alt = UseAlt
                         KeymapItem.value = TriggerType
                         KeymapItem.active = Active
-        except:
+        except Exception as e:
+            print(e)
             print("KEYMAP FAILED: " + ItemidName + " " + OperatorID)
 
 def AlxKeymapRegister(KeymapCallType="", SpaceType="EMPTY", RegionType="WINDOW", ItemidName="", Key="", KeyModifier="", UseShift=False, UseCtrl=False, UseAlt=False, TriggerType="PRESS"):
@@ -77,20 +88,20 @@ def AlxKeymapRegister(KeymapCallType="", SpaceType="EMPTY", RegionType="WINDOW",
                 AlxAddonKeymaps.append((Keymap, KeymapItem))
 
 def KeymapCreation():
-    if (AlxPreferences.GetPreferences().View3d_Pan_Use_Shift_GRLess == True):
-        AlxEditKeymaps(ConfigSpaceName="3D View", ItemidName="view3d.move", MapType="KEYBOARD", Key="GRLESS", UseShift=True, Active=True)
-    if (AlxPreferences.GetPreferences().View3d_Pan_Use_Shift_GRLess == False):
-        AlxEditKeymaps(ConfigSpaceName="3D View", ItemidName="view3d.move", MapType="MOUSE", Key="MIDDLEMOUSE", UseShift=True, Active=True)
+    if (AlxPreferences.AlxGetPreferences().View3d_Pan_Use_Shift_GRLess == True):
+        AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="3D View", ItemidName="view3d.move", MapType="KEYBOARD", Key="GRLESS", UseShift=True, Active=True)
+    if (AlxPreferences.AlxGetPreferences().View3d_Pan_Use_Shift_GRLess == False):
+        AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="3D View", ItemidName="view3d.move", MapType="MOUSE", Key="MIDDLEMOUSE", UseShift=True, Active=True)
 
-    if (AlxPreferences.GetPreferences().View3d_Rotate_Use_GRLess == True):
-        AlxEditKeymaps(ConfigSpaceName="3D View", ItemidName="view3d.rotate", MapType="KEYBOARD", Key="GRLESS", Active=True)
-    if (AlxPreferences.GetPreferences().View3d_Rotate_Use_GRLess == False):
-        AlxEditKeymaps(ConfigSpaceName="3D View", ItemidName="view3d.rotate", MapType="MOUSE", Key="MIDDLEMOUSE", Active=True)
+    if (AlxPreferences.AlxGetPreferences().View3d_Rotate_Use_GRLess == True):
+        AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="3D View", ItemidName="view3d.rotate", MapType="KEYBOARD", Key="GRLESS", Active=True)
+    if (AlxPreferences.AlxGetPreferences().View3d_Rotate_Use_GRLess == False):
+        AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="3D View", ItemidName="view3d.rotate", MapType="MOUSE", Key="MIDDLEMOUSE", Active=True)
 
-    if (AlxPreferences.GetPreferences().View3d_Zoom_Use_GRLess == True):
-        AlxEditKeymaps(ConfigSpaceName="3D View", ItemidName="view3d.zoom", MapType="KEYBOARD", Key="GRLESS", UseCtrl=True, Active=True)
-    if (AlxPreferences.GetPreferences() .View3d_Zoom_Use_GRLess == False):
-        AlxEditKeymaps(ConfigSpaceName="3D View", ItemidName="view3d.zoom", MapType="MOUSE", Key="MIDDLEMOUSE", UseCtrl=True, Active=True)
+    if (AlxPreferences.AlxGetPreferences().View3d_Zoom_Use_GRLess == True):
+        AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="3D View", ItemidName="view3d.zoom", MapType="KEYBOARD", Key="GRLESS", UseCtrl=True, Active=True)
+    if (AlxPreferences.AlxGetPreferences() .View3d_Zoom_Use_GRLess == False):
+        AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="3D View", ItemidName="view3d.zoom", MapType="MOUSE", Key="MIDDLEMOUSE", UseCtrl=True, Active=True)
 
     AlxKeymapRegister(KeymapCallType="OPERATOR", RegionType="WINDOW", ItemidName="wm.window_fullscreen_toggle", Key="F11", UseAlt=True, TriggerType="PRESS")
     AlxKeymapRegister(KeymapCallType="OPERATOR", RegionType="WINDOW", ItemidName="scripts.reload", Key="F8", TriggerType="PRESS")
@@ -107,7 +118,7 @@ def KeymapCreation():
 
    
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Armature", ItemidName="armature.align", Active=False)
-    AlxKeymapRegister(KeymapCallType="PANEL", RegionType="WINDOW", ItemidName=AlxPanels.Alx_PT_AlexandriaToolPanel.bl_idname, Key="A", UseCtrl=True, UseAlt=True, TriggerType="CLICK")
+    AlxKeymapRegister(KeymapCallType="PANEL", RegionType="WINDOW", ItemidName=AlxPanels.Alx_PT_AlexandriaGeneralPanel.bl_idname, Key="A", UseCtrl=True, UseAlt=True, TriggerType="CLICK")
 
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="3D View", ItemidName="wm.call_menu_pie", OperatorID="VIEW3D_MT_snap_pie", Active=False)
     AlxKeymapRegister(KeymapCallType="PANEL", RegionType="WINDOW", ItemidName=AlxPanels.Alx_PT_Scene_GeneralPivot.bl_idname, Key="S", UseShift=True, TriggerType="CLICK")
