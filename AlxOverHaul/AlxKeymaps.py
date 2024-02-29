@@ -1,8 +1,7 @@
 import bpy
-import time
-from AlxOverHaul import AlxPreferences, AlxPanels
 
-
+from . import AlxPreferences
+from .AlxPanels import Alx_PT_AlexandriaGeneralPanel, Alx_MT_UnlockedModesPie, Alx_PT_Scene_GeneralPivot
 
 AlxAddonKeymaps = []
 
@@ -45,49 +44,61 @@ def AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="", ItemidName="",
                         KeymapItem.alt = UseAlt
                         KeymapItem.value = TriggerType
                         KeymapItem.active = Active
-        except Exception as e:
-            print(e)
-            print("KEYMAP FAILED: " + ItemidName + " " + OperatorID)
+        except Exception as error:
+            pass
 
-def AlxKeymapRegister(KeymapCallType="", SpaceType="EMPTY", RegionType="WINDOW", ItemidName="", Key="", KeyModifier="", UseShift=False, UseCtrl=False, UseAlt=False, TriggerType="PRESS"):
+def AlxKeymapRegister(keymap_call_type="", space_type="EMPTY", region_type="WINDOW", item_idname="", key="NONE", key_modifier="", use_shift=False, use_ctrl=False, use_alt=False, trigger_type="PRESS", **kwargs):
     """
-    Keymap Call Type: [OPERATOR, MENU, PANEL, PIE]
-    Region Type: [WINDOW]
+    Available keymap_call_type: ["OPERATOR", "MENU", "PANEL", "PIE"]
     """
-    if (ItemidName != ""):
-        WindowManager = bpy.context.window_manager
-        KeyConfigs = WindowManager.keyconfigs.addon
+    
+    WindowManager = bpy.context.window_manager
+    KeymapConfigs = WindowManager.keyconfigs.addon
 
-        if KeyConfigs:
+    keymap_name = ""
+    if (region_type == "WINDOW") and (space_type != "VIEW_3D"):
+        keymap_name = "Window"
+        space_type = "EMPTY"
+    if (space_type == "VIEW_3D"):
+        keymap_name = "3D View"
 
-            CallType = ""
-            if (KeymapCallType == "OPERATOR"):
-                CallType = ItemidName
-            if (KeymapCallType == "MENU"):
-                CallType = "wm.call_menu"
-            if (KeymapCallType == "PANEL"):
-                CallType = "wm.call_panel"
-            if (KeymapCallType == "PIE"):
-                CallType = "wm.call_menu_pie"
+    keymap_call_id = ""
+    if (keymap_call_type == "OPERATOR"):
+        keymap_call_id = item_idname
+    if (keymap_call_type == "MENU"):
+        keymap_call_id = "wm.call_menu"
+    if (keymap_call_type == "PANEL"):
+        keymap_call_id = "wm.call_panel"
+    if (keymap_call_type == "PIE"):
+        keymap_call_id = "wm.call_menu_pie"
 
-            KeymapName = ""
-            if (RegionType == "WINDOW") and (SpaceType != "VIEW_3D"):
-                KeymapName = "Window"
-                SpaceType = "EMPTY"
-            if (SpaceType == "VIEW_3D"):
-                KeymapName = "3D View"
-            
-            if (KeyModifier == ""):
-                KeyModifier = "NONE"
+    if (key_modifier == ""):
+        key_modifier = "NONE"
 
-            if (CallType != "") and (SpaceType != ""):
-                Keymap = KeyConfigs.keymaps.new(name=KeymapName, space_type=SpaceType, region_type=RegionType)
-                KeymapItem = Keymap.keymap_items.new(CallType, type=Key, key_modifier=KeyModifier, shift=UseShift, ctrl=UseCtrl, alt=UseAlt, value=TriggerType, head=True)
-                if (KeymapCallType in ["PANEL", "PIE"]):
-                    KeymapItem.properties.name = ItemidName
-                AlxAddonKeymaps.append((Keymap, KeymapItem))
 
-def KeymapCreation():
+    if KeymapConfigs is not None:
+
+        if (keymap_call_id != "") and (item_idname != ""):
+            Keymap = KeymapConfigs.keymaps.new(name=keymap_name, space_type=space_type, region_type=region_type)
+            KeymapItem = Keymap.keymap_items.new(idname=keymap_call_id, type=key, key_modifier=key_modifier, shift=use_shift, ctrl=use_ctrl, alt=use_alt, value=trigger_type, head=True)
+
+            if (KeymapItem.properties is not None):
+
+                if (keymap_call_type in ["PANEL", "MENU", "PIE"]):
+                    KeymapItem.properties.name = item_idname
+
+                for property, value in kwargs.items():
+                    if (hasattr(KeymapItem.properties, f"{property}")):
+                        setattr(KeymapItem.properties, property, value)
+
+            else:
+                print(f"KeymapItem.properties: {KeymapItem.properties}")
+
+            AlxAddonKeymaps.append((Keymap, KeymapItem))
+    else:
+        print(f"keyconfigs: {KeymapConfigs}")
+
+def AlxKeymapCreation():
     if (AlxPreferences.AlxGetPreferences().View3d_Pan_Use_Shift_GRLess == True):
         AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="3D View", ItemidName="view3d.move", MapType="KEYBOARD", Key="GRLESS", UseShift=True, Active=True)
     if (AlxPreferences.AlxGetPreferences().View3d_Pan_Use_Shift_GRLess == False):
@@ -103,22 +114,26 @@ def KeymapCreation():
     if (AlxPreferences.AlxGetPreferences() .View3d_Zoom_Use_GRLess == False):
         AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="3D View", ItemidName="view3d.zoom", MapType="MOUSE", Key="MIDDLEMOUSE", UseCtrl=True, Active=True)
 
-    AlxKeymapRegister(KeymapCallType="OPERATOR", RegionType="WINDOW", ItemidName="wm.window_fullscreen_toggle", Key="F11", UseAlt=True, TriggerType="PRESS")
-    AlxKeymapRegister(KeymapCallType="OPERATOR", RegionType="WINDOW", ItemidName="scripts.reload", Key="F8", TriggerType="PRESS")
+    AlxKeymapRegister(keymap_call_type="OPERATOR", region_type="WINDOW", item_idname="wm.window_fullscreen_toggle", key="F11", use_alt=True, trigger_type="PRESS")
+    AlxKeymapRegister(keymap_call_type="OPERATOR", region_type="WINDOW", item_idname="scripts.reload", key="F8", trigger_type="PRESS")
 
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Mesh", ItemidName="mesh.select_more", MapType="MOUSE", Key="WHEELUPMOUSE", UseCtrl=True, Active=True)
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Mesh", ItemidName="mesh.select_less", MapType="MOUSE", Key="WHEELDOWNMOUSE", UseCtrl=True, Active=True)
+    AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Mesh", ItemidName="wm.call_menu", OperatorID="VIEW3D_MT_edit_mesh_merge", Active=False)
+    AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Mesh", ItemidName="mesh.dupli_extrude_cursor", Active=False)
     
+
+
+    AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Armature", ItemidName="armature.align", Active=False)
+    AlxKeymapRegister(keymap_call_type="PANEL", region_type="WINDOW", item_idname=Alx_PT_AlexandriaGeneralPanel.bl_idname, key="A", use_ctrl=True, use_alt=True, trigger_type="CLICK")
 
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Object Non-modal", ItemidName="object.mode_set", Active=False)
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Image", ItemidName="object.mode_set", Active=False)
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Object Non-modal", ItemidName="view3d.object_mode_pie_or_toggle", Active=False)
     AlxEditKeymaps(KeyconfigSource="Blender addon", ConfigSpaceName="Object Non-modal", ItemidName="wm.call_menu_pie", OperatorID="MACHIN3_MT_modes_pie", Active=False)
-    AlxKeymapRegister(KeymapCallType="PIE", SpaceType="VIEW_3D", ItemidName=AlxPanels.Alx_MT_UnlockedModesPie.bl_idname, Key="TAB", TriggerType="PRESS")
+    AlxKeymapRegister(keymap_call_type="PIE", space_type="VIEW_3D", item_idname=Alx_MT_UnlockedModesPie.bl_idname, key="TAB", trigger_type="PRESS")
 
    
-    AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Armature", ItemidName="armature.align", Active=False)
-    AlxKeymapRegister(KeymapCallType="PANEL", RegionType="WINDOW", ItemidName=AlxPanels.Alx_PT_AlexandriaGeneralPanel.bl_idname, Key="A", UseCtrl=True, UseAlt=True, TriggerType="CLICK")
 
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="3D View", ItemidName="wm.call_menu_pie", OperatorID="VIEW3D_MT_snap_pie", Active=False)
-    AlxKeymapRegister(KeymapCallType="PANEL", RegionType="WINDOW", ItemidName=AlxPanels.Alx_PT_Scene_GeneralPivot.bl_idname, Key="S", UseShift=True, TriggerType="CLICK")
+    AlxKeymapRegister(keymap_call_type="PANEL", region_type="WINDOW", item_idname=Alx_PT_Scene_GeneralPivot.bl_idname, key="S", use_shift=True, trigger_type="CLICK")

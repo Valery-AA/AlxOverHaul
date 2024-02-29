@@ -1,3 +1,5 @@
+# type:ignore
+
 import bpy
 from AlxOverHaul import AlxInitialize, AlxPreferences
 
@@ -79,8 +81,8 @@ if (bpy.app.version[0] == 3) and AlxPreferences.GetPreferences().EnableStanfordE
                             global_scale=self.ExportGlobalScale
                             )
 
-            except Exception as e:
-                print(e)
+            except Exception as error:
+                print(error)
 
             return {"FINISHED"}
         

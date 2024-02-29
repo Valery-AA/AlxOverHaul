@@ -1,7 +1,7 @@
+# type:ignore
+
 import bpy
 import bmesh
-
-# change working area to type bpy.context.area.type = "VIEW_3D"
 
 class Alx_OT_Scene_VisibilityIsolator(bpy.types.Operator):
     """"""
@@ -18,8 +18,8 @@ class Alx_OT_Scene_VisibilityIsolator(bpy.types.Operator):
         return context.area.type == "VIEW_3D"
 
     def execute(self, context):
-        SelectedVisibility = context.scene.alx_addon_properties.scene_isolator_visibility_target
-        SelectedType = context.scene.alx_addon_properties.scene_isolator_type_target
+        SelectedVisibility = context.scene.alx_tool_scene_isolator_properties.scene_isolator_visibility_target
+        SelectedType = context.scene.alx_tool_scene_isolator_properties.scene_isolator_type_target
 
         if (len(SelectedVisibility) != 0) and (len(SelectedType) != 0):
             VisibilityType = []
@@ -67,10 +67,8 @@ class Alx_OT_Scene_VisibilityIsolator(bpy.types.Operator):
                     IsolatorObjects = [Object for Object in context.scene.objects if ((Object is not None) and (Object not in context.selected_objects))]
                     ObjectsCollections = [Object.users_collection[0] for Object in context.selected_objects]
                     IsolatorCollection = [Collection for ObjectCollection in ObjectsCollections for Collection in bpy.data.collections if (ObjectCollection != Collection) and (ObjectCollection not in Collection.children_recursive)]
-                except:
-                    pass
-                print("Object %s" % ObjectsCollections)
-                print("Isolator %s" % IsolatorCollection)
+                except Exception as error:
+                    print(error)
 
                 if ("OBJECT" in TargetType):
                     try:
@@ -200,6 +198,34 @@ class Alx_OT_Mode_UnlockedModes(bpy.types.Operator):
                     
                     return {"FINISHED"}       
 
+                case "POSE":
+                    if (context.mode != "POSE"):
+                        if (context.active_object is not None) and (context.active_object.type == "ARMATURE"):
+                            if (context.mode == "PAINT_WEIGHT"):
+                                bpy.ops.object.mode_set(mode="OBJECT")
+
+                            context.active_object.hide_set(False)
+                            context.active_object.hide_viewport = False
+
+                            bpy.context.view_layer.objects.active = context.active_object
+                            bpy.ops.object.mode_set(mode="POSE")
+                    return {"FINISHED"}
+
+                case "PAINT_WEIGHT":
+                    if (context.mode != "PAINT_WEIGHT"):
+                        if (context.active_object is not None) and (context.active_object.type == "MESH"):
+                            if (context.mode == "POSE"):
+                                bpy.ops.object.mode_set(mode="OBJECT")
+                                
+                            context.active_object.hide_set(False)
+                            context.active_object.hide_viewport = False
+
+                            context.active_object.select_set(True)
+
+                            bpy.context.view_layer.objects.active = context.active_object
+                            bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
+                        return {"FINISHED"}
+
         if (self.DefaultBehaviour == False):
             match self.TargetMode:
                 case "POSE":
@@ -235,28 +261,6 @@ class Alx_OT_Mode_UnlockedModes(bpy.types.Operator):
 
         return {"FINISHED"}
 
-class Alx_OT_UI_SimpleDesigner(bpy.types.Operator):
-    """"""
-
-    bl_label = ""
-    bl_idname = "alx.operator_ui_simple_designer"
-    bl_options = {"INTERNAL"}
-
-    AreaTypeTarget : bpy.props.EnumProperty(default="VIEW_3D", items=
-                                            [
-                                            ("VIEW_3D", "Viewport", "", 1),
-                                            ("OUTLINER", "Outliner", "", 1<<1),
-                                            ("PROPERTIES", "Properties", "", 1<<2),
-                                            ])
-
-    @classmethod
-    def poll(self, context: bpy.types.Context):
-        return True
-    
-    def execute(self, context):
-        if (context.area is not None):
-            context.area.type = self.AreaTypeTarget
-        return {"FINISHED"}
 
 class Alx_OT_Modifier_ManageOnSelected(bpy.types.Operator):
     """"""
@@ -265,41 +269,174 @@ class Alx_OT_Modifier_ManageOnSelected(bpy.types.Operator):
     bl_idname = "alx.operator_modifier_manage_on_selected"
     bl_options = {"INTERNAL", "REGISTER", "UNDO"}
 
-    UseCreateDuplicate : bpy.props.BoolProperty(name="Create Duplicates", default=False)
+    object_pointer_reference : bpy.props.StringProperty(name="", default="", options={"HIDDEN"})
+    object_modifier_index : bpy.props.IntProperty(name="", default=0, options={"HIDDEN"})
+
+    modifier_type : bpy.props.StringProperty(name="", default="NONE", options={"HIDDEN"})
+
+    create_modifier : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"})
+    remove_modifier : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"})
+    
+    move_modifier_up : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"})
+    move_modifier_down : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"})
 
     @classmethod
-    def poll(self, context):
+    def poll(self, context: bpy.types.Context):
         return context.area.type == "VIEW_3D"
 
     def execute(self, context):
-        for Object in context.selected_objects:
-            if (Object is not None):
-                for ModType in ModTypeList:
+        if (self.create_modifier is True):
+            for Object in context.selected_objects:
+                if (Object is not None):
                     Modifier = None
+                    try:
+                        Modifier = Object.modifiers.new(name="", type=self.modifier_type)
 
-                    if (self.UseCreateDuplicate == False):
-                        if (AlxUtils.AlxRetiriveObjectModifier(Object, ModType) is None):
-                            Modifier = Object.modifiers.new(name="", type=ModType)
-
-                    if (self.UseCreateDuplicate == True):
-                        Modifier = Object.modifiers.new(name="", type=ModType)
-
-                    if (Modifier is not None):
-                        Object.modifiers.move(Object.modifiers.find(Modifier.name), ModTypeList.index(ModType))
-
-                        match ModType:
+                        match Modifier.type:
                             case "BEVEL":
-                                Modifier.width = 0.002
-                                Modifier.segments = 2
+                                Modifier.width = 0.01
+                                Modifier.segments = 1
                                 Modifier.miter_outer = "MITER_ARC"
                                 Modifier.harden_normals = True
                             
                             case "SUBSURF":
                                 Modifier.render_levels = 1
                                 Modifier.quality = 6
+                    except:
+                        pass
+        try:
+            if (self.remove_modifier is True):
+                Object = bpy.data.objects.get(self.object_pointer_reference)
+                if (Object is not None):
+                    Object.modifiers.remove(Object.modifiers.get(Object.modifiers[self.object_modifier_index].name))
+
+            if (self.move_modifier_up == True) and (self.move_modifier_down == False):
+                Object = bpy.data.objects.get(self.object_pointer_reference)
+                if (Object is not None):
+                    if ((self.object_modifier_index - 1) >= 0):
+                        Object.modifiers.move(self.object_modifier_index, self.object_modifier_index - 1)
+            else:
+                    print("Move Up Failed")
+
+            if (self.move_modifier_up == False) and (self.move_modifier_down == True):
+                Object = bpy.data.objects.get(self.object_pointer_reference)
+                if (Object is not None):
+                    if ((self.object_modifier_index + 1) < len(Object.modifiers)):
+                        Object.modifiers.move(self.object_modifier_index, self.object_modifier_index + 1)
+                else:
+                    print(self.object_pointer_reference)
+                    print(Object)
+                    print("Move Down Failed")
+
+        except Exception as error:
+            print(error)
 
         return {"FINISHED"}
+
+
+
+class Alx_OT_UI_SimpleDesigner(bpy.types.Operator):
+    """"""
+
+    bl_label = ""
+    bl_idname = "alx.operator_ui_simple_designer"
+    bl_options = {"INTERNAL"}
+
+    UseAreaSplit : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"})
+    AreaSplitDirection : bpy.props.EnumProperty(name="", default="VERTICAL", items=[("VERTICAL", "Vertical", "", 1), ("HORIZONTAL", "Horizontal", "", 1<<1)])
+    AreaSplitFactor : bpy.props.FloatProperty(name="", default=0.5, options={"HIDDEN"})
+
+    UseCloseArea : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"})
+
+
+    @classmethod
+    def poll(self, context: bpy.types.Context):
+        return True
     
+    def modal(self, context: bpy.types.Context, event: bpy.types.Event):
+        ScreenAreas = []
+        if (context is not None) and (context.screen is not None):
+            ScreenAreas = [area for area in context.screen.areas if (area is None) and (area.type != "EMPTY")]
+
+        if (event.type == "MOUSE_MOVE"):
+            try:
+                ScreenAreas[0]
+                
+                for area in ScreenAreas:
+                    if (area.x <= event.mouse_x) and ((area.x + area.width) >= event.mouse_x):
+                        pass
+
+            except Exception as error:
+                print(error)
+            
+            event.mouse_x
+            event.mouse_y
+
+        if (event.type == "ESC"):
+            return {"CANCELLED"}
+
+        return {"RUNNING_MODAL"}
+
+    def invoke(self, context, event):
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+class Alx_OT_Armature_MatchIKByMirroredName(bpy.types.Operator):
+    """"""
+
+    bl_label = ""
+    bl_idname = "alx.bone_match_ik_by_mirrored_name"
+
+    bl_description = "Requires [Pose Mode] Mirrors IK Data from the source side to the opposite"
+
+    bl_options = {"INTERNAL", "REGISTER", "UNDO"}
+
+    SourceSide : bpy.props.EnumProperty(name="Mirror From", default=1, items=[("LEFT", "Left", "", 1), ("RIGHT", "Right", "", 2)])
+
+    @classmethod
+    def poll(self, context):
+        return context.area.type == "VIEW_3D" and context.mode == "POSE"
+
+    def execute(self, context):
+        if (context.active_object is not None) and (context.active_object.type == "ARMATURE") and (context.mode == "POSE"):
+
+            ContextArmature = context.active_object
+
+            if (ContextArmature is not None):
+
+                PoseBoneData = ContextArmature.pose.bones
+
+                SymmetricPairBones = []
+                SymmetricUniqueBones = []
+                
+                if (self.SourceSide == "LEFT"):
+                    SymmetricPairBones = [PoseBone for PoseBone in PoseBoneData if ((PoseBone.name[-1].lower() == "l"))]
+                
+                if (self.SourceSide == "RIGHT"):
+                    SymmetricPairBones = [PoseBone for PoseBone in PoseBoneData if ((PoseBone.name[-1].lower() == "r"))]
+                
+                for PoseBone in SymmetricPairBones:
+                    if (PoseBone not in SymmetricUniqueBones):
+                        SymmetricUniqueBones.append(PoseBone)
+
+                for UniquePoseBone in SymmetricUniqueBones:
+                    ContextPoseBone = None
+                    ContextOppositeBone = None
+
+                    if (self.SourceSide == "LEFT"):
+                        ContextPoseBone = AlxUtils.AlxGetBoneAlwaysLeft(UniquePoseBone, ContextArmature)
+                        ContextOppositeBone = AlxUtils.AlxGetBoneOpposite(AlxUtils.AlxGetBoneAlwaysLeft(UniquePoseBone, ContextArmature), ContextArmature)
+                    
+                    if (self.SourceSide == "RIGHT"):
+                        ContextPoseBone = AlxUtils.AlxGetBoneAlwaysRight(UniquePoseBone, ContextArmature)
+                        ContextOppositeBone = AlxUtils.AlxGetBoneOpposite(AlxUtils.AlxGetBoneAlwaysRight(UniquePoseBone, ContextArmature), ContextArmature)
+
+                    if (ContextPoseBone is not None) and (ContextOppositeBone is not None):
+                        AlxUtils.AlxCloneIKSettings(ContextPoseBone, ContextOppositeBone)
+                        AlxUtils.AlxCloneIKBoneLimitOnChain(ContextPoseBone, ContextArmature)
+        
+        return {"FINISHED"}
+
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self, width=300)
 
@@ -313,7 +450,6 @@ class Alx_OT_Mesh_BoundaryMultiTool(bpy.types.Operator):
 
     UseCrease : bpy.props.BoolProperty(name="Crease", default=False)
     UsePin : bpy.props.BoolProperty(name="Use as Pin", default=False)
-    
 
     @classmethod
     def poll(self, context):
@@ -331,23 +467,27 @@ class Alx_OT_Mesh_BoundaryMultiTool(bpy.types.Operator):
                 BoundaryVertex = []
                 BoundaryEdge = []
                 DividingNonBoundaryEdge = []
-                for SelectionItem in ContextBMesh.select_history:
-                    if (SelectionItem is not None) and (SelectionItem.__class__ is bmesh.types.BMFace):
+
+                EdgeSelection = [edge for edge in ContextBMesh.edges if (edge.select)]
+
+
+                for SelectedEdge in EdgeSelection:
+                    
+                    if (SelectedEdge is not None):
                         NonBoundaryEdge = []
 
-                        for Edge in SelectionItem.edges:
-                            if (Edge.is_boundary == True):
-                                BoundaryVertex.extend([Vertex for Vertex in Edge.verts if (Vertex not in BoundaryVertex)])
-                                if (Edge not in BoundaryEdge):
-                                    BoundaryEdge.append(Edge)
+                        if (SelectedEdge.is_boundary == True):
+                            BoundaryVertex.extend([Vertex for Vertex in SelectedEdge.verts if (Vertex not in BoundaryVertex)])
+                            if (SelectedEdge not in BoundaryEdge):
+                                BoundaryEdge.append(SelectedEdge)
 
                         for Vertex in BoundaryVertex:
-                            for Edge in Vertex.link_edges:
-                                if (Edge.is_boundary == False):
-                                    if (Edge not in NonBoundaryEdge):
-                                        NonBoundaryEdge.append(Edge)
-                                    if (Edge in NonBoundaryEdge):
-                                        DividingNonBoundaryEdge.append(Edge)
+                            for LinkedEdge in Vertex.link_edges:
+                                if (LinkedEdge.is_boundary == False):
+                                    if (LinkedEdge not in NonBoundaryEdge):
+                                        NonBoundaryEdge.append(LinkedEdge)
+                                    if (LinkedEdge in NonBoundaryEdge):
+                                        DividingNonBoundaryEdge.append(LinkedEdge)
 
                 if (self.UsePin == True):
                     PinGroup = None
@@ -368,18 +508,17 @@ class Alx_OT_Mesh_BoundaryMultiTool(bpy.types.Operator):
 
                 if(self.UseCrease == True):
                     CreaseLayer = ContextBMesh.edges.layers.float.get('crease_edge', None)
+                    if (CreaseLayer is None):
+                        CreaseLayer = ContextBMesh.edges.layers.float.new('crease_edge')
+                        ContextBMesh.verts.ensure_lookup_table()
                     for CreaseEdge in BoundaryEdge:
                         ContextBMesh.edges[CreaseEdge.index][CreaseLayer] = 1.0
                     bmesh.update_edit_mesh(ContextMesh, loop_triangles=False)
 
-                bpy.ops.object.mode_set(mode="OBJECT")
                 if (self.UsePin):
+                    bpy.ops.object.mode_set(mode="OBJECT")
                     PinGroup.add(index=AddVertex, weight=1.0, type="REPLACE")
-                    if (self.KeepDividingEdges == False):
-                        PinGroup.remove(index=RemoveVertex)
-                bpy.ops.object.mode_set(mode="EDIT")
-
-        
+                    bpy.ops.object.mode_set(mode="EDIT")
 
         return {"FINISHED"}
 
@@ -537,7 +676,6 @@ class Alx_OT_Scene_UnlockedSnapping(bpy.types.Operator):
 
         return {"FINISHED"}
 
-
 class Alx_OT_Armature_AssignToSelection(bpy.types.Operator):
     """"""
 
@@ -639,64 +777,6 @@ class Alx_OT_Armature_AssignToSelection(bpy.types.Operator):
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self, width=300)
 
-class Alx_OT_Armature_MatchIKByMirroredName(bpy.types.Operator):
-    """"""
-
-    bl_label = ""
-    bl_idname = "alx.bone_match_ik_by_mirrored_name"
-
-    bl_description = "Requires [Pose Mode] Mirrors IK Data from the source side to the opposite"
-
-    bl_options = {"INTERNAL", "REGISTER", "UNDO"}
-
-    SourceSide : bpy.props.EnumProperty(name="Mirror From", default=1, items=[("LEFT", "Left", "", 1), ("RIGHT", "Right", "", 2)])
-
-    @classmethod
-    def poll(self, context):
-        return context.area.type == "VIEW_3D" and context.mode == "POSE"
-
-    def execute(self, context):
-        if (context.active_object is not None) and (context.active_object.type == "ARMATURE") and (context.mode == "POSE"):
-
-            ContextArmature = context.active_object
-
-            if (ContextArmature is not None):
-
-                PoseBoneData = ContextArmature.pose.bones
-
-                SymmetricPairBones = []
-                SymmetricUniqueBones = []
-                
-                if (self.SourceSide == "LEFT"):
-                    SymmetricPairBones = [PoseBone for PoseBone in PoseBoneData if ((PoseBone.name[-1].lower() == "l"))]
-                
-                if (self.SourceSide == "RIGHT"):
-                    SymmetricPairBones = [PoseBone for PoseBone in PoseBoneData if ((PoseBone.name[-1].lower() == "r"))]
-                
-                for PoseBone in SymmetricPairBones:
-                    if (PoseBone not in SymmetricUniqueBones):
-                        SymmetricUniqueBones.append(PoseBone)
-
-                for UniquePoseBone in SymmetricUniqueBones:
-                    ContextPoseBone = None
-                    ContextOppositeBone = None
-
-                    if (self.SourceSide == "LEFT"):
-                        ContextPoseBone = AlxUtils.AlxGetBoneAlwaysLeft(UniquePoseBone, ContextArmature)
-                        ContextOppositeBone = AlxUtils.AlxGetBoneOpposite(AlxUtils.AlxGetBoneAlwaysLeft(UniquePoseBone, ContextArmature), ContextArmature)
-                    
-                    if (self.SourceSide == "RIGHT"):
-                        ContextPoseBone = AlxUtils.AlxGetBoneAlwaysRight(UniquePoseBone, ContextArmature)
-                        ContextOppositeBone = AlxUtils.AlxGetBoneOpposite(AlxUtils.AlxGetBoneAlwaysRight(UniquePoseBone, ContextArmature), ContextArmature)
-
-                    if (ContextPoseBone is not None) and (ContextOppositeBone is not None):
-                        AlxUtils.AlxCloneIKSettings(ContextPoseBone, ContextOppositeBone)
-                        AlxUtils.AlxCloneIKBoneLimitOnChain(ContextPoseBone, ContextArmature)
-        
-        return {"FINISHED"}
-
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self, width=300)
 
 class Alx_OT_Modifier_HideOnSelected(bpy.types.Operator):
     """"""
@@ -740,3 +820,4 @@ class Alx_OT_Modifier_HideOnSelected(bpy.types.Operator):
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self, width=300)
    
+

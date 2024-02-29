@@ -1,3 +1,5 @@
+# type:ignore
+
 import bpy
 
 def AlxCheckBlenderVersion(Version: [int] = [bpy.app.version[0]], SubVersion: [int] = [bpy.app.version[1]], TrailingVersion: [int] = [bpy.app.version[2]]):

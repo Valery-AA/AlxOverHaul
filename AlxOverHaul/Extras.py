@@ -1,3 +1,34 @@
+#https://blender.stackexchange.com/questions/187655/facing-problem-in-drawing-ui-previews-dynamic-enumproperty
+
+
+# import bpy
+# import random
+
+# for scene_object in bpy.context.scene.objects:
+#     if (scene_object.type == "MESH"):
+#         try:
+#             scene_object.material_slots[0]
+#         except:
+#             bpy.context.view_layer.objects.active = scene_object
+#             bpy.ops.object.material_slot_add()
+            
+#     if (scene_object.material_slots[0].material is None):
+#         try:
+#             bpy.data.materials[0]
+#             if (bpy.data.materials.get(scene_object.name) is None):
+#                 bpy.data.materials.new(scene_object.name)
+#             if (bpy.data.materials[0] != bpy.data.materials[-1]):
+#                 scene_object.material_slots[0].material = bpy.data.materials.get(scene_object.name)
+                
+#         except Exception as error:
+#             print(error)
+#     else:
+#         if (bpy.data.materials.get(scene_object.name) is not None):
+#             bpy.data.materials.get(scene_object.name).diffuse_color = [random.random(), random.random(), random.random(), 1]
+#         else:
+#             print("color not set")
+
+
 # class Alx_OT_VertexGroupCleanEmpty(bpy.types.Operator):
 #     """"""
 
@@ -133,31 +164,31 @@
 #     def poll(self, context):
 #         return True
 
-    # def execute(self, context):
-    #     if (len(bpy.context.scene.alx_materials) != 0) and (bpy.context.scene.alx_active_material_index < len(bpy.context.scene.alx_materials)):
-    #         MaterialID = bpy.data.materials.get(bpy.context.scene.alx_materials[bpy.context.scene.alx_active_material_index].name)
+#     def execute(self, context):
+#         if (len(bpy.context.scene.alx_materials) != 0) and (bpy.context.scene.alx_active_material_index < len(bpy.context.scene.alx_materials)):
+#             MaterialID = bpy.data.materials.get(bpy.context.scene.alx_materials[bpy.context.scene.alx_active_material_index].name)
 
-    #         MaterialUserMap = bpy.data.user_map(key_types={"MATERIAL"}, value_types={"MESH"})
-    #         MaterialUsers = MaterialUserMap.get(bpy.data.materials[MaterialID.name], None)
+#             MaterialUserMap = bpy.data.user_map(key_types={"MATERIAL"}, value_types={"MESH"})
+#             MaterialUsers = MaterialUserMap.get(bpy.data.materials[MaterialID.name], None)
 
-    #         for User in MaterialUsers:
-    #             MaterialUser = User
-    #             if (MaterialUser.name not in ["Scene", "Airbrush"]):
-    #                 MeshUserMap = bpy.data.user_map(key_types={"MESH"}, value_types={"OBJECT"})
-    #                 MeshUsers = MeshUserMap.get(bpy.data.meshes[MaterialUser.name], None)
+#             for User in MaterialUsers:
+#                 MaterialUser = User
+#                 if (MaterialUser.name not in ["Scene", "Airbrush"]):
+#                     MeshUserMap = bpy.data.user_map(key_types={"MESH"}, value_types={"OBJECT"})
+#                     MeshUsers = MeshUserMap.get(bpy.data.meshes[MaterialUser.name], None)
 
-    #                 for MeshUser in MeshUsers:
-    #                     print(MeshUsers)
-    #                     MeshUser.active_material_index = MeshUser.material_slots.find(bpy.context.scene.alx_materials[bpy.context.scene.alx_active_material_index].name)
-    #                     print(MeshUser)
-    #                     print(MeshUser.active_material_index)
-    #                     bpy.ops.object.material_slot_select()
-    #                     bpy.ops.object.material_slot_remove()
+#                     for MeshUser in MeshUsers:
+#                         print(MeshUsers)
+#                         MeshUser.active_material_index = MeshUser.material_slots.find(bpy.context.scene.alx_materials[bpy.context.scene.alx_active_material_index].name)
+#                         print(MeshUser)
+#                         print(MeshUser.active_material_index)
+#                         bpy.ops.object.material_slot_select()
+#                         bpy.ops.object.material_slot_remove()
 
-    #         if ((bpy.context.scene.alx_active_material_index -1) != -1):
-    #             bpy.context.scene.alx_active_material_index = bpy.context.scene.alx_active_material_index - 1
+#             if ((bpy.context.scene.alx_active_material_index -1) != -1):
+#                 bpy.context.scene.alx_active_material_index = bpy.context.scene.alx_active_material_index - 1
 
-    #     return {"FINISHED"}
+#         return {"FINISHED"}
     
 # class Alx_OT_MaterialAssignToSelection(bpy.types.Operator):
 #     """"""

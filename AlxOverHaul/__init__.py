@@ -9,145 +9,175 @@ bl_info = {
     "blender" : (3, 6, 0)
 }
 
-import bpy
+__ALX_DEBUG__ = False
+
 import importlib
+import bpy
 
-
-
-if ("AlxProperties" not in locals()):
-    from . import AlxProperties
+if ("AlxCallbacks" not in locals()):
+    from . import AlxCallbacks
 else:
-    AlxProperties = importlib.reload(AlxProperties)
+    AlxCallbacks = importlib.reload(AlxCallbacks)
 
-if ("AlxPreferences" not in locals()):
-    from . import AlxPreferences
+if ("AlxGpuUI" not in locals()):
+    from . import AlxGpuUI
 else:
-    AlxPreferences = importlib.reload(AlxPreferences)
-
-from .AlxPreferences import AlxGetPreferences
-
-
-if ("AlxUtils" not in locals()):
-    from . import AlxUtils
-else:
-    AlxUtils = importlib.reload(AlxUtils)
-
-from .AlxUtils import AlxCheckBlenderVersion
-
-
-if ("AlxKeymaps" not in locals()):
-    from . import AlxKeymaps
-else:
-    AlxKeymaps = importlib.reload(AlxKeymaps)
-
-from .AlxKeymaps import AlxAddonKeymaps, KeymapCreation
+    AlxGpuUI = importlib.reload(AlxGpuUI)
 
 if ("AlxHandlers" not in locals()):
     from . import AlxHandlers
 else:
     AlxHandlers = importlib.reload(AlxHandlers)
 
-if ("AlxPanels" not in locals()):
-    from . import AlxPanels
+if ("AlxKeymaps" not in locals()):
+    from . import AlxKeymaps
 else:
-    AlxPanels = importlib.reload(AlxPanels)
+    AlxKeymaps = importlib.reload(AlxKeymaps)
 
 if ("AlxOperators" not in locals()):
     from . import AlxOperators
 else:
     AlxOperators = importlib.reload(AlxOperators)
 
-# Expansion Submodules
+if ("AlxPanels" not in locals()):
+    from . import AlxPanels
+else:
+    AlxPanels = importlib.reload(AlxPanels)
 
-if (AlxCheckBlenderVersion([3], [6])):
-    if (AlxGetPreferences().EnableStanfordExportSubmodule == True):
-        if ("AlxStanfordBatchExporter" not in locals()):
-            from . import AlxStanfordBatchExporter
-        else:
-            AlxStanfordBatchExporter = importlib.reload(AlxStanfordBatchExporter)
+if ("AlxPreferences" not in locals()):
+    from . import AlxPreferences
+else:
+    AlxPreferences = importlib.reload(AlxPreferences)
+
+if ("AlxProperties" not in locals()):
+    from . import AlxProperties
+else:
+    AlxProperties = importlib.reload(AlxProperties)
+
+if ("AlxUnlockedModeling" not in locals()):
+    from . import AlxUnlockedModeling
+else:
+    AlxUnlockedModeling = importlib.reload(AlxUnlockedModeling)
+
+if ("AlxUtils" not in locals()):
+    from . import AlxUtils
+else:
+    AlxUtils = importlib.reload(AlxUtils)
+    
+
+from .AlxCallbacks import notify_context_mode_update, notify_workspace_tool_update
+
+from .AlxUtils import AlxCheckBlenderVersion
+from .AlxKeymaps import AlxAddonKeymaps, AlxKeymapCreation
 
 AlxClassQueue = [
-                AlxProperties.AlxAddonProperties,
-                AlxProperties.AlxGenPanelProperties,
                 AlxPreferences.AlxOverHaulAddonPreferences,
-                
-                AlxPanels.Alx_MT_UnlockedModesPie,
-                AlxPanels.Alx_PT_AlexandriaGeneralPanel,
+                AlxProperties.Alx_Tool_UnlockedModeling_Properties,
+                AlxUnlockedModeling.Alx_OT_Tool_UnlockedModeling,
+                AlxUnlockedModeling.Alx_PT_Panel_UnlockedModeling,
 
-                AlxOperators.Alx_OT_Scene_VisibilityIsolator,
-                AlxOperators.Alx_OT_Mode_UnlockedModes,
-                AlxOperators.Alx_OT_UI_SimpleDesigner,
-
-
-
-
-                AlxPanels.ObjectSelectionListItem,
-                AlxPanels.Alx_UL_Object_PropertiesList,
-
-                # AlxTools sub-panels
-                AlxPanels.Alx_PT_AlexandriaRenderPanel,
-                AlxPanels.Alx_PT_AlexandriaObjectToolsPanel,
-
-                
-
-                
-                
-                AlxPanels.Alx_PT_Scene_GeneralPivot,
-
-                
-                AlxOperators.Alx_OT_Scene_UnlockedSnapping,
-                
-
-                AlxOperators.Alx_OT_Modifier_ManageOnSelected,
+                AlxOperators.Alx_OT_Armature_MatchIKByMirroredName,
                 AlxOperators.Alx_OT_Mesh_EditAttributes,
+                AlxOperators.Alx_OT_Mesh_BoundaryMultiTool,
 
-                AlxOperators.Alx_OT_Armature_MatchIKByMirroredName
+                AlxProperties.Alx_Panel_AlexandriaGeneral_Properties,
+                AlxProperties.Alx_Tool_SceneIsolator_Properties,
+                AlxOperators.Alx_OT_Scene_VisibilityIsolator,
+                AlxProperties.Alx_Object_Selection_ListItem,
+                AlxPanels.Alx_UL_Object_PropertiesList,
+                AlxOperators.Alx_OT_Modifier_ManageOnSelected,
+                AlxPanels.Alx_UL_Object_ModifierList,
+                AlxOperators.Alx_OT_UI_SimpleDesigner,
+                AlxPanels.Alx_PT_AlexandriaModifierPanel,
+                AlxPanels.Alx_PT_AlexandriaGeneralPanel,
+                
+                AlxOperators.Alx_OT_Mode_UnlockedModes,
+                AlxPanels.Alx_MT_UnlockedModesPie,
+
+                AlxPanels.Alx_PT_Scene_GeneralPivot,
                 ]
 
-def register():
-    for AlxClass in AlxClassQueue:
-        if (AlxClass is AlxPreferences.AlxOverHaulAddonPreferences) and (bpy.context.preferences.addons[__package__].preferences is None):
-            bpy.utils.register_class(AlxPreferences.AlxOverHaulAddonPreferences)
-        if (AlxClass is not AlxPreferences.AlxOverHaulAddonPreferences) and (hasattr(bpy.types, "%s" % AlxClass) == False):
-            bpy.utils.register_class(AlxClass)
+AlxToolQueue = [
+               dict(tool_class=AlxUnlockedModeling.Alx_WT_WorkSpaceTool_UnlockedModeling, after=None, separator=True, group=False)
+               ]
 
+def RegisterProperties():
+    bpy.types.Scene.alx_tool_unlocked_modeling_properties = bpy.props.PointerProperty(type=AlxProperties.Alx_Tool_UnlockedModeling_Properties)
 
+    bpy.types.Scene.alx_panel_alexandria_general_properties = bpy.props.PointerProperty(type=AlxProperties.Alx_Panel_AlexandriaGeneral_Properties)
+    bpy.types.Scene.alx_tool_scene_isolator_properties = bpy.props.PointerProperty(type=AlxProperties.Alx_Tool_SceneIsolator_Properties)
 
-    if (AlxCheckBlenderVersion([4], [0, 1])):
-        KeymapCreation()
-
-
-
-    bpy.types.Scene.alx_addon_properties = bpy.props.PointerProperty(type=AlxProperties.AlxAddonProperties)
-    bpy.types.Scene.alx_general_panel_properties = bpy.props.PointerProperty(type=AlxProperties.AlxGenPanelProperties)
-
-    bpy.types.Scene.alx_object_selection_properties = bpy.props.CollectionProperty(type=AlxPanels.ObjectSelectionListItem)
+    bpy.types.Scene.alx_object_selection_properties = bpy.props.CollectionProperty(type=AlxProperties.Alx_Object_Selection_ListItem)
     bpy.types.Scene.alx_object_selection_properties_index = bpy.props.IntProperty(default=0)
 
     bpy.types.Scene.alx_scene_isolator_visibility_object_list = []
     bpy.types.Scene.alx_scene_isolator_visibility_collection_list = []
 
+    bpy.types.Object.alx_self_bmesh_datablock = []
+    bpy.types.Scene.alx_draw_handler_unlocked_modeling = None
 
-    
+def UnRegisterProperties():
+    del bpy.types.Scene.alx_tool_unlocked_modeling_properties
+    del bpy.types.Scene.alx_panel_alexandria_general_properties
+    del bpy.types.Scene.alx_tool_scene_isolator_properties
+
+    del bpy.types.Scene.alx_scene_isolator_visibility_object_list
+    del bpy.types.Scene.alx_scene_isolator_visibility_collection_list
+
+    del bpy.types.Object.alx_self_bmesh_datablock
+    del bpy.types.Scene.alx_draw_handler_unlocked_modeling
+
+def RegisterHandlers():
+    bpy.app.handlers.load_post.append(AlxHandlers.AlxMsgBusSubscriptions)
     bpy.app.handlers.load_post.append(AlxHandlers.AlxAddonKeymapHandler)
     bpy.app.handlers.load_post.append(AlxHandlers.AlxUpdateSceneSelectionObjectList)
     bpy.app.handlers.depsgraph_update_post.append(AlxHandlers.AlxUpdateSceneSelectionObjectList)
 
+def UnRegisterHandlers():
+    bpy.app.handlers.load_post.remove(AlxHandlers.AlxMsgBusSubscriptions)
+    bpy.app.handlers.load_post.remove(AlxHandlers.AlxAddonKeymapHandler)
+    bpy.app.handlers.load_post.remove(AlxHandlers.AlxUpdateSceneSelectionObjectList)
+    bpy.app.handlers.depsgraph_update_post.remove(AlxHandlers.AlxUpdateSceneSelectionObjectList)
+
+def register():
+    for AlxClass in AlxClassQueue:
+        try:
+            bpy.utils.register_class(AlxClass)
+        except:
+            bpy.utils.unregister_class(AlxClass)
+            bpy.utils.register_class(AlxClass)
+
+    for AlxTool in AlxToolQueue:
+        try:
+            bpy.utils.register_tool(AlxTool.get("tool_class"), after=AlxTool.get("after"), separator=AlxTool.get("separator"), group=AlxTool.get("group"))
+        except:
+            bpy.utils.unregister_tool(AlxTool.get("tool_class"))
+            bpy.utils.register_tool(AlxTool.get("tool_class"), after=AlxTool.get("after"), separator=AlxTool.get("separator"), group=AlxTool.get("group"))
+
+    AlxKeymapCreation()
+
+    RegisterProperties()
+    RegisterHandlers()
+
     bpy.context.preferences.use_preferences_save = True
 
+
+
 def unregister():
-    for AlxQCls in AlxClassQueue:
-        bpy.utils.unregister_class(AlxQCls)
+    for AlxClass in AlxClassQueue:
+        bpy.utils.unregister_class(AlxClass)
+
+    for AlxTool in AlxToolQueue:
+        bpy.utils.unregister_tool(AlxTool.get("tool_class"))
 
     for km, kmi in AlxAddonKeymaps:
         km.keymap_items.remove(kmi)
     AlxAddonKeymaps.clear()
 
-    del bpy.types.Scene.alx_addon_properties
-
-    bpy.app.handlers.load_post.remove(AlxHandlers.AlxAddonKeymapHandler)
-    bpy.app.handlers.depsgraph_update_post.remove(AlxHandlers.AlxUpdateSceneSelectionObjectList)
+    UnRegisterProperties()
+    UnRegisterHandlers()
 
 
 if __name__ == "__main__":
     register()
+
