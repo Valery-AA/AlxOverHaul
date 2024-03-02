@@ -47,6 +47,7 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
 
     bIsRunning : bpy.props.BoolProperty(name="", default=False)
     ContextBmesh : bmesh.types.BMesh = None
+    #SelectionContext : []
 
     @classmethod
     def poll(self, context: bpy.types.Context):
@@ -91,15 +92,18 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
 
             self.ContextBmesh.edges.ensure_lookup_table()
 
-            self.crease_mark_layer = self.ContextBmesh.edges.layers.float.get('crease_edge', None)
-            if (self.crease_mark_layer is None):
-                self.crease_mark_layer = self.ContextBmesh.edges.layers.float.new('crease_edge')
+            self.bevel_mark_layer = self.ContextBmesh.edges.layers.float.get('bevel_weight_edge', None)
+            if (self.bevel_mark_layer is None):
+                self.bevel_mark_layer = self.ContextBmesh.edges.layers.float.new('bevel_weight_edge')
 
             self.crease_mark_layer = self.ContextBmesh.edges.layers.float.get('crease_edge', None)
             if (self.crease_mark_layer is None):
                 self.crease_mark_layer = self.ContextBmesh.edges.layers.float.new('crease_edge')
 
             self.ContextBmesh.edges.ensure_lookup_table()
+
+            self.selection = [mesh_poly for mesh_poly in self.ContextBmesh.edges if (mesh_poly.select == True)]
+            self.average_bevel_weight = [edge[selected_edge][self.bevel_mark_layer] for edge in self.selection]
 
         if (event.type == "S"):
             bpy.ops.wm.call_panel(name=Alx_PT_Panel_UnlockedModeling.bl_idname, keep_open=True)
@@ -189,8 +193,10 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
         position_x = 100
         position_y = 100
 
+        
+
         if (context.scene.alx_draw_handler_unlocked_modeling is None):
-            bpy.types.Scene.alx_draw_handler_unlocked_modeling = bpy.types.SpaceView3D.draw_handler_add(draw_unlocked_modeling_ui, (position_x, position_y, self.bIsRunning), "WINDOW", 'POST_PIXEL')
+            bpy.types.Scene.alx_draw_handler_unlocked_modeling = bpy.types.SpaceView3D.draw_handler_add(draw_unlocked_modeling_ui, (position_x, position_y, self), "WINDOW", 'POST_PIXEL')
         else:
             print("From Invoke: alx_draw_handler_unlocked_modeling is not None")
 

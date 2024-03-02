@@ -8,94 +8,34 @@ bl_info = {
     "location" : "[Ctrl Alt A] Tool Menu, [Shift S] Pivot Menu, [Tab] Mode Compact Menu",
     "blender" : (3, 6, 0)
 }
-
-__ALX_DEBUG__ = False
-
-import importlib
 import bpy
 
-if ("AlxCallbacks" not in locals()):
-    from . import AlxCallbacks
-else:
-    AlxCallbacks = importlib.reload(AlxCallbacks)
+# Class Import/Reload
+import os
+import importlib
 
-if ("AlxGpuUI" not in locals()):
-    from . import AlxGpuUI
-else:
-    AlxGpuUI = importlib.reload(AlxGpuUI)
+addon_files = [file_name[0:-3] for file_name in os.listdir(__path__[0]) if (file_name[0:3] == "Alx") and (file_name.endswith(".py"))]
 
-if ("AlxHandlers" not in locals()):
-    from . import AlxHandlers
-else:
-    AlxHandlers = importlib.reload(AlxHandlers)
+for file in addon_files:
+    if (file not in locals()):
+        import_line = f"from . import {file}"
+        exec(import_line)
+    else:
+        reload_line = f"{file} = importlib.reload({file})"
+        exec(reload_line)
 
-if ("AlxKeymaps" not in locals()):
-    from . import AlxKeymaps
-else:
-    AlxKeymaps = importlib.reload(AlxKeymaps)
+# Class Queue
+import inspect
 
-if ("AlxOperators" not in locals()):
-    from . import AlxOperators
-else:
-    AlxOperators = importlib.reload(AlxOperators)
+bpy_class_object_list = tuple(bpy_class[1] for bpy_class in inspect.getmembers(bpy.types, inspect.isclass))
+alx_class_object_list = tuple(alx_class[1] for file in addon_files for alx_class in inspect.getmembers(eval(file), inspect.isclass) if issubclass(alx_class[1], bpy_class_object_list) and (not issubclass(alx_class[1], bpy.types.WorkSpaceTool)))
 
-if ("AlxPanels" not in locals()):
-    from . import AlxPanels
-else:
-    AlxPanels = importlib.reload(AlxPanels)
+AlxClassQueue = alx_class_object_list
 
-if ("AlxPreferences" not in locals()):
-    from . import AlxPreferences
-else:
-    AlxPreferences = importlib.reload(AlxPreferences)
-
-if ("AlxProperties" not in locals()):
-    from . import AlxProperties
-else:
-    AlxProperties = importlib.reload(AlxProperties)
-
-if ("AlxUnlockedModeling" not in locals()):
-    from . import AlxUnlockedModeling
-else:
-    AlxUnlockedModeling = importlib.reload(AlxUnlockedModeling)
-
-if ("AlxUtils" not in locals()):
-    from . import AlxUtils
-else:
-    AlxUtils = importlib.reload(AlxUtils)
-    
-
-from .AlxCallbacks import notify_context_mode_update, notify_workspace_tool_update
-
-from .AlxUtils import AlxCheckBlenderVersion
-from .AlxKeymaps import AlxAddonKeymaps, AlxKeymapCreation
-
-AlxClassQueue = [
-                AlxPreferences.AlxOverHaulAddonPreferences,
-                AlxProperties.Alx_Tool_UnlockedModeling_Properties,
-                AlxUnlockedModeling.Alx_OT_Tool_UnlockedModeling,
-                AlxUnlockedModeling.Alx_PT_Panel_UnlockedModeling,
-
-                AlxOperators.Alx_OT_Armature_MatchIKByMirroredName,
-                AlxOperators.Alx_OT_Mesh_EditAttributes,
-                AlxOperators.Alx_OT_Mesh_BoundaryMultiTool,
-
-                AlxProperties.Alx_Panel_AlexandriaGeneral_Properties,
-                AlxProperties.Alx_Tool_SceneIsolator_Properties,
-                AlxOperators.Alx_OT_Scene_VisibilityIsolator,
-                AlxProperties.Alx_Object_Selection_ListItem,
-                AlxPanels.Alx_UL_Object_PropertiesList,
-                AlxOperators.Alx_OT_Modifier_ManageOnSelected,
-                AlxPanels.Alx_UL_Object_ModifierList,
-                AlxOperators.Alx_OT_UI_SimpleDesigner,
-                AlxPanels.Alx_PT_AlexandriaModifierPanel,
-                AlxPanels.Alx_PT_AlexandriaGeneralPanel,
-                
-                AlxOperators.Alx_OT_Mode_UnlockedModes,
-                AlxPanels.Alx_MT_UnlockedModesPie,
-
-                AlxPanels.Alx_PT_Scene_GeneralPivot,
-                ]
+from . import AlxProperties
+from . import AlxUnlockedModeling
+from . import AlxHandlers
+from . AlxKeymaps import AlxAddonKeymaps, AlxKeymapCreation
 
 AlxToolQueue = [
                dict(tool_class=AlxUnlockedModeling.Alx_WT_WorkSpaceTool_UnlockedModeling, after=None, separator=True, group=False)

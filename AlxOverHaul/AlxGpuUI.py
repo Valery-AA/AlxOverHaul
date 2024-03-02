@@ -57,15 +57,11 @@ def create_poly_fan(center_point: tuple[int,int]=(0,0), radius_px: int = 10, qua
 def draw_text(text: str, size: float):
     pass
 
-def draw_unlocked_modeling_ui(position_x, position_y, bIsRunning):
+def draw_unlocked_modeling_ui(position_x, position_y, operator):
 
-    indices, vertices = create_poly_fan((position_x, position_y), radius_px=50, quadrants=(False, True, False, True), quadrant_resolution=1)
+    indices, vertices = rectangle(position_x,position_y, 100, 100)#create_poly_fan((position_x, position_y), radius_px=50, quadrants=(False, True, False, True), quadrant_resolution=1)
 
-    # print(indices)
-    # print(vertices)
 
-    # vertices = rectangle([position_x, position_y], [120, 70])
-    # indices = ((0, 1, 2), (2, 1, 3))
 
     gpu.state.blend_set("ALPHA")
     shader = gpu.shader.from_builtin("UNIFORM_COLOR")
@@ -81,10 +77,10 @@ def draw_unlocked_modeling_ui(position_x, position_y, bIsRunning):
     # blf.size(0, 24.0)
     # blf.dimensions()
 
-    blf.draw(0, f"{'Active' if bIsRunning else 'Right-Click To Start'}")
+    blf.draw(0, f"{'Active' if operator.bIsRunning else 'Right-Click To Start'}")
     blf.position(0, position_x + 5, position_y + 10, 0)
     blf.size(0, 24.0)
-    blf.draw(0, f"{'Active' if bIsRunning else 'Right-Click To Start'}")
+    blf.draw(0, f"{'Active' if operator.bIsRunning else 'Right-Click To Start'}")
     
     gpu.state.line_width_set(1)
     gpu.state.blend_set("NONE")

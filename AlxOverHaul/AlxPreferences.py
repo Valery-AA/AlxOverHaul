@@ -15,11 +15,6 @@ class AlxOverHaulAddonPreferences(bpy.types.AddonPreferences):
 
     def UPDATE_View3d_Pan_Use_Shift_GRLess(self, context):
         if (self.View3d_Pan_Use_Shift_GRLess == True):
-            if (bpy.context.view_layer.objects.get("Cube")  is None):
-                Empty = bpy.data.objects.new("Cube", None)
-                Empty.name = "Cube"
-                bpy.data.collections.get("Collection").objects.link(Empty)
-
             AlxKeymaps.AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="3D View", ItemidName="view3d.move", MapType="KEYBOARD", Key="GRLESS", UseShift=True, Active=True)
         
         if (self.View3d_Pan_Use_Shift_GRLess == False):
