@@ -42,7 +42,7 @@ AlxToolQueue = [
                ]
 
 def RegisterProperties():
-    bpy.types.Scene.alx_tool_unlocked_modeling_properties = bpy.props.PointerProperty(type=AlxProperties.Alx_Tool_UnlockedModeling_Properties)
+    bpy.types.Scene.alx_tool_unlocked_modeling_properties = bpy.props.PointerProperty(type=AlxUnlockedModeling.Alx_Tool_UnlockedModeling_Properties)
 
     bpy.types.Scene.alx_panel_alexandria_general_properties = bpy.props.PointerProperty(type=AlxProperties.Alx_Panel_AlexandriaGeneral_Properties)
     bpy.types.Scene.alx_tool_scene_isolator_properties = bpy.props.PointerProperty(type=AlxProperties.Alx_Tool_SceneIsolator_Properties)

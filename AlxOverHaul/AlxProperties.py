@@ -2,27 +2,6 @@
 
 import bpy
 
-class Alx_Tool_UnlockedModeling_Properties(bpy.types.PropertyGroup):
-    """"""
-
-    poly_delete_type : bpy.props.EnumProperty(default="NONE",
-        items=[
-            ("NONE", "None", "", 1),
-            ("VERTS", "Vertex", "", 1<<1),
-            ("EDGES", "Edge", "", 1<<2),
-            ("FACES", "Face", "", 1<<3),
-            ("FACES_ONLY", "Face Only", "", 1<<4)
-        ])
-
-    edge_mark_type : bpy.props.EnumProperty(default={"NONE"}, options={"ENUM_FLAG"},
-        items=[
-            ("NONE", "None", "", 1),
-            ("seam_edge", "Seam", "", 1<<1),
-            ("sharp_edge", "Sharp", "", 1<<2),
-            ("bevel_weight_edge", "Bevel", "", 1<<3),
-            ("crease_edge", "Crease", "", 1<<4)
-        ])
-
 class Alx_Tool_SceneIsolator_Properties(bpy.types.PropertyGroup):
     """"""
 

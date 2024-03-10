@@ -5,6 +5,8 @@ from .AlxProperties import Alx_Object_Selection_ListItem
 
 from .AlxUtils import AlxRetrieveContextObject, AlxRetrieveContextArmature
 
+from .AlxModifierOperators import Alx_OT_Modifier_Shrinkwrap
+
 # UI Embeded Operators
 from .AlxOperators import Alx_OT_Scene_VisibilityIsolator, Alx_OT_Mode_UnlockedModes, Alx_OT_Modifier_ManageOnSelected
 
@@ -50,7 +52,7 @@ class Alx_UL_Object_ModifierList(bpy.types.UIList):
 
             ModifierBox = LayoutBox.row().box()
             for Modifier in item.ObjectPointer.modifiers:
-                modifier_ui_row = ModifierBox.row()
+                modifier_ui_row = ModifierBox.row(align=True)
 
                 modifier_delete_button = modifier_ui_row.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="PANEL_CLOSE")
                 modifier_delete_button.object_pointer_reference = item.ObjectPointer.name
@@ -61,6 +63,10 @@ class Alx_UL_Object_ModifierList(bpy.types.UIList):
                 icon_name = bpy.types.Modifier.bl_rna.properties['type'].enum_items.get(Modifier.type).icon
 
                 modifier_ui_row.prop(Modifier, "name", text="", icon=icon_name, emboss=True)
+
+                modifier_ui_row.prop(Modifier, "show_in_editmode", text="", emboss=True)
+                modifier_ui_row.prop(Modifier, "show_viewport", text="", emboss=True)
+                modifier_ui_row.prop(Modifier, "show_render", text="", emboss=True)
 
                 modifier_move_up_button = modifier_ui_row.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="TRIA_UP")
                 modifier_move_up_button.object_pointer_reference = item.ObjectPointer.name
@@ -173,7 +179,7 @@ class Alx_PT_AlexandriaGeneralPanel(bpy.types.Panel):
             #OperatorsBox = AlxSpace.box()
             #OperatorsBox.popover(panel=Alx_PT_AlexandriaModifierPopover.bl_idname, text= "Modifier")
 
-         #AlxOverlay_Options.prop(context.space_data.overlay, "show_annotation", text="Annotations", icon="HIDE_OFF", toggle=True)
+            #AlxOverlay_Options.prop(context.space_data.overlay, "show_annotation", text="Annotations", icon="HIDE_OFF", toggle=True)
 
         if (context.scene.alx_panel_alexandria_general_properties.alx_panel_tab == "ARMATURE") and (context.area.type == "VIEW_3D"):
             AlxLayout.ui_units_x = 15.0 * PanelProperties.alx_panel_scale_x
@@ -207,6 +213,7 @@ class Alx_PT_AlexandriaGeneralPanel(bpy.types.Panel):
             AlxSpace.row().operator(Alx_OT_Armature_MatchIKByMirroredName.bl_idname, text="Symmetrize IK")
             AlxSpace.row().operator(Alx_OT_Mesh_EditAttributes.bl_idname, text="Edit Mesh Attributes")
             AlxSpace.row().operator(Alx_OT_Mesh_BoundaryMultiTool.bl_idname, text="Boundary MultiTool")
+            AlxSpace.row().operator(Alx_OT_Modifier_Shrinkwrap.bl_idname, text="Replace Shrinkwrap")
             
 
         if (context.scene.alx_panel_alexandria_general_properties.alx_panel_tab == "RENDER") and (context.area.type == "VIEW_3D"):

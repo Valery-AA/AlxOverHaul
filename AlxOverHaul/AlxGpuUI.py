@@ -1,15 +1,15 @@
 import math
 import gpu
 from gpu_extras import batch as gpu_batch
-
+from . import Alx_STAL_GPU_utils
 
 import blf
 
 def rectangle(position_x: int, position_y: int, width: int, height: int):
-    return (
-        (position_x, position_y + height), (position_x + width, position_y + height),
-        (position_x, position_y), (position_x + width, position_y)
-            )
+    vertex_set = [(position_x, position_y), (position_x + width, position_y), (position_x + width, position_y + height), (position_x, position_y + height)]
+    index_set = [(0,1,2), (0,2, 3)]
+
+    return index_set, vertex_set
 
 def AlxRange(start = 0.0, stop = 100.0, step = 1.0):
     value = start
@@ -54,19 +54,18 @@ def create_poly_fan(center_point: tuple[int,int]=(0,0), radius_px: int = 10, qua
 
     return index_set, vertex_set
 
-def draw_text(text: str, size: float):
-    pass
 
 def draw_unlocked_modeling_ui(position_x, position_y, operator):
 
-    indices, vertices = rectangle(position_x,position_y, 100, 100)#create_poly_fan((position_x, position_y), radius_px=50, quadrants=(False, True, False, True), quadrant_resolution=1)
+    indices, vertices = rectangle(position_x, position_y, 150, 100)
+    #create_poly_fan((position_x, position_y), radius_px=50, quadrants=(False, True, False, True), quadrant_resolution=1)
 
 
 
-    gpu.state.blend_set("ALPHA")
+    #gpu.state.blend_set("ALPHA")
     shader = gpu.shader.from_builtin("UNIFORM_COLOR")
     batch = gpu_batch.batch_for_shader(shader, 'TRIS', {"pos": vertices}, indices=indices)
-    gpu.state.blend_set("ALPHA")
+    #gpu.state.blend_set("ALPHA")
     gpu.state.line_width_set(1)
     
     shader.bind()
@@ -77,10 +76,22 @@ def draw_unlocked_modeling_ui(position_x, position_y, operator):
     # blf.size(0, 24.0)
     # blf.dimensions()
 
-    blf.draw(0, f"{'Active' if operator.bIsRunning else 'Right-Click To Start'}")
-    blf.position(0, position_x + 5, position_y + 10, 0)
-    blf.size(0, 24.0)
-    blf.draw(0, f"{'Active' if operator.bIsRunning else 'Right-Click To Start'}")
+
+    OT_running_status_text = f"{'Active' if operator.bIsRunning else 'Right-Click To Start'}"
+    OT_bevel_average_text = f"bevel weight: {operator.average_bevel_weight}"
+    OT_crease_average_text = f"crease weight: {operator.average_crease_weight}"
+
+    text_order = dict()
+    text_order.update({"OT_running_status_text" : 32.0})
+    text_order.update({"OT_bevel_average_text": 16.0})
+    text_order.update({"OT_crease_average_text": 16.0})
+    
+    position_dict = Alx_STAL_GPU_utils.Alx_text_columnflow(text_order, padding=10)
+
+    for text in position_dict:
+        blf.size(0, position_dict[text][0])
+        blf.position(0, position_x + 5, position_y + position_dict[text][1], 0)
+        blf.draw(0, eval(list(position_dict.keys())[list(position_dict.keys()).index(text)]))
     
     gpu.state.line_width_set(1)
     gpu.state.blend_set("NONE")
