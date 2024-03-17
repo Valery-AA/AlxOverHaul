@@ -356,7 +356,7 @@ class Alx_PT_AlexandriaGeneralPanel(bpy.types.Panel):
 class Alx_MT_UnlockedModesPie(bpy.types.Menu):
     """"""
 
-    bl_label = ""
+    bl_label = "This is a a way to show how it works"
     bl_idname = "ALX_MT_menu_unlocked_modes"
 
     @classmethod

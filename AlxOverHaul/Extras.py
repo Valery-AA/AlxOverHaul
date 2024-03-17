@@ -1,6 +1,9 @@
 #https://blender.stackexchange.com/questions/187655/facing-problem-in-drawing-ui-previews-dynamic-enumproperty
 
 
+# obj.button_pointer = bpy.data.objects['Cube'].modifiers["Build"]
+
+
 # import bpy
 # import random
 

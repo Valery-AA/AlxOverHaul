@@ -9,6 +9,8 @@ def AlxRetirive_ModifierList(TargetObejct, TargetType):
 
     return None
 
+#class Alx_OT_Modifier_Shrinkwrap(bpy.types.Operator):
+
 class Alx_OT_Modifier_Shrinkwrap(bpy.types.Operator):
     """"""
 
@@ -35,7 +37,10 @@ class Alx_OT_Modifier_Shrinkwrap(bpy.types.Operator):
                         backup_modifier[attr] = getattr(modifier, attr)
 
                     modifier_index = selected_object.modifiers.find(modifier.name)
+                    _mode = context.mode if (context.mode[0:4] != "EDIT") else "EDIT"
+                    bpy.ops.object.mode_set(mode="OBJECT")
                     bpy.ops.object.modifier_apply(modifier=modifier.name)
+                    bpy.ops.object.mode_set(mode=_mode)
 
                     new_modifier = selected_object.modifiers.new(name=backup_modifier["name"], type=backup_modifier["type"])
 

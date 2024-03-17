@@ -5,16 +5,12 @@ from .AlxGpuUI import draw_unlocked_modeling_ui
 
 class Alx_Tool_UnlockedModeling_Properties(bpy.types.PropertyGroup):
     """"""
-    leftclick_behaviour : bpy.props.EnumProperty(default="NONE", 
-        items=[
-            ("NONE", "Standard", "", 1),
-            ("RIGHTCLICK_AUTO", "Auto Rightclick", "", 1<<1)
-        ]) #type:ignore
 
     leftclick_selection_mode : bpy.props.EnumProperty(default="NONE", 
         items=[
             ("NONE", "Standard", "", 1),
-            ("LOOP_SELECTION", "Loop", "", 1<<1)
+            ("LOOP_SELECTION", "Loop", "", 1<<1),
+            ("LINKED_SELECTION", "Linked", "", 1<<2)
         ]) #type:ignore
 
     leftclick_selection_state_mode : bpy.props.EnumProperty(default="NONE", 
@@ -23,19 +19,11 @@ class Alx_Tool_UnlockedModeling_Properties(bpy.types.PropertyGroup):
             ("EXTEND", "Extend", "", 1<<1)
         ]) #type:ignore
 
-    leftclick_retopology : bpy.props.EnumProperty(default="NONE", 
+    rightclick_mode : bpy.props.EnumProperty(name="Right Click", default="NONE",
         items=[
-            ("NONE", "Normal", "", 1),
-            ("SURFACE_UNDER_POINTER", "On Sruface", "", 1<<1)
-        ]) #type:ignore
-
-    poly_delete_type : bpy.props.EnumProperty(default="NONE",
-        items=[
-            ("NONE", "None", "", 1),
-            ("VERTS", "Vertex", "", 1<<1),
-            ("EDGES", "Edge", "", 1<<2),
-            ("FACES", "Face", "", 1<<3),
-            ("FACES_ONLY", "Face Only", "", 1<<4)
+            ("NONE", "Standard", "", 1),
+            ("POLY_MARK", "Mark Mode", "", 1<<1),
+            ("POLY_DELETE", "Delete Mode", "", 1<<2)
         ]) #type:ignore
 
     edge_mark_type : bpy.props.EnumProperty(default={"NONE"}, options={"ENUM_FLAG"},
@@ -46,6 +34,20 @@ class Alx_Tool_UnlockedModeling_Properties(bpy.types.PropertyGroup):
             ("bevel_weight_edge", "Bevel", "", 1<<3),
             ("crease_edge", "Crease", "", 1<<4)
         ]) #type:ignore
+
+    poly_delete_type : bpy.props.EnumProperty(default="NONE",
+        items=[
+            ("NONE", "None", "", 1),
+            ("VERTS", "Vertex", "", 1<<1),
+            ("EDGES", "Edge", "", 1<<2),
+            ("FACES", "Face", "", 1<<3),
+        ]) #type:ignore
+
+    poly_dissolve : bpy.props.BoolProperty(name="Dissolve", default=False) #type:ignore
+
+
+
+
 
 class Alx_PT_Panel_UnlockedModeling(bpy.types.Panel):
     """"""
@@ -66,27 +68,24 @@ class Alx_PT_Panel_UnlockedModeling(bpy.types.Panel):
             return False
 
     def draw(self, context: bpy.types.Context):
-        Properties = context.scene.alx_tool_unlocked_modeling_properties
+        Properties : Alx_Tool_UnlockedModeling_Properties = context.scene.alx_tool_unlocked_modeling_properties
 
         AlxLayout = self.layout
         AlxLayout.ui_units_x = 12.0
 
-        AlxLayout.label(text="Select:")
-        leftclick_behaviour_mode_grid_flow = AlxLayout.grid_flow(columns=3, align=True)
-        leftclick_behaviour_mode_grid_flow.prop(Properties, "leftclick_behaviour", expand=True)
+        AlxLayout.label(text="Left Click:")
+        AlxLayout.grid_flow(align=True).prop(Properties, "leftclick_selection_mode", expand=True)
+        AlxLayout.grid_flow(align=True).prop(Properties, "leftclick_selection_state_mode", expand=True)
 
-        leftclick_selection_mode_grid_flow = AlxLayout.grid_flow(columns=3, align=True)
-        leftclick_selection_mode_grid_flow.prop(Properties, "leftclick_selection_mode", expand=True)
+        AlxLayout.label(text="Right Click:")
+        AlxLayout.grid_flow(align=True).prop(Properties, "rightclick_mode", expand=True)
 
-        leftclick_selection_state_mode_grid_flow = AlxLayout.grid_flow(columns=3, align=True)
-        leftclick_selection_state_mode_grid_flow.prop(Properties, "leftclick_selection_state_mode", expand=True)
+        AlxLayout.label(text="Mark:")
+        AlxLayout.grid_flow(align=True).prop(Properties, "edge_mark_type", expand=True)
 
         AlxLayout.label(text="Delete:")
-        poly_delete_grid_flow = AlxLayout.grid_flow(columns=3, align=True)
-        poly_delete_grid_flow.prop(Properties, "poly_delete_type", expand=True)
-        AlxLayout.label(text="Mark:")
-        edge_mark_grid_flow = AlxLayout.grid_flow(columns=3, align=True)
-        edge_mark_grid_flow.prop(Properties, "edge_mark_type", expand=True)
+        AlxLayout.prop(Properties, "poly_dissolve")
+        AlxLayout.grid_flow(align=True).prop(Properties, "poly_delete_type", expand=True)
 
 
 
@@ -125,33 +124,25 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
 
         context.area.tag_redraw()
 
+
+
     def Call_Special_Action(self, context: bpy.types.Context, poly_delete_type, edge_mark_as, pass_through: bool):
-        if (context.edit_object is not None) and (self.ContextBmesh is not None):
-            selection_type = ""
-            if (poly_delete_type in ["FACES", "FACES_ONLY"]):
-                selection_type = "faces"
-            if (poly_delete_type in ["EDGES"]):
-                selection_type = "edges"
-            if (poly_delete_type in ["VERTS"]):
-                selection_type = "verts"
 
-            if (poly_delete_type != "NONE") and (selection_type != ""):
-                bmesh.ops.delete(self.ContextBmesh, geom=[mesh_poly for mesh_poly in getattr(self.ContextBmesh, f"{selection_type}") if (mesh_poly.select == True)], context=poly_delete_type)
-                bmesh.update_edit_mesh(self.ContextMesh, loop_triangles=True, destructive=True)
-            self.ContextBmesh.edges.ensure_lookup_table()
 
-            if (poly_delete_type not in ["VERTS", "EDGES"]):
-                for selected_edge in [mesh_edge.index for mesh_edge in self.ContextBmesh.edges if (mesh_edge.select == True)]:
-                    if ("bevel_weight_edge" in edge_mark_as):
-                        self.ContextBmesh.edges[selected_edge][self.bevel_mark_layer] = 1.0
-                    if ("crease_edge" in edge_mark_as):
-                        self.ContextBmesh.edges[selected_edge][self.crease_mark_layer] = 1.0
-                    if ("seam_edge" in edge_mark_as):
-                        self.ContextBmesh.edges[selected_edge].seam = False
-                    if ("sharp_edge" in edge_mark_as):
-                        self.ContextBmesh.edges[selected_edge].smooth = False
+        if (poly_delete_type == "NONE"):
+            #self.ContextBmesh.select_history.validate()
 
-                    bmesh.update_edit_mesh(self.ContextMesh, loop_triangles=True, destructive=True)  
+            for sequence in self.ContextBmesh.select_history:
+                
+                print(f"history {sequence.__class__}")
+
+
+            #for selection in self.ContextBmesh.select_history:
+
+
+  
+
+            
 
         return {"RUNNING_MODAL"} if (pass_through == False) else {"PASS_THROUGH"}
         
@@ -170,6 +161,7 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
                 bmesh.update_edit_mesh(self.ContextMesh, loop_triangles=True, destructive=True) 
 
         return {"RUNNING_MODAL"} if (pass_through == False) else {"PASS_THROUGH"}
+
 
 
     def modal(self, context: bpy.types.Context, event: bpy.types.Event):
@@ -207,47 +199,68 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
 
 
 
-        if (event.type == "S"):
+        if (event.type == "S") and (event.shift == False) and (event.ctrl == False) and (event.alt == False):
             bpy.ops.wm.call_panel(name=Alx_PT_Panel_UnlockedModeling.bl_idname, keep_open=True)
             return {"RUNNING_MODAL"}
         
+        if (event.type == "Z") and (event.shift == False) and (event.ctrl == True):
+            print("key undo")
+            try:
+                bpy.ops.ed.undo()
+                print("undo")
+            except Exception as error:
+                print(error)
+            
+            return {"RUNNING_MODAL"}
+
+        if (event.type == "Z") and (event.shift == True) and (event.ctrl == True):
+            print("key redo")
+            try:
+                bpy.ops.ed.redo()
+                print("redo")
+            except Exception as error:
+                print(error)
+            
+            return {"RUNNING_MODAL"}
 
 
 
-        # if (context.mode == "EDIT_MESH"):
-        #     tool = bpy.context.workspace.tools.from_space_view3d_mode("EDIT_MESH", create=False)
-        #     props = tool.operator_properties(tool.idname) if (tool.idname in ["builtin.select_box"]) and (hasattr(tool, "operator_properties")) else None
-        #     if (props is not None):
-        #         props.mode = 1
+        operator_properties : Alx_Tool_UnlockedModeling_Properties = context.scene.alx_tool_unlocked_modeling_properties
+        
+        leftclick_selection_mode = operator_properties.leftclick_selection_mode
+        leftclick_extend_selection = (operator_properties.leftclick_selection_state_mode == "EXTEND")
+
+        rightclick_mode = operator_properties.rightclick_mode
+        edge_mark_type = operator_properties.edge_mark_type
+        poly_delete_type = operator_properties.poly_delete_type
+        poly_dissolve = operator_properties.poly_dissolve
 
 
-        leftclick_behaviour = context.scene.alx_tool_unlocked_modeling_properties.leftclick_behaviour
-        leftclick_selection_mode = context.scene.alx_tool_unlocked_modeling_properties.leftclick_selection_mode
-        leftclick_selection_state_mode = context.scene.alx_tool_unlocked_modeling_properties.leftclick_selection_state_mode
 
-        edge_mark_as = [mark_type for mark_type in context.scene.alx_tool_unlocked_modeling_properties.edge_mark_type]
-        poly_delete_type = context.scene.alx_tool_unlocked_modeling_properties.poly_delete_type
-
-        bExtend = True if (leftclick_selection_state_mode == "EXTEND") else False
-
-        if (event.type == "LEFTMOUSE") and (event.ctrl == False) and (leftclick_behaviour == "NONE"):
+        if (event.type == "LEFTMOUSE") and (event.ctrl == False):
             if (context.mode == "EDIT_MESH"):
                 override_window = context.window
                 override_screen = override_window.screen
                 override_area = [area for area in override_screen.areas if area.type == "VIEW_3D"]
                 override_region = [region for region in override_area[0].regions if region.type == 'WINDOW']
-                
-                
-                
+
                 with context.temp_override(window=override_window, area=override_area[0], region=override_region[0]):
                     if (leftclick_selection_mode == "NONE"):
-                        return {"PASS_THROUGH"}
+                        bpy.ops.view3d.select("INVOKE_DEFAULT", extend=leftclick_extend_selection)
+                        return {"RUNNING_MODAL"}
 
                     elif (leftclick_selection_mode == "LOOP_SELECTION"):
-                        bpy.ops.mesh.loop_select("INVOKE_DEFAULT", extend=bExtend, deselect=False, toggle=False, ring=False)
+                        bpy.ops.mesh.loop_select("INVOKE_DEFAULT", extend=leftclick_extend_selection, deselect=False, toggle=False, ring=False)
+                        return {"RUNNING_MODAL"}
+                    elif (leftclick_selection_mode == "LINKED_SELECTION"):
+                        bpy.ops.view3d.select("INVOKE_DEFAULT")
+                        bpy.ops.mesh.select_linked("INVOKE_DEFAULT", delimit={"SEAM"})
+                        return {"RUNNING_MODAL"}
             return {"RUNNING_MODAL"}
 
-        if (event.type == "LEFTMOUSE") and (event.ctrl == True) and (leftclick_behaviour == "NONE"):
+
+
+        if (event.type == "LEFTMOUSE") and (event.ctrl == True):
             if (context.mode == "EDIT_MESH"):
                 override_window = context.window
                 override_screen = override_window.screen
@@ -265,10 +278,57 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
 
 
         if (event.type == "RIGHTMOUSE") and (event.ctrl == False):
-            return self.Call_Special_Action(context, poly_delete_type, edge_mark_as, pass_through=False)
+
+            if (rightclick_mode == "POLY_MARK"):
+                for selected_edge in [mesh_edge.index for mesh_edge in self.ContextBmesh.edges if (mesh_edge.select == True)]:
+                    if ("bevel_weight_edge" in edge_mark_type):
+                        self.ContextBmesh.edges[selected_edge][self.bevel_mark_layer] = 1.0
+                    if ("crease_edge" in edge_mark_type):
+                        self.ContextBmesh.edges[selected_edge][self.crease_mark_layer] = 1.0
+                    if ("seam_edge" in edge_mark_type):
+                        self.ContextBmesh.edges[selected_edge].seam = True
+                    if ("sharp_edge" in edge_mark_type):
+                        self.ContextBmesh.edges[selected_edge].smooth = False
+
+                    bmesh.update_edit_mesh(self.ContextMesh, loop_triangles=True, destructive=False)
+                return {"RUNNING_MODAL"}
+
+            if (rightclick_mode == "POLY_DELETE"):
+                if (poly_dissolve == False):
+                    if (poly_delete_type in ["VERTS", "EDGES", "FACES"]):
+                        delete_selection = [mesh_poly for mesh_poly in getattr(self.ContextBmesh, f"{str.lower(poly_delete_type)}") if (mesh_poly.select == True)]
+                        bmesh.ops.delete(self.ContextBmesh, geom=delete_selection, context=poly_delete_type)
+                        bmesh.update_edit_mesh(self.ContextMesh, loop_triangles=True, destructive=True)
+                        match poly_delete_type:
+                            case "VERTS":
+                                self.ContextBmesh.verts.ensure_lookup_table()
+                            case "EDGES":
+                                self.ContextBmesh.edges.ensure_lookup_table()
+                            case "FACES":
+                                self.ContextBmesh.faces.ensure_lookup_table()
+                        return {"RUNNING_MODAL"}
+
+                if (poly_dissolve == True):
+                    if (poly_delete_type in ["VERTS", "EDGES", "FACES"]):
+                        dissolve_selection = [mesh_poly for mesh_poly in getattr(self.ContextBmesh, f"{str.lower(poly_delete_type)}") if (mesh_poly.select == True)]
+                        match poly_delete_type:
+                            case "VERTS":
+                                bmesh.ops.dissolve_verts(self.ContextBmesh, verts=dissolve_selection)
+                                self.ContextBmesh.verts.ensure_lookup_table()
+                            case "EDGES":
+                                bmesh.ops.dissolve_edges(self.ContextBmesh, edges=dissolve_selection, use_verts=True)
+                                self.ContextBmesh.edges.ensure_lookup_table()
+                            case "FACES":
+                                bmesh.ops.dissolve_faces(self.ContextBmesh, faces=dissolve_selection, use_verts=False)
+                                self.ContextBmesh.faces.ensure_lookup_table()
+                        bmesh.update_edit_mesh(self.ContextMesh, loop_triangles=True, destructive=True)
+                        return {"RUNNING_MODAL"}
+                return {"PASS_THROUGH"}
+
+
 
         if ((event.type == "RIGHTMOUSE") and (event.ctrl == True)):
-            return self.Call_Special_Alter(context, poly_delete_type, edge_mark_as, pass_through=False)
+            return self.Call_Special_Alter(context, poly_delete_type, edge_mark_type, pass_through=False)
 
          
 

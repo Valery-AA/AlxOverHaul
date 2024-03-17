@@ -3,6 +3,8 @@
 import bpy
 import bmesh
 
+from . import AlxUtils
+
 class Alx_OT_Scene_VisibilityIsolator(bpy.types.Operator):
     """"""
 
