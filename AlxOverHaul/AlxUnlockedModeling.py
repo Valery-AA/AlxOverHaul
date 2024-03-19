@@ -106,6 +106,8 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
     def poll(self, context: bpy.types.Context):
         return (context.area is not None) and (context.area.type == "VIEW_3D") and (context.mode == "EDIT_MESH")
 
+
+
     def CancelModal(self, context: bpy.types.Context):
         self.bIsRunning = False
         if (self.ContextBmesh is not None):
@@ -123,45 +125,7 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
             print(f"info-cancel: unlocked modeling ui {error}")
 
         context.area.tag_redraw()
-
-
-
-    def Call_Special_Action(self, context: bpy.types.Context, poly_delete_type, edge_mark_as, pass_through: bool):
-
-
-        if (poly_delete_type == "NONE"):
-            #self.ContextBmesh.select_history.validate()
-
-            for sequence in self.ContextBmesh.select_history:
-                
-                print(f"history {sequence.__class__}")
-
-
-            #for selection in self.ContextBmesh.select_history:
-
-
-  
-
-            
-
-        return {"RUNNING_MODAL"} if (pass_through == False) else {"PASS_THROUGH"}
         
-    def Call_Special_Alter(self, context: bpy.types.Context, poly_delete_type, edge_mark_as, pass_through: bool):
-        if (context.edit_object is not None) and (self.ContextBmesh is not None):
-            for selected_edge in [mesh_edge.index for mesh_edge in self.ContextBmesh.edges if (mesh_edge.select == True)]:
-                if ("bevel_weight_edge" in edge_mark_as):
-                    self.ContextBmesh.edges[selected_edge][self.bevel_mark_layer] = 0.0
-                if ("crease_edge" in edge_mark_as):
-                    self.ContextBmesh.edges[selected_edge][self.crease_mark_layer] = 0.0
-                if ("seam_edge" in edge_mark_as):
-                    self.ContextBmesh.edges[selected_edge].seam = False
-                if ("sharp_edge" in edge_mark_as):
-                    self.ContextBmesh.edges[selected_edge].smooth = True
-
-                bmesh.update_edit_mesh(self.ContextMesh, loop_triangles=True, destructive=True) 
-
-        return {"RUNNING_MODAL"} if (pass_through == False) else {"PASS_THROUGH"}
-
 
 
     def modal(self, context: bpy.types.Context, event: bpy.types.Event):
@@ -203,7 +167,7 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
             bpy.ops.wm.call_panel(name=Alx_PT_Panel_UnlockedModeling.bl_idname, keep_open=True)
             return {"RUNNING_MODAL"}
         
-        if (event.type == "Z") and (event.shift == False) and (event.ctrl == True):
+        if (event.type == "Z") and (event.shift == False) and (event.ctrl == True) and (event.value == "CLICK"):
             print("key undo")
             try:
                 bpy.ops.ed.undo()
@@ -213,7 +177,7 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
             
             return {"RUNNING_MODAL"}
 
-        if (event.type == "Z") and (event.shift == True) and (event.ctrl == True):
+        if (event.type == "Z") and (event.shift == True) and (event.ctrl == True) and (event.value == "CLICK"):
             print("key redo")
             try:
                 bpy.ops.ed.redo()
@@ -237,7 +201,7 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
 
 
 
-        if (event.type == "LEFTMOUSE") and (event.ctrl == False):
+        if (event.type == "LEFTMOUSE") and (event.ctrl == False) and (event.value == "CLICK"):
             if (context.mode == "EDIT_MESH"):
                 override_window = context.window
                 override_screen = override_window.screen
@@ -246,21 +210,24 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
 
                 with context.temp_override(window=override_window, area=override_area[0], region=override_region[0]):
                     if (leftclick_selection_mode == "NONE"):
-                        bpy.ops.view3d.select("INVOKE_DEFAULT", extend=leftclick_extend_selection)
+                        bpy.ops.view3d.select("INVOKE_DEFAULT", extend=leftclick_extend_selection, deselect=False)
+                        bpy.ops.ed.undo_push(message=f"AlxUM Select extend:{leftclick_extend_selection}")
                         return {"RUNNING_MODAL"}
-
+                    
                     elif (leftclick_selection_mode == "LOOP_SELECTION"):
                         bpy.ops.mesh.loop_select("INVOKE_DEFAULT", extend=leftclick_extend_selection, deselect=False, toggle=False, ring=False)
+                        bpy.ops.ed.undo_push(message=f"AlxUM Loop Select extend:{leftclick_extend_selection}")
                         return {"RUNNING_MODAL"}
+                    
                     elif (leftclick_selection_mode == "LINKED_SELECTION"):
-                        bpy.ops.view3d.select("INVOKE_DEFAULT")
+                        bpy.ops.view3d.select("INVOKE_DEFAULT", deselect=False)
                         bpy.ops.mesh.select_linked("INVOKE_DEFAULT", delimit={"SEAM"})
+                        bpy.ops.ed.undo_push(message=f"AlxUM Linked Select extend:{leftclick_extend_selection}")
                         return {"RUNNING_MODAL"}
+                    
             return {"RUNNING_MODAL"}
 
-
-
-        if (event.type == "LEFTMOUSE") and (event.ctrl == True):
+        if (event.type == "LEFTMOUSE") and (event.ctrl == True) and (event.value == "CLICK"):
             if (context.mode == "EDIT_MESH"):
                 override_window = context.window
                 override_screen = override_window.screen
@@ -269,15 +236,20 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
 
                 with context.temp_override(window=override_window, area=override_area[0], region=override_region[0]):
                     if (leftclick_selection_mode == "NONE"):
-                        return {"PASS_THROUGH"}
-
+                        bpy.ops.view3d.select("INVOKE_DEFAULT", extend=False, deselect=True,  toggle=True)
+                        bpy.ops.ed.undo_push(message=f"AlxUM De-Select extend:{leftclick_extend_selection}")
+                        return {"RUNNING_MODAL"}
+                    
                     elif (leftclick_selection_mode == "LOOP_SELECTION"):
-                        bpy.ops.mesh.loop_select("INVOKE_DEFAULT", extend=False, deselect=True, toggle=False, ring=False)
+                        bpy.ops.mesh.loop_select("INVOKE_DEFAULT", extend=False, deselect=True, toggle=True, ring=False)
+                        bpy.ops.ed.undo_push(message=f"AlxUM Loop De-Select extend:{leftclick_extend_selection}")
+                        return {"RUNNING_MODAL"}
+
             return {"RUNNING_MODAL"}
 
 
 
-        if (event.type == "RIGHTMOUSE") and (event.ctrl == False):
+        if (event.type == "RIGHTMOUSE") and (event.ctrl == False) and (event.value == "PRESS"):
 
             if (rightclick_mode == "POLY_MARK"):
                 for selected_edge in [mesh_edge.index for mesh_edge in self.ContextBmesh.edges if (mesh_edge.select == True)]:
@@ -290,7 +262,8 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
                     if ("sharp_edge" in edge_mark_type):
                         self.ContextBmesh.edges[selected_edge].smooth = False
 
-                    bmesh.update_edit_mesh(self.ContextMesh, loop_triangles=True, destructive=False)
+                bmesh.update_edit_mesh(self.ContextMesh, loop_triangles=True, destructive=False)
+                bpy.ops.ed.undo_push(message=f"AlxUM Mark Selection: {edge_mark_type}")
                 return {"RUNNING_MODAL"}
 
             if (rightclick_mode == "POLY_DELETE"):
@@ -306,6 +279,7 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
                                 self.ContextBmesh.edges.ensure_lookup_table()
                             case "FACES":
                                 self.ContextBmesh.faces.ensure_lookup_table()
+                        bpy.ops.ed.undo_push(message=f"AlxUM Delete Selection {poly_delete_type}")
                         return {"RUNNING_MODAL"}
 
                 if (poly_dissolve == True):
@@ -322,15 +296,30 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
                                 bmesh.ops.dissolve_faces(self.ContextBmesh, faces=dissolve_selection, use_verts=False)
                                 self.ContextBmesh.faces.ensure_lookup_table()
                         bmesh.update_edit_mesh(self.ContextMesh, loop_triangles=True, destructive=True)
+                        bpy.ops.ed.undo_push(message=f"AlxUM Dissolve Selection {poly_delete_type}")
                         return {"RUNNING_MODAL"}
+
                 return {"PASS_THROUGH"}
 
 
 
-        if ((event.type == "RIGHTMOUSE") and (event.ctrl == True)):
-            return self.Call_Special_Alter(context, poly_delete_type, edge_mark_type, pass_through=False)
+        if (event.type == "RIGHTMOUSE") and (event.ctrl == True) and (event.value == "PRESS"):
 
-         
+            if (rightclick_mode == "POLY_MARK"):
+                for selected_edge in [mesh_edge.index for mesh_edge in self.ContextBmesh.edges if (mesh_edge.select == True)]:
+                    if ("bevel_weight_edge" in edge_mark_type):
+                        self.ContextBmesh.edges[selected_edge][self.bevel_mark_layer] = 0.0
+                    if ("crease_edge" in edge_mark_type):
+                        self.ContextBmesh.edges[selected_edge][self.crease_mark_layer] = 0.0
+                    if ("seam_edge" in edge_mark_type):
+                        self.ContextBmesh.edges[selected_edge].seam = False
+                    if ("sharp_edge" in edge_mark_type):
+                        self.ContextBmesh.edges[selected_edge].smooth = True
+
+                bmesh.update_edit_mesh(self.ContextMesh, loop_triangles=True, destructive=False)
+                bpy.ops.ed.undo_push(message=f"AlxUM Mark Selection: {edge_mark_type}")
+                return {"RUNNING_MODAL"}
+
 
         self.bmesh_selection = [bmesh_edge.index for bmesh_edge in self.ContextBmesh.edges if (bmesh_edge.select == True)]
 
@@ -343,14 +332,13 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
         return {"PASS_THROUGH"}
 
 
+
     def invoke(self, context, event):
         print("invoke called")
         self.bIsRunning = True
 
         position_x = 100
         position_y = 100
-
-
 
         if (context.scene.alx_draw_handler_unlocked_modeling is None):
             bpy.types.Scene.alx_draw_handler_unlocked_modeling = bpy.types.SpaceView3D.draw_handler_add(draw_unlocked_modeling_ui, (position_x, position_y, self), "WINDOW", 'POST_PIXEL')

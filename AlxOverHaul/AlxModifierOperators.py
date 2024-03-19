@@ -9,8 +9,6 @@ def AlxRetirive_ModifierList(TargetObejct, TargetType):
 
     return None
 
-#class Alx_OT_Modifier_Shrinkwrap(bpy.types.Operator):
-
 class Alx_OT_Modifier_Shrinkwrap(bpy.types.Operator):
     """"""
 
