@@ -1,13 +1,19 @@
-bl_info = {
-    "name" : "AlxOverHaul",
-    "author" : "Valeria Bosco[Valy Arhal]",
-    "description" : "For proper functionality [Blender] keymaps preset shoudl be used, [Blender 27x and Industry Compatible] will result in severe keymap conflicts",
-    "version" : (0, 5, 4),
-    "warning" : "[Heavly Under Development] And Subject To Substantial Changes",
-    "category" : "3D View",
-    "location" : "[Ctrl Alt A] Tool Menu, [Shift S] Pivot Menu, [Tab] Mode Compact Menu",
-    "blender" : (3, 6, 0)
-}
+import bpy
+
+if (bpy.app.version[0:2] in [(3,6),(4,0), (4,1)]):
+    bl_info = {
+        "name" : "AlxOverHaul",
+        "author" : "Valeria Bosco[Valy Arhal]",
+        "description" : "For proper functionality [Blender] keymaps preset shoudl be used, [Blender 27x and Industry Compatible] will result in severe keymap conflicts",
+        "version" : (0, 5, 4),
+        "warning" : "[Heavly Under Development] And Subject To Substantial Changes",
+        "category" : "3D View",
+        "location" : "[Ctrl Alt A] Tool Menu, [Shift S] Pivot Menu, [Tab] Mode Compact Menu",
+        "blender" : (3, 6, 0)
+    }
+
+
+
 import bpy
 
 # Class Import/Reload
@@ -38,8 +44,25 @@ from . import AlxHandlers
 from . AlxKeymaps import AlxAddonKeymaps, AlxKeymapCreation
 
 AlxToolQueue = [
-               dict(tool_class=AlxUnlockedModeling.Alx_WT_WorkSpaceTool_UnlockedModeling, after=None, separator=True, group=False)
+               [AlxUnlockedModeling.Alx_WT_WorkSpaceTool_UnlockedModeling, None, True, False] #tool_class, after, separator, group
                ]
+
+
+
+def AlxRegisterClassQueue():
+    for AlxClass in AlxClassQueue:
+        try:
+            bpy.utils.register_class(AlxClass)
+        except:
+            bpy.utils.unregister_class(AlxClass)
+            bpy.utils.register_class(AlxClass)
+def AlxRegisterToolQueue():
+    for AlxTool in AlxToolQueue:
+        try:
+            bpy.utils.register_tool(AlxTool[0], after=AlxTool[1], separator=AlxTool[2], group=AlxTool[3])
+        except:
+            bpy.utils.unregister_tool(AlxTool[0])
+            bpy.utils.register_tool(AlxTool[0], after=AlxTool[1], separator=AlxTool[2], group=AlxTool[3])
 
 def RegisterProperties():
     bpy.types.Scene.alx_tool_unlocked_modeling_properties = bpy.props.PointerProperty(type=AlxUnlockedModeling.Alx_Tool_UnlockedModeling_Properties)
@@ -55,7 +78,6 @@ def RegisterProperties():
 
     bpy.types.Object.alx_self_bmesh_datablock = []
     bpy.types.Scene.alx_draw_handler_unlocked_modeling = None
-
 def UnRegisterProperties():
     del bpy.types.Scene.alx_tool_unlocked_modeling_properties
     del bpy.types.Scene.alx_panel_alexandria_general_properties
@@ -72,27 +94,18 @@ def RegisterHandlers():
     bpy.app.handlers.load_post.append(AlxHandlers.AlxAddonKeymapHandler)
     bpy.app.handlers.load_post.append(AlxHandlers.AlxUpdateSceneSelectionObjectList)
     bpy.app.handlers.depsgraph_update_post.append(AlxHandlers.AlxUpdateSceneSelectionObjectList)
-
 def UnRegisterHandlers():
     bpy.app.handlers.load_post.remove(AlxHandlers.AlxMsgBusSubscriptions)
     bpy.app.handlers.load_post.remove(AlxHandlers.AlxAddonKeymapHandler)
     bpy.app.handlers.load_post.remove(AlxHandlers.AlxUpdateSceneSelectionObjectList)
     bpy.app.handlers.depsgraph_update_post.remove(AlxHandlers.AlxUpdateSceneSelectionObjectList)
 
-def register():
-    for AlxClass in AlxClassQueue:
-        try:
-            bpy.utils.register_class(AlxClass)
-        except:
-            bpy.utils.unregister_class(AlxClass)
-            bpy.utils.register_class(AlxClass)
 
-    for AlxTool in AlxToolQueue:
-        try:
-            bpy.utils.register_tool(AlxTool.get("tool_class"), after=AlxTool.get("after"), separator=AlxTool.get("separator"), group=AlxTool.get("group"))
-        except:
-            bpy.utils.unregister_tool(AlxTool.get("tool_class"))
-            bpy.utils.register_tool(AlxTool.get("tool_class"), after=AlxTool.get("after"), separator=AlxTool.get("separator"), group=AlxTool.get("group"))
+
+def register():
+    
+    AlxRegisterClassQueue()
+    AlxRegisterToolQueue()
 
     AlxKeymapCreation()
 
@@ -108,7 +121,7 @@ def unregister():
         bpy.utils.unregister_class(AlxClass)
 
     for AlxTool in AlxToolQueue:
-        bpy.utils.unregister_tool(AlxTool.get("tool_class"))
+        bpy.utils.unregister_tool(AlxTool)
 
     for km, kmi in AlxAddonKeymaps:
         km.keymap_items.remove(kmi)
