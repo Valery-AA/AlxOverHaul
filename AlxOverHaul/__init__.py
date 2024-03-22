@@ -6,7 +6,7 @@ bl_info = {
     "warning" : "[Heavly Under Development] And Subject To Substantial Changes",
     "category" : "3D View",
     "location" : "[Ctrl Alt A] Tool Menu, [Shift S] Pivot Menu, [Tab] Mode Compact Menu",
-    "blender" : (3, 0, 0)
+    "blender" : (3, 6, 0)
 }
 
 
