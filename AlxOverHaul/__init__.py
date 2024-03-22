@@ -1,16 +1,13 @@
-import bpy
-
-if (bpy.app.version[0:2] in [(3,6),(4,0), (4,1)]):
-    bl_info = {
-        "name" : "AlxOverHaul",
-        "author" : "Valeria Bosco[Valy Arhal]",
-        "description" : "For proper functionality [Blender] keymaps preset shoudl be used, [Blender 27x and Industry Compatible] will result in severe keymap conflicts",
-        "version" : (0, 5, 4),
-        "warning" : "[Heavly Under Development] And Subject To Substantial Changes",
-        "category" : "3D View",
-        "location" : "[Ctrl Alt A] Tool Menu, [Shift S] Pivot Menu, [Tab] Mode Compact Menu",
-        "blender" : (3, 6, 0)
-    }
+bl_info = {
+    "name" : "AlxOverHaul",
+    "author" : "Valeria Bosco[Valy Arhal]",
+    "description" : "For proper functionality [Blender] keymaps preset shoudl be used, [Blender 27x and Industry Compatible] will result in severe keymap conflicts",
+    "version" : (0, 5, 4),
+    "warning" : "[Heavly Under Development] And Subject To Substantial Changes",
+    "category" : "3D View",
+    "location" : "[Ctrl Alt A] Tool Menu, [Shift S] Pivot Menu, [Tab] Mode Compact Menu",
+    "blender" : (3, 0, 0)
+}
 
 
 

@@ -1,3 +1,5 @@
+import random
+
 import bpy
 import bmesh
 
@@ -52,9 +54,13 @@ class Alx_Tool_UnlockedModeling_Properties(bpy.types.PropertyGroup):
             ("COLOR_RANDOM", "Random", "", 1<<1)
         ]) #type:ignore
 
+    def auto_paint_layers(scene, context: bpy.types.Context):
+        color_layers = [(f"{color.name}", f"{color.name}", "") for color in context.edit_object.data.color_attributes]
+        return color_layers
 
+    poly_paint_layers : bpy.props.EnumProperty(name="Delete Type", items=auto_paint_layers) #type:ignore
 
-
+    poly_paint_color : bpy.props.FloatVectorProperty(name="Paint Color", subtype="COLOR", size=4, default=(1.0, 1.0, 1.0, 1.0), min=0.0, max=1.0) #type:ignore
 
 class Alx_PT_Panel_UnlockedModeling(bpy.types.Panel):
     """"""
@@ -109,6 +115,16 @@ class Alx_PT_Panel_UnlockedModeling(bpy.types.Panel):
             row = AlxLayout.split(factor=0.5)
             row.label(text="Paint")
             row.prop(Properties, "poly_paint_mode", text="")
+
+            row = AlxLayout.split(factor=0.5)
+            row.label(text="Layer")
+            row.prop(Properties, "poly_paint_layers", text="")
+
+            if (Properties.poly_paint_mode == "NONE"):
+                row = AlxLayout.split(factor=0.5)
+                row.label(text="Paint")
+                row.prop(Properties, "poly_paint_color", text="")
+                
 
 
 class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
@@ -201,7 +217,7 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
 
 
 
-                if (event.type == "S") and (event.shift == False) and (event.ctrl == False) and (event.alt == False):
+                if (event.type == "MIDDLEMOUSE") and (event.shift == False) and (event.ctrl == False) and (event.alt == False):
                     bpy.ops.wm.call_panel(name=Alx_PT_Panel_UnlockedModeling.bl_idname, keep_open=True)
                     return {"RUNNING_MODAL"}
                 
@@ -237,7 +253,9 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
                 poly_delete_type = operator_properties.poly_delete_type
                 poly_dissolve = operator_properties.poly_dissolve
 
-
+                poly_paint_mode = operator_properties.poly_paint_mode
+                poly_paint_color = operator_properties.poly_paint_color
+                poly_paint_layers = operator_properties.poly_paint_layers
 
                 if (event.type == "LEFTMOUSE") and (event.ctrl == False) and (event.value == "CLICK"):
                     if (context.mode == "EDIT_MESH"):
@@ -340,21 +358,46 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
                         return {"PASS_THROUGH"}
 
                     if (rightclick_mode == "POLY_PAINT"):
-                        id_layer = self.ContextBmesh.loops.layers.float_color.get("AlxIDMap", None)
-                        if (id_layer is not None):
-                            loop_selection = [[mesh_face.index, mesh_loop.index] for mesh_face in self.ContextBmesh.faces for mesh_loop in mesh_face.loops if (all([vert.select for vert in mesh_loop.face.verts]))]
-                            
-                            unique_loop_selection = []
-                            for loop in loop_selection:
-                                if (loop not in unique_loop_selection):
-                                    unique_loop_selection.append(loop)
+                        if (poly_paint_layers is not None):
+                            if (context.edit_object is not None) and (context.edit_object.type == "MESH") and (context.edit_object.data is not None):
+                                object_layer = context.edit_object.data.color_attributes.get(poly_paint_layers)
+                                
+                                if (object_layer is not None):
+                                    layer_domain = "verts" if (object_layer.domain == "POINT") else "loops" if (object_layer.domain == "CORNER") else ""
+                                    layer_data = "float_color" if (object_layer.data_type == "FLOAT_COLOR") else "color" if (object_layer.data_type == "BYTE_COLOR") else ""
 
-                            for selected_loop in unique_loop_selection:
-                                self.ContextBmesh.faces[selected_loop[0]].loops[(selected_loop[1] % len(self.ContextBmesh.faces[selected_loop[0]].verts) )-1][id_layer] = (1.0, 0.0, 0.0, 1.0)
-                            bmesh.update_edit_mesh(self.ContextMesh, loop_triangles=True, destructive=False)
+                                    if (layer_domain != "") and (layer_data != ""):
+                                        self.color_layer = getattr(getattr(self.ContextBmesh, layer_domain).layers, layer_data).get(poly_paint_layers, None)
+
+                                        paint_color = (random.random(), random.random(), random.random(), 1.0) if (poly_paint_mode == "COLOR_RANDOM") else poly_paint_color
+
+                                        if (self.color_layer is not None):
+                                            if (layer_domain == "loops"):
+                                                loop_selection = [[mesh_face.index, mesh_loop.index] for mesh_face in self.ContextBmesh.faces for mesh_loop in mesh_face.loops if (all([vert.select for vert in mesh_loop.face.verts]))]
+                                                
+                                                unique_loop_selection = []
+                                                for loop in loop_selection:
+                                                    if (loop not in unique_loop_selection):
+                                                        unique_loop_selection.append(loop)
+
+                                                for selected_loop in unique_loop_selection:
+                                                    self.ContextBmesh.faces[selected_loop[0]].loops[(selected_loop[1] % len(self.ContextBmesh.faces[selected_loop[0]].verts) )-1][self.color_layer] = paint_color
+                                                bmesh.update_edit_mesh(self.ContextMesh, loop_triangles=True, destructive=False)
+                                            elif (layer_domain == "verts"):
+                                                verts_selection = [vert.index for vert in self.ContextBmesh.verts if (vert.select == True)]
+
+                                                for vert in verts_selection:
+                                                    self.ContextBmesh.verts[vert][self.color_layer] = paint_color
+                                                bmesh.update_edit_mesh(self.ContextMesh, loop_triangles=True, destructive=False)
+                                            else:
+                                                self.report(type={"WARNING"}, message="Domain Failure")
+
+                                        else:
+                                            self.report(type={"WARNING"}, message="Failed To Retieve Color Attribute")
+                            else:
+                                    self.report(type={"WARNING"}, message=f"Layer Incompatible {layer_domain}, {layer_data}")
                         else:
-                            print("None")
-
+                            self.report(type={"WARNING"}, message="Failed To Retieve Color Layers")
                         return {"RUNNING_MODAL"}
                     
 

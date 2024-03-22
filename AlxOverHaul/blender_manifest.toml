@@ -1,6 +1,6 @@
 schema_version = "1.0.0"
 
-id = "alexandria_overhaul"
+id = "AlxOverHaul"
 version = "0.5.51"
 name = "AlxOverHaul"
 tagline = "Simplify Blender"
