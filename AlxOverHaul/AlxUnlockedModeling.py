@@ -55,7 +55,7 @@ class Alx_Tool_UnlockedModeling_Properties(bpy.types.PropertyGroup):
         ]) #type:ignore
 
     def auto_paint_layers(scene, context: bpy.types.Context):
-        color_layers = [(f"{color.name}", f"{color.name}", "") for color in context.edit_object.data.color_attributes]
+        color_layers = [(color.name, color.name, "") for color in context.edit_object.data.color_attributes]
         return color_layers
 
     poly_paint_layers : bpy.props.EnumProperty(name="Delete Type", items=auto_paint_layers) #type:ignore
@@ -168,13 +168,6 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
 
 
     def modal(self, context: bpy.types.Context, event: bpy.types.Event):
-        
-        # for area in context.window.screen.areas:
-        #     print(area.type)
-        #     print((event.mouse_x > area.x) and (event.mouse_x < area.x + area.width) and (event.mouse_y > area.y) and (event.mouse_y < area.y + area.height))
-
-
-
         override_window = context.window
         override_screen = override_window.screen
         override_area = [area for area in override_screen.areas if area.type == "VIEW_3D"]
@@ -374,7 +367,7 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
                                         if (self.color_layer is not None):
                                             if (layer_domain == "loops"):
                                                 loop_selection = [[mesh_face.index, mesh_loop.index] for mesh_face in self.ContextBmesh.faces for mesh_loop in mesh_face.loops if (all([vert.select for vert in mesh_loop.face.verts]))]
-                                                
+
                                                 unique_loop_selection = []
                                                 for loop in loop_selection:
                                                     if (loop not in unique_loop_selection):

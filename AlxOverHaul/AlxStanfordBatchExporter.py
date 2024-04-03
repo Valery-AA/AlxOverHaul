@@ -1,4 +1,4 @@
-# type:ignore
+# #type:ignore
 
 # import bpy
 # from . import AlxInitialize, AlxPreferences
@@ -98,7 +98,6 @@
 #                 AlxInitialize.AlxClassQueue.append(Class)
 
 #     def Exporter_register():
-
 #         bpy.types.Scene.UserSelectedPath = bpy.props.StringProperty(name="Export Path", default="", subtype="DIR_PATH")
 
 

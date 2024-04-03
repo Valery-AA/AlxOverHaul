@@ -32,8 +32,8 @@ class Alx_Panel_AlexandriaGeneral_Properties(bpy.types.PropertyGroup):
             ("VISIBILITY", "Visibility", "", "HIDE_OFF", 1),
             ("OBJECT", "Object", "", "OBJECT_DATAMODE", 1<<1),
             ("ARMATURE", "Armature", "", "ARMATURE_DATA", 1<<2),
-            ("MODIFIER", "Modifier", "", "PLUGIN", 1<<3),
-            ("ALXOPERATORS", "AlxOPS", "", "MODIFIER", 1<<4),
+            ("MODIFIER", "Modifier", "", "MODIFIER", 1<<3),
+            ("ALXOPERATORS", "AlxOPS", "", "PLUGIN", 1<<4),
             ("RENDER", "Render", "", "SCENE", 1<<5),
             ("UI_DESIGNER", "UI Designer", "", "WINDOW", 1<<6),
             ("SETTINGS", "Settings", "", "PREFERENCES", 1<<7)

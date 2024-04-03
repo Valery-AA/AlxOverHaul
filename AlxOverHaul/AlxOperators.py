@@ -264,76 +264,7 @@ class Alx_OT_Mode_UnlockedModes(bpy.types.Operator):
         return {"FINISHED"}
 
 
-class Alx_OT_Modifier_ManageOnSelected(bpy.types.Operator):
-    """"""
 
-    bl_label = ""
-    bl_idname = "alx.operator_modifier_manage_on_selected"
-    bl_options = {"INTERNAL", "REGISTER", "UNDO"}
-
-    object_pointer_reference : bpy.props.StringProperty(name="", default="", options={"HIDDEN"})
-    object_modifier_index : bpy.props.IntProperty(name="", default=0, options={"HIDDEN"})
-
-    modifier_type : bpy.props.StringProperty(name="", default="NONE", options={"HIDDEN"})
-
-    create_modifier : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"})
-    remove_modifier : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"})
-    
-    move_modifier_up : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"})
-    move_modifier_down : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"})
-
-    @classmethod
-    def poll(self, context: bpy.types.Context):
-        return context.area.type == "VIEW_3D"
-
-    def execute(self, context):
-        if (self.create_modifier is True):
-            for Object in context.selected_objects:
-                if (Object is not None):
-                    Modifier = None
-                    try:
-                        Modifier = Object.modifiers.new(name="", type=self.modifier_type)
-
-                        match Modifier.type:
-                            case "BEVEL":
-                                Modifier.width = 0.01
-                                Modifier.segments = 1
-                                Modifier.miter_outer = "MITER_ARC"
-                                Modifier.harden_normals = True
-                            
-                            case "SUBSURF":
-                                Modifier.render_levels = 1
-                                Modifier.quality = 6
-                    except:
-                        pass
-        try:
-            if (self.remove_modifier is True):
-                Object = bpy.data.objects.get(self.object_pointer_reference)
-                if (Object is not None):
-                    Object.modifiers.remove(Object.modifiers.get(Object.modifiers[self.object_modifier_index].name))
-
-            if (self.move_modifier_up == True) and (self.move_modifier_down == False):
-                Object = bpy.data.objects.get(self.object_pointer_reference)
-                if (Object is not None):
-                    if ((self.object_modifier_index - 1) >= 0):
-                        Object.modifiers.move(self.object_modifier_index, self.object_modifier_index - 1)
-            else:
-                    print("Move Up Failed")
-
-            if (self.move_modifier_up == False) and (self.move_modifier_down == True):
-                Object = bpy.data.objects.get(self.object_pointer_reference)
-                if (Object is not None):
-                    if ((self.object_modifier_index + 1) < len(Object.modifiers)):
-                        Object.modifiers.move(self.object_modifier_index, self.object_modifier_index + 1)
-                else:
-                    print(self.object_pointer_reference)
-                    print(Object)
-                    print("Move Down Failed")
-
-        except Exception as error:
-            print(error)
-
-        return {"FINISHED"}
 
 
 

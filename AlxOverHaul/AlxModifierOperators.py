@@ -9,12 +9,103 @@ def AlxRetirive_ModifierList(TargetObejct, TargetType):
 
     return None
 
-class Alx_OT_Modifier_Shrinkwrap(bpy.types.Operator):
+class Alx_OT_Modifier_ManageOnSelected(bpy.types.Operator):
     """"""
 
-    bl_label = "Shrinkwrap Tool"
-    bl_idname = "alx.operator_modifier_shrinkwrap"
+    bl_label = ""
+    bl_idname = "alx.operator_modifier_manage_on_selected"
+    bl_options = {"INTERNAL", "REGISTER", "UNDO"}
+
+    object_pointer_reference : bpy.props.StringProperty(name="", default="", options={"HIDDEN"}) #type:ignore
+    object_modifier_index : bpy.props.IntProperty(name="", default=0, options={"HIDDEN"}) #type:ignore
+
+    modifier_type : bpy.props.StringProperty(name="", default="NONE", options={"HIDDEN"}) #type:ignore
+
+    create_modifier : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"}) #type:ignore
+    apply_modifier : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"})  #type:ignore
+    remove_modifier : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"}) #type:ignore
+    
+    move_modifier_up : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"}) #type:ignore
+    move_modifier_down : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"}) #type:ignore
+
+    @classmethod
+    def poll(self, context: bpy.types.Context):
+        return context.area.type == "VIEW_3D"
+
+    def execute(self, context):
+        self.modifier = None
+        if (self.create_modifier is True):
+            for Object in context.selected_objects:
+                if (Object is not None):
+                    try:
+                        self.modifier = Object.modifiers.new(name="", type=self.modifier_type)
+
+                        match self.modifier.type:
+                            case "BEVEL":
+                                self.modifier.width = 0.01
+                                self.modifier.segments = 1
+                                self.modifier.miter_outer = "MITER_ARC"
+                                self.modifier.harden_normals = True
+                            
+                            case "SUBSURF":
+                                self.modifier.render_levels = 1
+                                self.modifier.quality = 6
+                    except:
+                        pass
+        else:
+            if (self.apply_modifier is True):
+                Object : bpy.types.Object = bpy.data.objects.get(self.object_pointer_reference)
+                if (Object is not None):
+                    mode = context.mode if (context.mode[0:4] != "EDIT") else "EDIT" if (context.mode[0:4] == "EDIT") else "OBJECT"
+                    bpy.ops.object.mode_set(mode="OBJECT")
+                    bpy.ops.object.modifier_apply(modifier=Object.modifiers[self.object_modifier_index].name)
+                    bpy.ops.object.mode_set(mode=mode)
+            else:
+                if (self.remove_modifier is True):
+                    Object : bpy.types.Object = bpy.data.objects.get(self.object_pointer_reference)
+                    if (Object is not None):
+                        Object.modifiers.remove(Object.modifiers.get(Object.modifiers[self.object_modifier_index].name))
+
+
+        try:
+            
+
+            if (self.move_modifier_up == True) and (self.move_modifier_down == False):
+                Object = bpy.data.objects.get(self.object_pointer_reference)
+                if (Object is not None):
+                    if ((self.object_modifier_index - 1) >= 0):
+                        Object.modifiers.move(self.object_modifier_index, self.object_modifier_index - 1)
+            else:
+                    print("Move Up Failed")
+
+            if (self.move_modifier_up == False) and (self.move_modifier_down == True):
+                Object = bpy.data.objects.get(self.object_pointer_reference)
+                if (Object is not None):
+                    if ((self.object_modifier_index + 1) < len(Object.modifiers)):
+                        Object.modifiers.move(self.object_modifier_index, self.object_modifier_index + 1)
+                else:
+                    print(self.object_pointer_reference)
+                    print(Object)
+                    print("Move Down Failed")
+
+        except Exception as error:
+            print(error)
+
+        return {"FINISHED"}
+
+class Alx_OT_Modifier_ApplyReplace(bpy.types.Operator):
+    """"""
+
+    bl_label = "Modifier Apply Replace"
+    bl_idname = "alx.operator_modifier_apply_replace"
     bl_options = {"REGISTER", "UNDO", "INTERNAL"}
+
+    def auto_object_modifier(scene, context: bpy.types.Context):
+        if (context.object is not None):
+            modifier_list = [(modifier.type, modifier.name, "") for modifier in context.object.modifiers]
+        return modifier_list
+
+    replace_type : bpy.props.EnumProperty(name="Modifier", items=auto_object_modifier) #type:ignore
 
     @classmethod
     def poll(self, context: bpy.types.Context):
@@ -25,7 +116,7 @@ class Alx_OT_Modifier_Shrinkwrap(bpy.types.Operator):
             context.selectable_objects[0]
 
             for selected_object in context.selected_objects:
-                modifiers = AlxRetirive_ModifierList(selected_object, "SHRINKWRAP")
+                modifiers = AlxRetirive_ModifierList(selected_object, self.replace_type)
 
                 context.view_layer.objects.active = selected_object
 
@@ -35,7 +126,7 @@ class Alx_OT_Modifier_Shrinkwrap(bpy.types.Operator):
                         backup_modifier[attr] = getattr(modifier, attr)
 
                     modifier_index = selected_object.modifiers.find(modifier.name)
-                    _mode = context.mode if (context.mode[0:4] != "EDIT") else "EDIT"
+                    _mode = context.mode # if (context.mode[0:4] != "EDIT") else "EDIT"
                     bpy.ops.object.mode_set(mode="OBJECT")
                     bpy.ops.object.modifier_apply(modifier=modifier.name)
                     bpy.ops.object.mode_set(mode=_mode)
@@ -58,3 +149,7 @@ class Alx_OT_Modifier_Shrinkwrap(bpy.types.Operator):
             print(error)
 
         return {"FINISHED"}
+    
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self, width=300)
+    

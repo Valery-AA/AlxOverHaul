@@ -5,14 +5,12 @@ from .AlxProperties import Alx_Object_Selection_ListItem
 
 from .AlxUtils import AlxRetrieveContextObject, AlxRetrieveContextArmature
 
-from .AlxModifierOperators import Alx_OT_Modifier_Shrinkwrap
-
 # UI Embeded Operators
-from .AlxOperators import Alx_OT_Scene_VisibilityIsolator, Alx_OT_Mode_UnlockedModes, Alx_OT_Modifier_ManageOnSelected
+from .AlxOperators import Alx_OT_Scene_VisibilityIsolator, Alx_OT_Mode_UnlockedModes
 
-# UI Operators
-from .AlxOperators import Alx_OT_Armature_MatchIKByMirroredName, Alx_OT_Mesh_EditAttributes, Alx_OT_Mesh_BoundaryMultiTool
-
+from .AlxOperators import Alx_OT_Armature_MatchIKByMirroredName
+from .AlxModifierOperators import Alx_OT_Modifier_ApplyReplace, Alx_OT_Modifier_ManageOnSelected
+from .AlxUVRetopology import Alx_OT_UVRetopology
 
 
 class Alx_UL_Object_PropertiesList(bpy.types.UIList):
@@ -25,7 +23,6 @@ class Alx_UL_Object_PropertiesList(bpy.types.UIList):
         UISplit = ItemBox.row().split(factor=0.5, align=False)
 
         UISplit.prop(item.ObjectPointer, "name", text="", emboss=True)
-        UISplit.label(text="test text")
         UISplit.prop(item.ObjectPointer, "display_type", text="")
 
         PropertiesRow = ItemBox.row().split(factor=0.25, align=True)
@@ -121,99 +118,98 @@ class Alx_PT_AlexandriaGeneralPanel(bpy.types.Panel):
         PanelProperties = context.scene.alx_panel_alexandria_general_properties
 
         AlxLayout = self.layout
-        AlxLayout.ui_units_x = 30.0 * PanelProperties.alx_panel_scale_x
+        AlxLayout.ui_units_x = 30.0
 
-        LayoutSpace = AlxLayout.row()
+        LayoutBox = AlxLayout.row()
 
-        panel_tab_selection = LayoutSpace.box()
-        panel_tab_selection.prop(PanelProperties, "alx_panel_tab", icon_only=True, expand=True)
+        Tabs = LayoutBox.box().prop(PanelProperties, "alx_panel_tab", icon_only=True, expand=True)
 
         if (context.scene.alx_panel_alexandria_general_properties.alx_panel_tab == "VISIBILITY") and (context.area.type == "VIEW_3D"):
-            AlxLayout.ui_units_x = 22.0 * PanelProperties.alx_panel_scale_x
-            AlxVisibilitySpace = LayoutSpace.column()
+            AlxLayout.ui_units_x = 20.0
+            VisibilityTabBox = LayoutBox.box()
 
-            AlxIsolatorSpace = AlxVisibilitySpace.row().box().row()
-            AlxOverlaySpace = AlxVisibilitySpace.row().box().row()
-    
-            isolator_options = AlxIsolatorSpace.row(align=True)
-            isolator_options.column().prop(AddonProperties, "scene_isolator_visibility_target", expand=True)
+
+
+            isolator_box = VisibilityTabBox.box().row()
+
+            isolator_options = isolator_box.row()
             isolator_options.column().prop(AddonProperties, "scene_isolator_type_target", expand=True)
-
-            isolator_operator = AlxIsolatorSpace.column(align=True)
-
-            isolator_hide = isolator_operator.operator(Alx_OT_Scene_VisibilityIsolator.bl_idname, text="Isolate", icon="HIDE_ON", emboss=True)
+            isolator_options.column().prop(AddonProperties, "scene_isolator_visibility_target", expand=True)
+            
+            isolator_show_hide = isolator_box.column()
+            isolator_hide = isolator_show_hide.operator(Alx_OT_Scene_VisibilityIsolator.bl_idname, text="Isolate", icon="HIDE_ON", emboss=True)
             isolator_hide.Panik = False
             isolator_hide.TargetVisibility = False
-
-            isolator_show = isolator_operator.operator(Alx_OT_Scene_VisibilityIsolator.bl_idname, text="Show", icon="HIDE_OFF", emboss=True)
+            isolator_show = isolator_show_hide.operator(Alx_OT_Scene_VisibilityIsolator.bl_idname, text="Show", icon="HIDE_OFF", emboss=True)
             isolator_show.Panik = False
             isolator_show.TargetVisibility = True
 
-            isolator_panik_placement = AlxIsolatorSpace.column()
+            isolator_panik_placement = isolator_box.column()
             isolator_panik_placement.scale_y = 2.0
             isolator_panik = isolator_panik_placement.operator(Alx_OT_Scene_VisibilityIsolator.bl_idname, text="", icon="LOOP_BACK", emboss=True)
             isolator_panik.Panik = True
-            
 
-            overlay_toggle_placement = AlxOverlaySpace.column(align=True)
-            overlay_toggle_placement.scale_y = 3.0
 
-            overlay_toggle_placement.prop(context.space_data.overlay, "show_overlays", text="", icon="OVERLAY")
 
-            xray_toggle = AlxOverlaySpace.column(align=True)
+            OverlayBox = VisibilityTabBox.box().row()
+
+            overlay_toggle = OverlayBox.column()
+            overlay_toggle.prop(context.space_data.overlay, "show_overlays", text="", icon="OVERLAY")
+            overlay_toggle.prop(context.space_data.overlay, "show_face_orientation", text="", icon="NORMALS_FACE")
+
+            xray_toggle = OverlayBox.column()
             xray_toggle.prop(context.area.spaces.active.shading, "show_xray", text="XRay-Mesh", icon="XRAY")
             xray_toggle.prop(context.space_data.overlay, "show_xray_bone", text="XRay-Bone", icon="XRAY")
 
-            topology_toggle = AlxOverlaySpace.column(align=True)
-            topology_toggle.prop(context.space_data.overlay, "show_face_orientation", text="Normals", icon="NORMALS_FACE", toggle=True)
+            topology_toggle = OverlayBox.column()
             topology_toggle.prop(context.space_data.overlay, "show_wireframes", text="Wireframe", icon="MOD_WIREFRAME")
             topology_toggle.prop(context.space_data.overlay, "show_retopology", text="Retopology", icon="MESH_GRID")
 
+
+
         if (context.scene.alx_panel_alexandria_general_properties.alx_panel_tab == "OBJECT") and (context.area.type == "VIEW_3D"):
-            AlxLayout.ui_units_x = 22.0 * PanelProperties.alx_panel_scale_x
-            AlxObjectSpace = LayoutSpace.column()
+            AlxLayout.ui_units_x = 20.0
+            ObjectTabBox = LayoutBox.box()
 
-            ObjectPropertyBox = AlxObjectSpace.box()
-            ObjectPropertyBox.template_list(Alx_UL_Object_PropertiesList.bl_idname, list_id="", dataptr=context.scene, propname="alx_object_selection_properties", active_dataptr=context.scene, active_propname="alx_object_selection_properties_index")
+            ObjectTabBox.template_list(Alx_UL_Object_PropertiesList.bl_idname, list_id="", dataptr=context.scene, propname="alx_object_selection_properties", active_dataptr=context.scene, active_propname="alx_object_selection_properties_index")
 
-            #OperatorsBox = AlxSpace.box()
-            #OperatorsBox.popover(panel=Alx_PT_AlexandriaModifierPopover.bl_idname, text= "Modifier")
 
-            #AlxOverlay_Options.prop(context.space_data.overlay, "show_annotation", text="Annotations", icon="HIDE_OFF", toggle=True)
 
         if (context.scene.alx_panel_alexandria_general_properties.alx_panel_tab == "ARMATURE") and (context.area.type == "VIEW_3D"):
-            AlxLayout.ui_units_x = 15.0 * PanelProperties.alx_panel_scale_x
-            AlxArmatureSpace = LayoutSpace.column()
-
-            
+            AlxLayout.ui_units_x = 20.0
+            ArmatureTabBox = LayoutBox.box()
 
             if (AlxContextArmature is not None):
-                AlxArmatureSpace.row().prop(bpy.data.armatures.get(AlxContextArmature.data.name), "pose_position", expand=True)
+                ArmatureTabBox.row().prop(bpy.data.armatures.get(AlxContextArmature.data.name), "pose_position", expand=True)
 
-                armature_settings_options = AlxArmatureSpace.box()
-                armature_display_options = armature_settings_options.column()
+                armature_display_options = ArmatureTabBox.column()
                 armature_display_options.prop(bpy.data.armatures.get(AlxContextArmature.data.name), "show_names")
                 armature_display_options.prop(bpy.data.armatures.get(AlxContextArmature.data.name), "show_axes")
                 armature_display_options.prop(bpy.data.armatures.get(AlxContextArmature.data.name), "display_type", text="", expand=False)
             else:
-                AlxArmatureSpace.row().label(text="[Active Armature] [Missing]")
+                ArmatureTabBox.row().label(text="[Active Armature] [Missing]")
+
+            ArmatureTabBox.row().operator(Alx_OT_Armature_MatchIKByMirroredName.bl_idname, text="Symmetrize IK")
+
+
 
         if (context.scene.alx_panel_alexandria_general_properties.alx_panel_tab == "MODIFIER") and (context.area.type == "VIEW_3D"):
-            AlxLayout.ui_units_x = 25.0 * PanelProperties.alx_panel_scale_x
-            AlxSpace = LayoutSpace.column()
+            AlxLayout.ui_units_x = 20.0
+            ModifierTabBox = LayoutBox.box()
 
-            AlxSpace.popover(Alx_PT_AlexandriaModifierPanel.bl_idname, text="Create Modifier")
+            ModifierTabBox.popover(Alx_PT_AlexandriaModifierPanel.bl_idname, text="Create Modifier")
+            ModifierTabBox.operator(Alx_OT_Modifier_ApplyReplace.bl_idname, text="Apply-Replace Modifier")
             
-            AlxSpace.row().template_list(Alx_UL_Object_ModifierList.bl_idname, list_id="", dataptr=context.scene, propname="alx_object_selection_properties", active_dataptr=context.scene, active_propname="alx_object_selection_properties_index")
+            ModifierTabBox.row().template_list(Alx_UL_Object_ModifierList.bl_idname, list_id="", dataptr=context.scene, propname="alx_object_selection_properties", active_dataptr=context.scene, active_propname="alx_object_selection_properties_index")
+
+
 
         if (context.scene.alx_panel_alexandria_general_properties.alx_panel_tab == "ALXOPERATORS") and (context.area.type == "VIEW_3D"):
-            AlxLayout.ui_units_x = 25.0 * PanelProperties.alx_panel_scale_x
-            AlxSpace = LayoutSpace.column()
+            AlxLayout.ui_units_x = 20.0
+            AlxOperatorsTabBox = LayoutBox.box()
 
-            AlxSpace.row().operator(Alx_OT_Armature_MatchIKByMirroredName.bl_idname, text="Symmetrize IK")
-            AlxSpace.row().operator(Alx_OT_Mesh_EditAttributes.bl_idname, text="Edit Mesh Attributes")
-            AlxSpace.row().operator(Alx_OT_Mesh_BoundaryMultiTool.bl_idname, text="Boundary MultiTool")
-            AlxSpace.row().operator(Alx_OT_Modifier_Shrinkwrap.bl_idname, text="Replace Shrinkwrap")
+            AlxOperatorsTabBox.row().operator(Alx_OT_UVRetopology.bl_idname, text="Grid Retopology")
+            
             
 
         if (context.scene.alx_panel_alexandria_general_properties.alx_panel_tab == "RENDER") and (context.area.type == "VIEW_3D"):
