@@ -9,7 +9,7 @@ def all_false(iterable: Iterable[object]) -> bool:
             return False
     return True
 
- # loop_index_table = set()
+# loop_index_table = set()
 # _unique_runner=[loop_index_table.add(index) for index in tuple(loop.index for vert in self.ContextBMesh.verts for loop in vert.link_loops)]
 # del _unique_runner
 
@@ -121,140 +121,77 @@ class Alx_OT_UVExtractIsland(bpy.types.Operator):
 
 
 
-                    vertex_queue = [[vert for vert in self.ContextBMesh.verts if (vert.select == True) and (all_false(tuple(edge.seam for edge in vert.link_edges)))][0]]
-                    vertex_done = set()
+                    vertex_island_mapping = list()
+                    
+                    vertex_unprocessed = set(vert.index for vert in self.ContextBMesh.verts)
 
-                    while len(vertex_queue) > 0:
-                        start_vert : bmesh.types.BMVert = vertex_queue[0]
+                    while len(vertex_unprocessed) > 0:
+                        vertex_index_island = set()
 
-                        if (all_false(tuple(edge.seam for edge in start_vert.link_edges))):
-                            start_vert.select = True
-                            for edge in start_vert.link_edges:
-                                for vert in edge.verts:
-                                    if (vert is not start_vert) and (vert.index not in vertex_done):
-                                        vert.select = True
-                                        vertex_done.add(vert.index)
-                                        vertex_queue.append(vert)
+                        vertex  = [vert for vert in tuple(vert for vert in self.ContextBMesh.verts if (vert.index in vertex_unprocessed) and (all_false(tuple(edge.seam for edge in vert.link_edges))))][0]
+                        vertex_queue = [vertex]
 
-                        for edge in start_vert.link_edges:
-                            for face in edge.link_faces:
-                                seam_edge = tuple([vert.index for vert in edge.verts] for edge in face.edges if (edge.seam == True))
-                                if (len(face.edges) == 3) and (len(seam_edge) == 2):
-                                    index = [index for index in [vert_index for edge_verts in seam_edge for vert_index in edge_verts] if [vert_index for edge_verts in seam_edge for vert_index in edge_verts].count(index) == 2][0]
-                                    for vert in face.verts:
-                                        if (vert.index == index) and (vert.index not in vertex_done):
-                                            vert.select = True
-                                            vertex_done.add(vert.index)
-                                
+                        if (vertex_queue[0] not in vertex_index_island):
+                            while len(vertex_queue) > 0:
+                                start_vert : bmesh.types.BMVert = vertex_queue[0]
 
-                        vertex_queue.pop(0)
+                                if (all_false(tuple(edge.seam for edge in start_vert.link_edges))):
+                                    for edge in start_vert.link_edges:
+                                        for vert in edge.verts:
+                                            if (vert is not start_vert) and (vert.index not in vertex_index_island):
+                                                vertex_index_island.add(start_vert.index)
+                                                vertex_index_island.add(vert.index)
+                                                vertex_queue.append(vert)
 
-                    else:
-                        print(len(vertex_queue))
+                                for edge in start_vert.link_edges:
+                                    for face in edge.link_faces:
+                                        seam_edge = tuple([vert.index for vert in edge.verts] for edge in face.edges if (edge.seam == True))
+                                        if (len(face.edges) == 3) and (len(seam_edge) == 2):
+                                            index = [index for index in [vert_index for edge_verts in seam_edge for vert_index in edge_verts] if [vert_index for edge_verts in seam_edge for vert_index in edge_verts].count(index) == 2][0]
+                                            for vert in face.verts:
+                                                if (vert.index == index) and (vert.index not in vertex_index_island):
+                                                    vertex_index_island.add(vert.index)
+
+                                vertex_queue.pop(0)
+
+                            else:
+                                vertex_unprocessed.difference_update(vertex_index_island)
+                                vertex_island_mapping.append(vertex_index_island)
 
                     bmesh.update_edit_mesh(self.ContextMesh)
 
+
+
                     UVExtractMesh = bpy.data.meshes.new(f"UV Extract - {context.edit_object.name}") if bpy.data.meshes.get(f"UV Extract - {context.edit_object.name}") is None else bpy.data.meshes.get(f"UV Extract - {context.edit_object.name}")
 
+                    if (uv_layer is not None):
+                        UVExtractBMesh : bmesh.types.BMesh = bmesh.new()
+
+                        vert_loop_done = set()
+
+                        for vert_island in vertex_island_mapping:
+                            for vert_index in vert_island:
+                                for face in self.ContextBMesh.verts[vert_index].link_faces:
+                                    verts = set()
+                                    for loop in face.loops:
+                                        if (loop.index not in vert_loop_done):
+                                            uv_coord = loop[uv_layer].uv
+                                            uv_vert = UVExtractBMesh.verts.new((uv_coord[0], 0, uv_coord[1]))
+
+                                            verts.add(uv_vert)
+                                            vert_loop_done.add(loop.index)
+                                    if (len(verts) >= 3):
+                                        UVExtractBMesh.faces.new(verts)
+                                            
+                    bmesh.ops.remove_doubles(UVExtractBMesh, verts=UVExtractBMesh.verts, dist=0.0001)
+
+                    UVExtractBMesh.to_mesh(UVExtractMesh)
+
+
                     UVExtractObject = bpy.data.objects.new(f"UV Extract - {context.edit_object.name}", UVExtractMesh) if bpy.data.objects.get(f"UV Extract - {context.edit_object.name}") is None else bpy.data.objects.get(f"UV Extract - {context.edit_object.name}")
+                    
                     if (UVExtractObject.name not in context.scene.collection.objects):
                         context.scene.collection.objects.link(UVExtractObject)
 
-
-            #     UVExtractBMesh : bmesh.types.BMesh = bmesh.new()
-
-            
-
-
-            # if (uv_layer is not None):
-
-                
-
-                
-
-                
-
-                
-            #     islands_index_table = tuple()
-
-                
-
-
-                # if (edge.seam == True):
-                        # for loop in edge.link_loops:
-                        #     if (loop.edge.seam == True):
-                        #         uv_coord = loop[uv_layer].uv
-                        #         uv_vert = UVExtractBMesh.verts.new((uv_coord[0], 0, uv_coord[1]))
-                # for edge in SkeletonBmesh.edges:
-                #     if (edge.seam == True):
-                #         for loop in edge.link_loops:
-                #             if (len(edge.link_loops) == 1):
-                #                 
-                #                 
-                #             if (loop.edge.seam == True):
-                #                 print(edge.index)
-                                
-
-                                # for sub_loop in loop.link_loops:
-                                #     if (sub_loop is not loop) and (loop.edge.index == sub_loop.edge.index) and (sub_loop.edge.seam == True):
-                                #         pair.append([])
-
-
-
-
-
-
-
-
-
-
-
-
-                # perimeter_edges = [edge for edge in SkeletonBmesh.edges if edge.seam == True]
-                # perimeter_loops = [loop for loop in [loop for edge in perimeter_edges for loop in edge.link_loops] if (loop.edge in perimeter_edges)]
-
-
-
-                # uv_vert_loop_pair = []
-
-                # for loop in perimeter_loops:                
-                    
-                #     
-                    
-                #     uv_vert_loop_pair.append([loop.edge.index, loop, uv_vert])
-
-                # for loop_pair in uv_vert_loop_pair:
-                #     local_loop = loop_pair[1]
-                #     next_vert = [[loop, uv_vert] for loop_index , loop, uv_vert in uv_vert_loop_pair if loop_index == local_loop.edge.index]
-
-                #     print(len(next_vert))
-
-                #     for i in range(0, len(next_vert)):
-                #         try:
-                #             UVExtractBMesh.edges.new((loop_pair[2], next_vert[i][1]))
-                #         except:
-                #             pass
-
-                #bmesh.ops.remove_doubles(UVExtractBMesh, verts=UVExtractBMesh.verts, dist=0.0001)
-                
-
-                
-                # UVExtractBMesh.to_mesh(Extracted_Mesh)
-
-
-
-
-                
-
-
-
-            # obj=bpy.context.active_object
-            # if obj.type=='MESH':
-            #     obD=obj.data
-            #     if obD.uv_layers.active:
-            #         for poly in obD.polygons:
-            #             for loop in poly.loop_indices:
-            #                 uv=obD.uv_layers[0].data[loop].uv
-            #                 print('Vertex[', obD.loops[loop].vertex_index, '].uv = ', uv)
-
         return {"FINISHED"}
+    
