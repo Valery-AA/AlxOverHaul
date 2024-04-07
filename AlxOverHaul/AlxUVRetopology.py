@@ -86,6 +86,7 @@ class Alx_OT_UVRetopology(bpy.types.Operator):
         return {"RUNNING_MODAL"}
 
 
+
 class Alx_OT_UVExtractIsland(bpy.types.Operator):
     """"""
 
@@ -122,7 +123,7 @@ class Alx_OT_UVExtractIsland(bpy.types.Operator):
 
 
                     vertex_island_mapping = list()
-                    
+
                     vertex_unprocessed = set(vert.index for vert in self.ContextBMesh.verts)
 
                     while len(vertex_unprocessed) > 0:
@@ -187,11 +188,72 @@ class Alx_OT_UVExtractIsland(bpy.types.Operator):
 
                     UVExtractBMesh.to_mesh(UVExtractMesh)
 
-
                     UVExtractObject = bpy.data.objects.new(f"UV Extract - {context.edit_object.name}", UVExtractMesh) if bpy.data.objects.get(f"UV Extract - {context.edit_object.name}") is None else bpy.data.objects.get(f"UV Extract - {context.edit_object.name}")
                     
                     if (UVExtractObject.name not in context.scene.collection.objects):
                         context.scene.collection.objects.link(UVExtractObject)
 
         return {"FINISHED"}
+
+
+
+class Alx_OT_VXGroupBySeams(bpy.types.Operator):
+    """"""
+
+    bl_label = "VX - Group By Seams"
+    bl_idname = "alx.operator_vx_group_by_seam"
+    bl_options = {"REGISTER", "UNDO"}
+
+    ContextMesh : bpy.types.Mesh = None
+    ContextBMesh : bmesh.types.BMesh = None
+
+    @classmethod
+    def poll(self, context: bpy.types.Context):
+        return (context.area is not None) and (context.area.type == "VIEW_3D") and (context.mode == "EDIT_MESH")
     
+    def execute(self, context: bpy.types.Context):
+        if (context.mode == "EDIT_MESH") and (context.edit_object.type == "MESH"):
+            self.ContextMesh = context.edit_object.data
+            if (self.ContextBMesh is None) or (not self.ContextBMesh.is_valid):
+                self.ContextBMesh = bmesh.from_edit_mesh(self.ContextMesh)
+
+            self.ContextBMesh.verts.ensure_lookup_table()
+            self.ContextBMesh.edges.ensure_lookup_table()
+            self.ContextBMesh.faces.ensure_lookup_table()
+
+            vert : bmesh.types.BMVert
+            edge : bmesh.types.BMEdge
+            face : bmesh.types.BMFace
+            loop : bmesh.types.BMLoop
+
+            seam_vert = set(vert for edge in self.ContextBMesh.edges for vert in edge.verts if ([edge.seam for edge in vert.link_edges].count(True) > 0))
+            non_seam_vert = set(vert for edge in self.ContextBMesh.edges for vert in edge.verts if (all_false([edge.seam for edge in vert.link_edges])))
+
+            sculpt_mask_layer = self.ContextBMesh.verts.layers.float.get(".sculpt_mask")
+            if (sculpt_mask_layer is None):
+                sculpt_mask_layer = self.ContextBMesh.verts.layers.float.new(".sculpt_mask")
+
+            for vert in seam_vert:
+                vert[sculpt_mask_layer] = 1.0
+
+            deform_layer = self.ContextBMesh.verts.layers.deform.verify()
+
+            seam_group_index = context.edit_object.vertex_groups.find("AlxSeamGroup") if (context.edit_object.vertex_groups.find("AlxSeamGroup") != -1) else None
+            if (seam_group_index is None):
+                seam_group_index = context.edit_object.vertex_groups.new(name="AlxSeamGroup").index
+
+            non_seam_group_index = context.edit_object.vertex_groups.find("AlxNonSeamGroup") if (context.edit_object.vertex_groups.find("AlxNonSeamGroup") != -1) else None
+            if (non_seam_group_index is None):
+                non_seam_group_index = context.edit_object.vertex_groups.new(name="AlxNonSeamGroup").index
+
+            if (seam_group_index is not None) and (non_seam_group_index is not None):
+                for vert in seam_vert:
+                    vert[deform_layer][seam_group_index] = 1
+                    vert[deform_layer][non_seam_group_index] = 0
+                for vert in non_seam_vert:
+                    vert[deform_layer][seam_group_index] = 0
+                    vert[deform_layer][non_seam_group_index] = 1
+
+            bmesh.update_edit_mesh(self.ContextMesh)
+
+            return {"FINISHED"}
