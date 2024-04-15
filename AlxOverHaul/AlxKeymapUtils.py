@@ -1,7 +1,8 @@
 import bpy
 
 from . import AlxPreferences
-from .AlxPanels import Alx_PT_AlexandriaGeneralPanel, Alx_MT_UnlockedModesPie, Alx_PT_Scene_GeneralPivot
+from . import AlxGeneralPanel
+from .AlxPanels import Alx_PT_Scene_GeneralPivot
 
 AlxAddonKeymaps = []
 
@@ -98,7 +99,7 @@ def AlxKeymapRegister(keymap_call_type="", space_type="EMPTY", region_type="WIND
     else:
         print(f"keyconfigs: {KeymapConfigs}")
 
-def AlxKeymapCreation():
+def AlxCreateKeymaps():
     if (AlxPreferences.AlxGetPreferences().View3d_Pan_Use_Shift_GRLess == True):
         AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="3D View", ItemidName="view3d.move", MapType="KEYBOARD", Key="GRLESS", UseShift=True, Active=True)
     if (AlxPreferences.AlxGetPreferences().View3d_Pan_Use_Shift_GRLess == False):
@@ -125,13 +126,13 @@ def AlxKeymapCreation():
 
 
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Armature", ItemidName="armature.align", Active=False)
-    AlxKeymapRegister(keymap_call_type="PANEL", region_type="WINDOW", item_idname=Alx_PT_AlexandriaGeneralPanel.bl_idname, key="A", use_ctrl=True, use_alt=True, trigger_type="CLICK")
+    AlxKeymapRegister(keymap_call_type="PANEL", region_type="WINDOW", item_idname=AlxGeneralPanel.Alx_PT_Panel_AlexandriaGeneral.bl_idname, key="A", use_ctrl=True, use_alt=True, trigger_type="CLICK")
 
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Object Non-modal", ItemidName="object.mode_set", Active=False)
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Image", ItemidName="object.mode_set", Active=False)
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Object Non-modal", ItemidName="view3d.object_mode_pie_or_toggle", Active=False)
     AlxEditKeymaps(KeyconfigSource="Blender addon", ConfigSpaceName="Object Non-modal", ItemidName="wm.call_menu_pie", OperatorID="MACHIN3_MT_modes_pie", Active=False)
-    AlxKeymapRegister(keymap_call_type="PIE", space_type="VIEW_3D", item_idname=Alx_MT_UnlockedModesPie.bl_idname, key="TAB", trigger_type="PRESS")
+    AlxKeymapRegister(keymap_call_type="PIE", space_type="VIEW_3D", item_idname=AlxGeneralPanel.Alx_MT_UnlockedModesPie.bl_idname, key="TAB", trigger_type="PRESS")
 
    
 

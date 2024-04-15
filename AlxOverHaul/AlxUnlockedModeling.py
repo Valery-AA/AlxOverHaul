@@ -5,7 +5,7 @@ import bmesh
 
 from .AlxGpuUI import draw_unlocked_modeling_ui
 
-class Alx_Tool_UnlockedModeling_Properties(bpy.types.PropertyGroup):
+class Alx_PG_PropertyGroup_UnlockedModelingProperties(bpy.types.PropertyGroup):
     """"""
 
     leftclick_selection_mode : bpy.props.EnumProperty(name="Left Click", default="NONE", 
@@ -81,7 +81,7 @@ class Alx_PT_Panel_UnlockedModeling(bpy.types.Panel):
             return False
 
     def draw(self, context: bpy.types.Context):
-        Properties : Alx_Tool_UnlockedModeling_Properties = context.scene.alx_tool_unlocked_modeling_properties
+        Properties : Alx_PG_PropertyGroup_UnlockedModelingProperties = context.scene.alx_tool_unlocked_modeling_properties
 
         AlxLayout = self.layout
         AlxLayout.ui_units_x = 12.0
@@ -236,7 +236,7 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
 
 
 
-                operator_properties : Alx_Tool_UnlockedModeling_Properties = context.scene.alx_tool_unlocked_modeling_properties
+                operator_properties : Alx_PG_PropertyGroup_UnlockedModelingProperties = context.scene.alx_tool_unlocked_modeling_properties
                 
                 leftclick_selection_mode = operator_properties.leftclick_selection_mode
                 leftclick_extend_selection = (operator_properties.leftclick_selection_state_mode == "EXTEND")

@@ -42,35 +42,9 @@ AlxModifier_Deformation_EnumItemsPreset = [("ARMATURE", "Armature", "", 1), ("SH
 AlxModifier_Particles_EnumItemsPreset = [("PARTICLE_SYSTEM", "Particle System", "", 1), ("PARTICLE_INSTANCE", "Particle Instance", "", 1 << 1)]
 AlxModifier_Simulation_EnumItemsPreset = [("COLLISION", "Collision", "", 1), ("CLOTH", "Cloth", "", 1 << 1), ("SOFT_BODY", "Soft Body", "", 1 << 2), ("FLUID", "Fluid", "", 1 << 3)]
 
-def AlxRetrieveContextObject(context):
-    try:
-        if (context is not None):
-            if (context.active_object is not None):
-                if (context.active_object.type == "MESH"):
-                    AlxContextObject = context.active_object
-                    return AlxContextObject
-            for Object in bpy.context.selected_objects:
-                if (Object.type == "MESH") and (Object.find_armature() is not None) and (Object.find_armature() is AlxRetrieveContextArmature(context=context)):
-                    AlxContextObject = Object
-                    return AlxContextObject
-    except:
-        return None
-    return None
 
-def AlxRetrieveContextArmature(context):
-    try:
-        if (context is not None):
-            if (context.active_object is not None):
-                if (context.active_object.type == "MESH"):
-                    if (context.active_object.find_armature() is not None):
-                        AlxContextArmature = context.active_object.find_armature()
-                        return AlxContextArmature
-                if (context.active_object.type == "ARMATURE"):
-                    AlxContextArmature = bpy.data.objects.get(context.active_object.name)
-                    return AlxContextArmature
-    except:
-        return None
-    return None
+
+
 
 def AlxRetiriveObjectModifier(TargetObejct, TargetType):
     if (TargetType in AlxModifier_Modifier_ListItemsPreset):

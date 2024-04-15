@@ -226,15 +226,17 @@ class Alx_OT_VXGroupBySeams(bpy.types.Operator):
             face : bmesh.types.BMFace
             loop : bmesh.types.BMLoop
 
-            seam_vert = set(vert for edge in self.ContextBMesh.edges for vert in edge.verts if ([edge.seam for edge in vert.link_edges].count(True) > 0))
-            non_seam_vert = set(vert for edge in self.ContextBMesh.edges for vert in edge.verts if (all_false([edge.seam for edge in vert.link_edges])))
+
+
+            seam_vert = set(vert.index for edge in self.ContextBMesh.edges for vert in edge.verts if ([edge.seam for edge in vert.link_edges].count(True) > 0))
+            non_seam_vert = set(vert.index for edge in self.ContextBMesh.edges for vert in edge.verts if (all_false([edge.seam for edge in vert.link_edges])))
 
             sculpt_mask_layer = self.ContextBMesh.verts.layers.float.get(".sculpt_mask")
             if (sculpt_mask_layer is None):
                 sculpt_mask_layer = self.ContextBMesh.verts.layers.float.new(".sculpt_mask")
 
             for vert in seam_vert:
-                vert[sculpt_mask_layer] = 1.0
+                self.ContextBMesh.verts[vert][sculpt_mask_layer] = 1.0
 
             deform_layer = self.ContextBMesh.verts.layers.deform.verify()
 
@@ -248,11 +250,11 @@ class Alx_OT_VXGroupBySeams(bpy.types.Operator):
 
             if (seam_group_index is not None) and (non_seam_group_index is not None):
                 for vert in seam_vert:
-                    vert[deform_layer][seam_group_index] = 1
-                    vert[deform_layer][non_seam_group_index] = 0
+                    self.ContextBMesh.verts[vert][deform_layer][seam_group_index] = 1
+                    self.ContextBMesh.verts[vert][deform_layer][non_seam_group_index] = 0
                 for vert in non_seam_vert:
-                    vert[deform_layer][seam_group_index] = 0
-                    vert[deform_layer][non_seam_group_index] = 1
+                    self.ContextBMesh.verts[vert][deform_layer][seam_group_index] = 0
+                    self.ContextBMesh.verts[vert][deform_layer][non_seam_group_index] = 1
 
             bmesh.update_edit_mesh(self.ContextMesh)
 

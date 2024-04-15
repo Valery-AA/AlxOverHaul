@@ -126,7 +126,7 @@ class Alx_OT_Modifier_ApplyReplace(bpy.types.Operator):
                         backup_modifier[attr] = getattr(modifier, attr)
 
                     modifier_index = selected_object.modifiers.find(modifier.name)
-                    _mode = context.mode # if (context.mode[0:4] != "EDIT") else "EDIT"
+                    _mode = context.mode if (context.mode[0:4] != "EDIT") else "EDIT" if (context.mode[0:4] == "EDIT") else "OBJECT"
                     bpy.ops.object.mode_set(mode="OBJECT")
                     bpy.ops.object.modifier_apply(modifier=modifier.name)
                     bpy.ops.object.mode_set(mode=_mode)

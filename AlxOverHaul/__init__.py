@@ -35,10 +35,16 @@ alx_class_object_list = tuple(alx_class[1] for file in addon_files for alx_class
 
 AlxClassQueue = alx_class_object_list
 
-from . import AlxProperties
-from . import AlxUnlockedModeling
+
 from . import AlxHandlers
-from . AlxKeymaps import AlxAddonKeymaps, AlxKeymapCreation
+from . import AlxKeymapUtils
+
+from .import AlxGeneralPanel
+from . import AlxVisibilityOperators
+
+from . import AlxUnlockedModeling
+
+
 
 AlxToolQueue = [
                [AlxUnlockedModeling.Alx_WT_WorkSpaceTool_UnlockedModeling, None, True, False] #tool_class, after, separator, group
@@ -53,6 +59,13 @@ def AlxRegisterClassQueue():
         except:
             bpy.utils.unregister_class(AlxClass)
             bpy.utils.register_class(AlxClass)
+def AlxUnregisterClassQueue():
+    for AlxClass in AlxClassQueue:
+        try:
+            bpy.utils.unregister_class(AlxClass)
+        except:
+            print("Can't Unregister", AlxClass)
+
 def AlxRegisterToolQueue():
     for AlxTool in AlxToolQueue:
         try:
@@ -60,31 +73,43 @@ def AlxRegisterToolQueue():
         except:
             bpy.utils.unregister_tool(AlxTool[0])
             bpy.utils.register_tool(AlxTool[0], after=AlxTool[1], separator=AlxTool[2], group=AlxTool[3])
+def AlxUnregisterToolQueue():
+    for AlxTool in AlxToolQueue:
+        try:
+            bpy.utils.unregister_tool(AlxTool[0])
+        except:
+            print("Can't Unregister", AlxTool)
 
 def RegisterProperties():
-    bpy.types.Scene.alx_tool_unlocked_modeling_properties = bpy.props.PointerProperty(type=AlxUnlockedModeling.Alx_Tool_UnlockedModeling_Properties)
-
-    bpy.types.Scene.alx_panel_alexandria_general_properties = bpy.props.PointerProperty(type=AlxProperties.Alx_Panel_AlexandriaGeneral_Properties)
-    bpy.types.Scene.alx_tool_scene_isolator_properties = bpy.props.PointerProperty(type=AlxProperties.Alx_Tool_SceneIsolator_Properties)
-
-    bpy.types.Scene.alx_object_selection_properties = bpy.props.CollectionProperty(type=AlxProperties.Alx_Object_Selection_ListItem)
+    bpy.types.Scene.alx_object_selection_properties = bpy.props.CollectionProperty(type=AlxGeneralPanel.Alx_PG_PropertyGroup_ObjectSelectionListItem)
     bpy.types.Scene.alx_object_selection_properties_index = bpy.props.IntProperty(default=0)
 
     bpy.types.Scene.alx_scene_isolator_visibility_object_list = []
     bpy.types.Scene.alx_scene_isolator_visibility_collection_list = []
+    bpy.types.Scene.alx_tool_scene_isolator_properties = bpy.props.PointerProperty(type=AlxVisibilityOperators.Alx_Tool_SceneIsolator_Properties)
+
+    bpy.types.Scene.alx_panel_alexandria_general_properties = bpy.props.PointerProperty(type=AlxGeneralPanel.Alx_PG_PropertyGroup_AlexandriaGeneral)
 
     bpy.types.Object.alx_self_bmesh_datablock = []
     bpy.types.Scene.alx_draw_handler_unlocked_modeling = None
+    bpy.types.Scene.alx_tool_unlocked_modeling_properties = bpy.props.PointerProperty(type=AlxUnlockedModeling.Alx_PG_PropertyGroup_UnlockedModelingProperties)
+
+    bpy.types.Object.alx_particle_surface_object = bpy.props.PointerProperty(type=bpy.types.Object)
+    bpy.types.Object.alx_particle_generator_source_object = bpy.props.PointerProperty(type=bpy.types.Object)
+    bpy.types.Object.alx_modifier_collection = bpy.props.CollectionProperty(type=AlxGeneralPanel.Alx_PG_PropertyGroup_ModifierSettings)
 def UnRegisterProperties():
-    del bpy.types.Scene.alx_tool_unlocked_modeling_properties
-    del bpy.types.Scene.alx_panel_alexandria_general_properties
-    del bpy.types.Scene.alx_tool_scene_isolator_properties
+    del bpy.types.Scene.alx_object_selection_properties
+    del bpy.types.Scene.alx_object_selection_properties_index
 
     del bpy.types.Scene.alx_scene_isolator_visibility_object_list
     del bpy.types.Scene.alx_scene_isolator_visibility_collection_list
+    del bpy.types.Scene.alx_tool_scene_isolator_properties
+
+    del bpy.types.Scene.alx_panel_alexandria_general_properties
 
     del bpy.types.Object.alx_self_bmesh_datablock
     del bpy.types.Scene.alx_draw_handler_unlocked_modeling
+    del bpy.types.Scene.alx_tool_unlocked_modeling_properties
 
 def RegisterHandlers():
     bpy.app.handlers.load_post.append(AlxHandlers.AlxMsgBusSubscriptions)
@@ -100,11 +125,10 @@ def UnRegisterHandlers():
 
 
 def register():
-    
     AlxRegisterClassQueue()
     AlxRegisterToolQueue()
 
-    AlxKeymapCreation()
+    AlxKeymapUtils.AlxCreateKeymaps()
 
     RegisterProperties()
     RegisterHandlers()
@@ -114,20 +138,17 @@ def register():
 
 
 def unregister():
-    for AlxClass in AlxClassQueue:
-        bpy.utils.unregister_class(AlxClass)
+    AlxUnregisterClassQueue()
+    AlxUnregisterToolQueue()
 
-    for AlxTool in AlxToolQueue:
-        bpy.utils.unregister_tool(AlxTool)
-
-    for km, kmi in AlxAddonKeymaps:
+    for km, kmi in AlxKeymapUtils.AlxAddonKeymaps:
         km.keymap_items.remove(kmi)
-    AlxAddonKeymaps.clear()
+    AlxKeymapUtils.AlxAddonKeymaps.clear()
 
     UnRegisterProperties()
     UnRegisterHandlers()
 
 
+
 if __name__ == "__main__":
     register()
-
