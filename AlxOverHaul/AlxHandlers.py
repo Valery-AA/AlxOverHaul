@@ -30,8 +30,7 @@ def AlxUpdateSceneSelectionObjectListLambda():
     for scene in bpy.data.scenes:
         scene.alx_object_selection_properties.clear()
 
-    for Object in SelectedObjects:
-        Object.alx_modifier_collection.clear()
+
 
     for scene in bpy.data.scenes:
         for Object in SelectedObjects:
@@ -42,6 +41,7 @@ def AlxUpdateSceneSelectionObjectListLambda():
     for Object in SelectedObjects:
         for Modifier in Object.modifiers:
             mod = Object.alx_modifier_collection.add()
+            mod.name = f"{Object.name}_{Modifier.name}"
             mod.object_modifier = Modifier.name
 
 @bpy.app.handlers.persistent

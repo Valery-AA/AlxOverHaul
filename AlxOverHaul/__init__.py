@@ -111,6 +111,10 @@ def UnRegisterProperties():
     del bpy.types.Scene.alx_draw_handler_unlocked_modeling
     del bpy.types.Scene.alx_tool_unlocked_modeling_properties
 
+    del bpy.types.Object.alx_particle_surface_object
+    del bpy.types.Object.alx_particle_generator_source_object
+    del bpy.types.Object.alx_modifier_collection
+
 def RegisterHandlers():
     bpy.app.handlers.load_post.append(AlxHandlers.AlxMsgBusSubscriptions)
     bpy.app.handlers.load_post.append(AlxHandlers.AlxAddonKeymapHandler)
@@ -134,8 +138,6 @@ def register():
     RegisterHandlers()
 
     bpy.context.preferences.use_preferences_save = True
-
-
 
 def unregister():
     AlxUnregisterClassQueue()

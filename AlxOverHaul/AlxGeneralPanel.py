@@ -68,28 +68,24 @@ class Alx_PG_PropertyGroup_ModifierSettings(bpy.types.PropertyGroup):
     object_modifier : bpy.props.StringProperty(name="", default="") #type:ignore
     show_options : bpy.props.BoolProperty(name="", default=False) #type:ignore
 
-class Alx_PT_Panel_Modifier_Options(bpy.types.Panel):
+class Alx_PT_Operator_ModifierChangeSettings(bpy.types.Operator):
     """"""
 
     bl_label = ""
-    bl_idname = "ALX_PT_panel_modifier_options"
-
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "WINDOW"
-
-    object_name : bpy.props.StringProperty(default="") #type:ignore
-    modifier_name : bpy.props.StringProperty(default="") #type:ignore
-    modifier_type : bpy.props.StringProperty(default="") #type:ignore
+    bl_idname = "alx.operator_modifier_change_settings"
+    
+    object_name : bpy.props.StringProperty() #type:ignore
+    modifier_name : bpy.props.StringProperty() #type:ignore
 
     @classmethod
-    def poll(cls, context):
+    def poll(self, context: bpy.types.Context):
         return True
-
-    def draw(self, context: bpy.types.Context):
-        if (self.modifier_type == "SUBSURF"):
-            self.layout.label(text="text")
-
-
+    
+    def execute(self, context: bpy.types.Context):
+        Object = context.scene.objects.get(self.object_name)
+        Modifier = Object.alx_modifier_collection.get(f"{self.object_name}_{self.modifier_name}")
+        Modifier.show_options = not Modifier.show_options
+        return {"FINISHED"}
 
 class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
     """"""
@@ -105,62 +101,52 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
 
         modifier_slots = LayoutBox.row().grid_flow(columns=1)
 
-        for Collection_Modifier in item.ObjectPointer.alx_modifier_collection:
-            modifier_header = modifier_slots.row()
-            obj_modifier = item.ObjectPointer.modifiers.get(Collection_Modifier.object_modifier)
-            icon_name = bpy.types.Modifier.bl_rna.properties['type'].enum_items.get(obj_modifier.type).icon
+        for raw_object_modifier in item.ObjectPointer.modifiers:
+            modifier_header = modifier_slots.row(align=True)
 
+            icon_name = bpy.types.Modifier.bl_rna.properties['type'].enum_items.get(raw_object_modifier.type).icon
+            
             modifier_delete_button : Alx_OT_Modifier_ManageOnSelected = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="PANEL_CLOSE")
             modifier_delete_button.object_pointer_reference = item.ObjectPointer.name
             modifier_delete_button.create_modifier = False
             modifier_delete_button.remove_modifier = True
-            modifier_delete_button.object_modifier_index = item.ObjectPointer.modifiers.find(Collection_Modifier.object_modifier)
+            modifier_delete_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
 
-            modifier_header.prop(obj_modifier, "name", text="", icon=icon_name, emboss=True)
-            modifier_header.prop(Collection_Modifier, "show_options")
-            options_panel = modifier_slots.row().panel_prop(Collection_Modifier, "show_options")
-            options_layout : bpy.types.UILayout = options_panel[1]
+            modifier_header.prop(raw_object_modifier, "name", text="", icon=icon_name, emboss=True)
 
-            modifier_header.prop(obj_modifier, "show_in_editmode", text="", emboss=True)
-            modifier_header.prop(obj_modifier, "show_viewport", text="", emboss=True)
-            modifier_header.prop(obj_modifier, "show_render", text="", emboss=True)
+            if (item.ObjectPointer.alx_modifier_collection.get(f"{item.ObjectPointer.name}_{raw_object_modifier.name}").show_options == True):
+                ModifierOptionBox = modifier_slots.row()
+                ModifierOptionBox.label(text="Test Text")
+
+            modifier_header.prop(raw_object_modifier, "show_in_editmode", text="", emboss=True)
+            modifier_header.prop(raw_object_modifier, "show_viewport", text="", emboss=True)
+            modifier_header.prop(raw_object_modifier, "show_render", text="", emboss=True)
+
+            modifier_move_up_button : Alx_OT_Modifier_ManageOnSelected = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="TRIA_UP")
+            modifier_move_up_button.object_pointer_reference = item.ObjectPointer.name
+            modifier_move_up_button.create_modifier = False
+            modifier_move_up_button.remove_modifier = False
+            modifier_move_up_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
+            modifier_move_up_button.move_modifier_up = True
+            modifier_move_up_button.move_modifier_down = False
+
+            modifier_move_up_button = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="TRIA_DOWN")
+            modifier_move_up_button.object_pointer_reference = item.ObjectPointer.name
+            modifier_move_up_button.create_modifier = False
+            modifier_move_up_button.remove_modifier = False
+            modifier_move_up_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
+            modifier_move_up_button.move_modifier_up = False
+            modifier_move_up_button.move_modifier_down = True
+
+            modifier_operator = modifier_header.row()
+            modifier_operator.scale_x = 0.6
+            modifier_change_settings : Alx_PT_Operator_ModifierChangeSettings = modifier_operator.operator(Alx_PT_Operator_ModifierChangeSettings.bl_idname, text="+")
+            modifier_change_settings.object_name = item.ObjectPointer.name
+            modifier_change_settings.modifier_name = raw_object_modifier.name
 
         LayoutBox.row().separator(factor=2.0)
-        
 
 
-
-        # ModifierBox = LayoutBox.row().box()
-
-        # for Modifier in item.ObjectPointer.modifiers:
-        #     modifier_ui_row = ModifierBox.row(align=True)
-
-        #     
-
-        #     icon_name = bpy.types.Modifier.bl_rna.properties['type'].enum_items.get(Modifier.type).icon
-
-        #     
-
-        #     modifier_options_panel = modifier_ui_row
-
-        #     
-
-        #     modifier_move_up_button : Alx_OT_Modifier_ManageOnSelected = modifier_ui_row.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="TRIA_UP")
-        #     modifier_move_up_button.object_pointer_reference = item.ObjectPointer.name
-        #     modifier_move_up_button.create_modifier = False
-        #     modifier_move_up_button.remove_modifier = False
-        #     modifier_move_up_button.object_modifier_index = item.ObjectPointer.modifiers.find(Modifier.name)
-        #     modifier_move_up_button.move_modifier_up = True
-        #     modifier_move_up_button.move_modifier_down = False
-
-        #     modifier_move_up_button = modifier_ui_row.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="TRIA_DOWN")
-        #     modifier_move_up_button.object_pointer_reference = item.ObjectPointer.name
-        #     modifier_move_up_button.create_modifier = False
-        #     modifier_move_up_button.remove_modifier = False
-        #     modifier_move_up_button.object_modifier_index = item.ObjectPointer.modifiers.find(Modifier.name)
-        #     modifier_move_up_button.move_modifier_up = False
-        #     modifier_move_up_button.move_modifier_down = True
-        
 
 class Alx_PT_Panel_AlexandriaGeneral(bpy.types.Panel):
     """"""
