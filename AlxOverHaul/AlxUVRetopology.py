@@ -9,9 +9,7 @@ def all_false(iterable: Iterable[object]) -> bool:
             return False
     return True
 
-# loop_index_table = set()
-# _unique_runner=[loop_index_table.add(index) for index in tuple(loop.index for vert in self.ContextBMesh.verts for loop in vert.link_loops)]
-# del _unique_runner
+
 
 class Alx_OT_UVRetopology(bpy.types.Operator):
     """"""
@@ -68,11 +66,6 @@ class Alx_OT_UVRetopology(bpy.types.Operator):
 
                 bmesh.update_edit_mesh(self.ContextMesh, loop_triangles=True, destructive=False)
 
-                # boundary_face_corner = [face.index for face in self.ContextBMesh.faces if ([edge.is_boundary for edge in face.edges].count(True) >= 2)]
-                # #boundary_split_corner = [face.index for face in self.ContextBMesh.faces if ([edge.is_boundary for edge in face.edges].count(True) >= 2)]
-                # print(boundary_face_corner)
-                # for face in boundary_face_corner: self.ContextBMesh.faces[face].select = True
-                #bmesh.update_edit_mesh(self.ContextMesh, loop_triangles=True, destructive=False)
 
 
                 return {"PASS_THROUGH"}
@@ -92,7 +85,7 @@ class Alx_OT_UVExtractIsland(bpy.types.Operator):
 
     bl_label = "UV - Extract Island"
     bl_idname = "alx.operator_uv_extract_island"
-    bl_options = {"REGISTER", "UNDO"}
+    bl_options = {"REGISTER", "UNDO", "INTERNAL"}
 
     ContextMesh : bpy.types.Mesh = None
     ContextBMesh : bmesh.types.BMesh = None
@@ -111,8 +104,8 @@ class Alx_OT_UVExtractIsland(bpy.types.Operator):
             self.ContextBMesh.edges.ensure_lookup_table()
             self.ContextBMesh.faces.ensure_lookup_table()
 
-            if (self.ContextBMesh is not None) and (len(self.ContextMesh.uv_layers) > 0):
-                uv_layer = self.ContextBMesh.loops.layers.uv[0]
+            if (self.ContextBMesh is not None):
+                uv_layer = self.ContextBMesh.loops.layers.uv.get("UVMap") if self.ContextBMesh.loops.layers.uv.get("UVMap") is not None else self.ContextBMesh.loops.layers.uv.new("UVMap")
 
                 if (uv_layer is not None):
                     vert : bmesh.types.BMVert
@@ -120,7 +113,7 @@ class Alx_OT_UVExtractIsland(bpy.types.Operator):
                     face : bmesh.types.BMFace
                     loop : bmesh.types.BMLoop
 
-
+                    UVExtractBMesh : bmesh.types.BMesh = bmesh.new()
 
                     vertex_island_mapping = list()
 
@@ -159,39 +152,55 @@ class Alx_OT_UVExtractIsland(bpy.types.Operator):
                                 vertex_unprocessed.difference_update(vertex_index_island)
                                 vertex_island_mapping.append(vertex_index_island)
 
-                    bmesh.update_edit_mesh(self.ContextMesh)
-
 
 
                     UVExtractMesh = bpy.data.meshes.new(f"UV Extract - {context.edit_object.name}") if bpy.data.meshes.get(f"UV Extract - {context.edit_object.name}") is None else bpy.data.meshes.get(f"UV Extract - {context.edit_object.name}")
 
-                    if (uv_layer is not None):
-                        UVExtractBMesh : bmesh.types.BMesh = bmesh.new()
+                    vert_loop_done = set()
 
-                        vert_loop_done = set()
+                    for vert_island in vertex_island_mapping:
+                        for vert_index in vert_island:
+                            for face in self.ContextBMesh.verts[vert_index].link_faces:
+                                verts = set()
+                                for loop in face.loops:
+                                    if (loop.index not in vert_loop_done):
+                                        uv_coord = loop[uv_layer].uv
+                                        uv_vert = UVExtractBMesh.verts.new((uv_coord[0], uv_coord[1], 0))
 
-                        for vert_island in vertex_island_mapping:
-                            for vert_index in vert_island:
-                                for face in self.ContextBMesh.verts[vert_index].link_faces:
-                                    verts = set()
-                                    for loop in face.loops:
-                                        if (loop.index not in vert_loop_done):
-                                            uv_coord = loop[uv_layer].uv
-                                            uv_vert = UVExtractBMesh.verts.new((uv_coord[0], 0, uv_coord[1]))
+                                        verts.add(uv_vert)
+                                        vert_loop_done.add(loop.index)
+                                if (len(verts) >= 3):
+                                    UVExtractBMesh.faces.new(verts)
 
-                                            verts.add(uv_vert)
-                                            vert_loop_done.add(loop.index)
-                                    if (len(verts) >= 3):
-                                        UVExtractBMesh.faces.new(verts)
-                                            
+                    self.ContextBMesh.verts.ensure_lookup_table()
+                    self.ContextBMesh.edges.ensure_lookup_table()
+                    self.ContextBMesh.faces.ensure_lookup_table()
+
+                    self.ContextBMesh.free()
+
                     bmesh.ops.remove_doubles(UVExtractBMesh, verts=UVExtractBMesh.verts, dist=0.0001)
 
+                    extract_uv_layer = UVExtractBMesh.loops.layers.uv.get("UVMap") if UVExtractBMesh.loops.layers.uv.get("UVMap") is not None else UVExtractBMesh.loops.layers.uv.new("UVMap")
+                    if (extract_uv_layer is not None):
+                        bmesh_loops = dict()
+                        _bmesh_loops_runner = [bmesh_loops.update({loop.index : loop}) for face in UVExtractBMesh.faces for loop in face.loops if (loop.index not in bmesh_loops.keys())]
+                        del _bmesh_loops_runner
+
+                        for loop_index in bmesh_loops.keys():
+                            bmesh_loops[loop_index][extract_uv_layer].uv = (bmesh_loops[loop_index].vert.co[0], bmesh_loops[loop_index].vert.co[1])
+                    else:
+                        self.report(type={"ERROR"}, message="Error - Extract UV Layer is None")
+
+                    
                     UVExtractBMesh.to_mesh(UVExtractMesh)
+                    UVExtractBMesh.free()
 
                     UVExtractObject = bpy.data.objects.new(f"UV Extract - {context.edit_object.name}", UVExtractMesh) if bpy.data.objects.get(f"UV Extract - {context.edit_object.name}") is None else bpy.data.objects.get(f"UV Extract - {context.edit_object.name}")
-                    
+
                     if (UVExtractObject.name not in context.scene.collection.objects):
                         context.scene.collection.objects.link(UVExtractObject)
+                else:
+                    self.report(type={"ERROR"}, message="Error - Source UV Layer is None")
 
         return {"FINISHED"}
 
