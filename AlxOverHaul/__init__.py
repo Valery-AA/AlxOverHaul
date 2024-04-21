@@ -2,10 +2,10 @@ bl_info = {
     "name" : "AlxOverHaul",
     "author" : "Valeria Bosco[Valy Arhal]",
     "description" : "For proper functionality [Blender] keymaps preset shoudl be used, [Blender 27x and Industry Compatible] will result in severe keymap conflicts",
-    "version" : (0, 5, 5),
+    "version" : (0, 5, 6),
     "warning" : "[Heavly Under Development] And Subject To Substantial Changes",
     "category" : "3D View",
-    "location" : "[Ctrl Alt A] Tool Menu, [Shift S] Pivot Menu, [Tab] Mode Compact Menu",
+    "location" : "[Ctrl Alt A] General Menu, [Shift S] Pivot Menu, [Tab] Auto Mode Pie Menu",
     "blender" : (3, 6, 0)
 }
 
