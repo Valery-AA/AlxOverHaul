@@ -12,6 +12,7 @@ class Alx_OT_Mode_UnlockedModes(bpy.types.Operator):
 
     bl_label = ""
     bl_idname = "alx.operator_mode_unlocked_modes"
+    bl_description = "mode swap supports in-between mode hops. object mode is not required for most swaps between modes"
     bl_options = {"INTERNAL"}
 
     DefaultBehaviour : bpy.props.BoolProperty(name="", default=True, options={"HIDDEN"})
@@ -394,101 +395,7 @@ class Alx_OT_Mesh_EditAttributes(bpy.types.Operator):
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self, width=300)
 
-class Alx_OT_Scene_UnlockedSnapping(bpy.types.Operator):
-    """"""
 
-    bl_label = ""
-    bl_idname = "alx.operator_scene_unlocked_snapping"
-    bl_options = {"INTERNAL"}
-
-    SourceSnapping : bpy.props.StringProperty(name="", default="NONE", options={"HIDDEN"})
-    TargetSnapping : bpy.props.StringProperty(name="", default="NONE", options={"HIDDEN"})
-    SubTargetSnapping : bpy.props.StringProperty(name="", default="NONE", options={"HIDDEN"})
-
-    ShouldOffset : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"})
-
-    @classmethod
-    def poll(self, context):
-        return context.area.type == "VIEW_3D"
-    
-    def execute(self, context):
-        if (self.SourceSnapping == "ACTIVE"):
-            if (self.TargetSnapping == "SELECTED"):
-                if (len(context.selected_objects) != 0):
-                    for Object in context.selected_objects:
-                        if (context.active_object is not None) and (Object is not context.active_object):
-                            Object.location = context.active_object.location
-                return {"FINISHED"}
-            
-            if (self.TargetSnapping == "SCENE_CURSOR"):
-                if (context.active_object is not None):
-                    if (context.mode == "OBJECT"):
-                        context.scene.cursor.location = context.active_object.location
-                    if (context.mode == "EDIT_MESH"):
-                        ContextBmesh = bmesh.from_edit_mesh(context.active_object.data)
-
-                        try:
-                            ContextBmesh.select_history[1]
-
-                            UniqueVertex = []
-                            SelectionVx_X = []
-                            SelectionVx_Y = []
-                            SelectionVx_Z = []
-                            for SelectedItem in ContextBmesh.select_history:
-                                if (SelectedItem.__class__ is bmesh.types.BMVert):
-                                    if (SelectedItem not in UniqueVertex):
-                                        UniqueVertex.append(SelectedItem)
-
-                                        SelectionVx_X.append(SelectedItem.co.x)
-                                        SelectionVx_Y.append(SelectedItem.co.y)
-                                        SelectionVx_Z.append(SelectedItem.co.z)
-
-                                if (SelectedItem.__class__ is bmesh.types.BMEdge) or (SelectedItem.__class__ is bmesh.types.BMFace):
-                                    for Vertex in SelectedItem.verts:
-                                        if Vertex not in UniqueVertex:
-                                            UniqueVertex.append(Vertex)
-
-                                            SelectionVx_X.append(Vertex.co.x)
-                                            SelectionVx_Y.append(Vertex.co.y)
-                                            SelectionVx_Z.append(Vertex.co.z)
-
-                            AverageX = sum(SelectionVx_X) / len(SelectionVx_X)
-                            AverageY = sum(SelectionVx_Y) / len(SelectionVx_Y)
-                            AverageZ = sum(SelectionVx_Z) / len(SelectionVx_Z)
-
-                            AverageCoordinates = [AverageX, AverageY, AverageZ]
-                            context.scene.cursor.location = AverageCoordinates
-
-                        except:
-                            pass
-                            
-
-                return {"FINISHED"}
-
-        if (self.SourceSnapping == "SCENE_CURSOR"):
-            if (self.TargetSnapping == "SELECTED"):
-                if (self.SubTargetSnapping == "OBJECT"):
-                    if (len(context.selected_objects) != 0):
-                        for Object in context.selected_objects:
-                                Object.location = context.scene.cursor.location
-                if (self.SubTargetSnapping == "ORIGIN"):
-                    if (len(context.selected_objects) != 0):
-                        for Object in context.selected_objects:
-                            bpy.context.view_layer.objects.active = Object
-                            bpy.ops.object.origin_set(type="ORIGIN_CURSOR")
-
-                    
-
-                    return {"FINISHED"}
-        
-        if (self.SourceSnapping == "RESET"):
-            if (self.TargetSnapping == "SCENE_CURSOR"):
-                context.scene.cursor.location = [0.0, 0.0, 0.0]
-                return {"FINISHED"}
-
-            return {"FINISHED"}
-
-        return {"FINISHED"}
 
 class Alx_OT_Armature_AssignToSelection(bpy.types.Operator):
     """"""

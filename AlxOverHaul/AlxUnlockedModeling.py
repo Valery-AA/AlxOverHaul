@@ -259,7 +259,7 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
 
                         with context.temp_override(window=override_window, area=override_area[0], region=override_region[0]):
                             if (leftclick_selection_mode == "NONE"):
-                                bpy.ops.view3d.select("INVOKE_DEFAULT", extend=leftclick_extend_selection, deselect=False)
+                                bpy.ops.view3d.select("INVOKE_DEFAULT", extend=leftclick_extend_selection and not event.shift == True, deselect=False, deselect_all=event.shift == True)
                                 bpy.ops.ed.undo_push(message=f"AlxUM Select extend:{leftclick_extend_selection}")
                                 return {"RUNNING_MODAL"}
                             

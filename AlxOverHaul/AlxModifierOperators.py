@@ -1,6 +1,5 @@
 import bpy
 
-
 def AlxRetirive_ModifierList(TargetObejct, TargetType):
     mod_type_list = bpy.types.Modifier.bl_rna.properties['type'].enum_items
 
@@ -68,8 +67,6 @@ class Alx_OT_Modifier_ManageOnSelected(bpy.types.Operator):
 
 
         try:
-            
-
             if (self.move_modifier_up == True) and (self.move_modifier_down == False):
                 Object = bpy.data.objects.get(self.object_pointer_reference)
                 if (Object is not None):
@@ -153,3 +150,35 @@ class Alx_OT_Modifier_ApplyReplace(bpy.types.Operator):
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self, width=300)
     
+class Alx_OT_Modifier_BatchVisibility(bpy.types.Operator):
+    """"""
+
+    bl_label = ""
+    bl_idname = "alx.operator_modifier_batch_visibility"
+    bl_options = {"REGISTER", "UNDO", "INTERNAL"}
+
+    def auto_object_modifier(scene, context: bpy.types.Context):
+        if (context.object is not None):
+            modifier_list = [(modifier.type, modifier.name, "") for modifier in context.object.modifiers]
+        return modifier_list
+
+    modifier_type : bpy.props.EnumProperty(name="modifier type", items=auto_object_modifier) #type:ignore
+    show_viewport : bpy.props.BoolProperty(name="show",default=False) #type:ignore
+
+
+    @classmethod
+    def poll(self, context: bpy.types.Context):
+        return True
+    
+    def execute(self, context: bpy.types.Context):
+        if (self.modifier_type != ""):
+            for object in context.selected_objects:
+                modifier = AlxRetirive_ModifierList(object, self.modifier_type)
+
+                for mod in modifier:
+                    mod.show_viewport = self.show_viewport
+        
+        return {"FINISHED"}
+    
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self, width=300)

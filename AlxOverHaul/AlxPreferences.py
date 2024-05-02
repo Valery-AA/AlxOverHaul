@@ -2,8 +2,6 @@
 
 import bpy
 
-from . import AlxPanels
-from . import AlxOperators
 from . import AlxKeymapUtils
 
 

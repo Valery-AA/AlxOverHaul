@@ -2,7 +2,6 @@ import bpy
 
 from . import AlxPreferences
 from . import AlxGeneralPanel
-from .AlxPanels import Alx_PT_Scene_GeneralPivot
 
 AlxAddonKeymaps = []
 
@@ -126,7 +125,7 @@ def AlxCreateKeymaps():
 
 
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Armature", ItemidName="armature.align", Active=False)
-    AlxKeymapRegister(keymap_call_type="PANEL", region_type="WINDOW", item_idname=AlxGeneralPanel.Alx_PT_Panel_AlexandriaGeneral.bl_idname, key="A", use_ctrl=True, use_alt=True, trigger_type="CLICK")
+    AlxKeymapRegister(keymap_call_type="PANEL", region_type="WINDOW", item_idname=AlxGeneralPanel.Alx_PT_Panel_AlexandriaGeneralModeling.bl_idname, key="A", use_ctrl=True, use_alt=True, trigger_type="CLICK")
 
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Object Non-modal", ItemidName="object.mode_set", Active=False)
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Image", ItemidName="object.mode_set", Active=False)
@@ -137,4 +136,4 @@ def AlxCreateKeymaps():
    
 
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="3D View", ItemidName="wm.call_menu_pie", OperatorID="VIEW3D_MT_snap_pie", Active=False)
-    AlxKeymapRegister(keymap_call_type="PANEL", region_type="WINDOW", item_idname=Alx_PT_Scene_GeneralPivot.bl_idname, key="S", use_shift=True, trigger_type="CLICK")
+    AlxKeymapRegister(keymap_call_type="PANEL", region_type="WINDOW", item_idname=AlxGeneralPanel.Alx_PT_Scene_GeneralPivot.bl_idname, key="S", use_shift=True, trigger_type="CLICK")

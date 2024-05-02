@@ -1,15 +1,16 @@
 import bpy
 from bpy_extras import node_utils
 
-from .AlxKeymapUtils import AlxKeymapRegister
-from .AlxObjectUtils import AlxRetrieveContextObject, AlxRetrieveContextArmature
+from .AlxUtils import AlxRetrieveContextObject, AlxRetrieveContextArmature
 
 from .AlxOperators import Alx_OT_Mode_UnlockedModes, Alx_OT_Armature_MatchIKByMirroredName
-from .AlxUVRetopology import Alx_OT_UVExtractIsland
+from .AlxObjectOperator import Alx_OT_Object_UnlockedQOrigin
+
+from .AlxUVRetopology import Alx_OT_VXGroupBySeams, Alx_OT_UVExtractIsland
 from .AlxHairTools import Alx_OT_Armature_BoneChainOnSelection
-from .AlxPanels import Alx_PT_AlexandriaModifierPanel
+
 from .AlxVisibilityOperators import Alx_Tool_SceneIsolator_Properties, Alx_OT_Scene_VisibilityIsolator, Alx_OT_Object_VisibilitySwitch
-from .AlxModifierOperators import Alx_OT_Modifier_ManageOnSelected, Alx_OT_Modifier_ApplyReplace
+from .AlxModifierOperators import Alx_OT_Modifier_ManageOnSelected, Alx_OT_Modifier_ApplyReplace, Alx_OT_Modifier_BatchVisibility
 
 
 class Alx_PG_PropertyGroup_AlexandriaGeneral(bpy.types.PropertyGroup):
@@ -64,7 +65,6 @@ class Alx_UL_UIList_ObjectSelectionProperties(bpy.types.UIList):
         ItemBox.row().separator(factor=2.0)
 
 
-
 class Alx_PG_PropertyGroup_ModifierSettings(bpy.types.PropertyGroup):
     """"""
     object_name : bpy.props.StringProperty(name="", default="") #type:ignore
@@ -98,11 +98,13 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
     def draw_item(self, context: bpy.types.Context, layout: bpy.types.UILayout, data: bpy.types.AnyType, item: Alx_PG_PropertyGroup_ObjectSelectionListItem, icon: int, active_data: bpy.types.AnyType, active_property: str, index: int = 0, flt_flag: int = 0):
         LayoutBox = layout.row().grid_flow(columns=1)
 
+        self.use_filter_show = True
+
         object_info = LayoutBox.row().box()
         object_info.scale_y = 0.5
         object_info.label(text=item.ObjectPointer.name)
 
-        
+
 
         for raw_object_modifier in item.ObjectPointer.modifiers:
             modifier_slots = LayoutBox.row().box()
@@ -110,21 +112,29 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
 
             raw_object_modifier : bpy.types.Modifier
 
-
-
             icon_name = bpy.types.Modifier.bl_rna.properties['type'].enum_items.get(raw_object_modifier.type).icon
 
             modifier_delete_button : Alx_OT_Modifier_ManageOnSelected = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="PANEL_CLOSE")
             modifier_delete_button.object_pointer_reference = item.ObjectPointer.name
+            modifier_delete_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
             modifier_delete_button.create_modifier = False
             modifier_delete_button.remove_modifier = True
-            modifier_delete_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
+
+            modifier_move_up_button : Alx_OT_Modifier_ManageOnSelected = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="FILE_TICK")
+            modifier_move_up_button.object_pointer_reference = item.ObjectPointer.name
+            modifier_move_up_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
+            modifier_move_up_button.create_modifier = False
+            modifier_move_up_button.apply_modifier = True
+            
+            _show_options = item.ObjectPointer.alx_modifier_collection.get(f"{item.ObjectPointer.name}_{raw_object_modifier.name}").show_options
 
             modifier_operator = modifier_header.row()
             modifier_operator.scale_x = 0.6
-            modifier_change_settings : Alx_PT_Operator_ModifierChangeSettings = modifier_operator.operator(Alx_PT_Operator_ModifierChangeSettings.bl_idname, text="+")
+            modifier_change_settings : Alx_PT_Operator_ModifierChangeSettings = modifier_operator.operator(Alx_PT_Operator_ModifierChangeSettings.bl_idname, text= "-" if (_show_options) else "+", depress= _show_options)
             modifier_change_settings.object_name = item.ObjectPointer.name
-            modifier_change_settings.modifier_name = raw_object_modifier.name\
+            modifier_change_settings.modifier_name = raw_object_modifier.name
+
+
 
             if (item.ObjectPointer.alx_modifier_collection.get(f"{item.ObjectPointer.name}_{raw_object_modifier.name}").show_options == True):
                 ModifierOptionBox = modifier_slots.row().column()
@@ -133,7 +143,21 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
                     ModifierOptionBox.row().prop(raw_object_modifier, "show_only_control_edges", text="optimal")
 
                 if (raw_object_modifier.type == "ARMATURE"):
+                    ModifierOptionBox.row().prop(raw_object_modifier, "object", text="")
                     ModifierOptionBox.row().prop(raw_object_modifier, "use_deform_preserve_volume", text="preserve volume")
+
+                if (raw_object_modifier.type == "BEVEL"):
+                    row = ModifierOptionBox.row().split(factor=0.33, align=True)
+
+                    row.prop(raw_object_modifier, "offset_type", text="")
+                    row.prop(raw_object_modifier, "width", text="width")
+                    row.prop(raw_object_modifier, "segments", text="segments")
+                    ModifierOptionBox.row().prop(raw_object_modifier, "limit_method", text="")
+
+                    ModifierOptionBox.row().prop(raw_object_modifier, "miter_outer", text="miter outer")
+                    ModifierOptionBox.row().prop(raw_object_modifier, "harden_normals", text="harden")
+
+
 
             modifier_header.prop(raw_object_modifier, "name", text="", icon=icon_name, emboss=True)
 
@@ -143,35 +167,27 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
 
             modifier_move_up_button : Alx_OT_Modifier_ManageOnSelected = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="TRIA_UP")
             modifier_move_up_button.object_pointer_reference = item.ObjectPointer.name
-            modifier_move_up_button.create_modifier = False
-            modifier_move_up_button.remove_modifier = False
             modifier_move_up_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
             modifier_move_up_button.move_modifier_up = True
-            modifier_move_up_button.move_modifier_down = False
 
             modifier_move_up_button = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="TRIA_DOWN")
             modifier_move_up_button.object_pointer_reference = item.ObjectPointer.name
-            modifier_move_up_button.create_modifier = False
-            modifier_move_up_button.remove_modifier = False
             modifier_move_up_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
-            modifier_move_up_button.move_modifier_up = False
             modifier_move_up_button.move_modifier_down = True
 
         LayoutBox.row().separator(factor=2.0)
 
 
-
-class Alx_PT_Panel_AlexandriaGeneral(bpy.types.Panel):
+class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
     """"""
 
-    bl_label = "Alexandria General Panel"
-    bl_idname = "ALX_PT_panel_alexandria_tool"
+    bl_label = "Alexandria General Modeling Panel"
+    bl_idname = "ALX_PT_panel_alexandria_general_modeling"
 
     bl_space_type = "VIEW_3D"
     bl_region_type = "WINDOW"
 
     
-
     @classmethod
     def poll(cls, context):
         return True
@@ -184,10 +200,8 @@ class Alx_PT_Panel_AlexandriaGeneral(bpy.types.Panel):
         AlxContextArmature = AlxRetrieveContextArmature(context)
 
 
-
         GeneralPanelProperties : Alx_PG_PropertyGroup_AlexandriaGeneral = context.scene.alx_panel_alexandria_general_properties
         SceneIsolatorProperties : Alx_Tool_SceneIsolator_Properties = context.scene.alx_tool_scene_isolator_properties
-
 
 
         Tabs = TabsLayout.column().prop(GeneralPanelProperties, "panel_tabs", icon_only=True, expand=True)
@@ -257,21 +271,23 @@ class Alx_PT_Panel_AlexandriaGeneral(bpy.types.Panel):
 
             ModifierTabBox.popover(Alx_PT_AlexandriaModifierPanel.bl_idname, text="Create Modifier")
             ModifierTabBox.operator(Alx_OT_Modifier_ApplyReplace.bl_idname, text="Apply-Replace Modifier")
+            ModifierTabBox.operator(Alx_OT_Modifier_BatchVisibility.bl_idname, text="Batch Visibility")
+
+            ModifierTabBox.row().template_list(Alx_UL_UIList_ObjectSelectionModifiers.bl_idname, list_id="", dataptr=context.scene, propname="alx_object_selection_properties", active_dataptr=context.scene, active_propname="alx_object_selection_properties_index", maxrows=3)
             
-            ModifierTabBox.row().template_list(Alx_UL_UIList_ObjectSelectionModifiers.bl_idname, list_id="", dataptr=context.scene, propname="alx_object_selection_properties", active_dataptr=context.scene, active_propname="alx_object_selection_properties_index")
-
-
 
         if (GeneralPanelProperties.panel_tabs == "ALXOPERATORS") and (context.area.type == "VIEW_3D"):
             AlxOperatorsTabBox = TabsLayout.column()
 
-            
-            AlxOperatorsTabBox.operator(Alx_OT_UVExtractIsland.bl_idname, text="UV - Extract islands")
-            AlxOperatorsTabBox.operator(Alx_OT_Armature_BoneChainOnSelection.bl_idname, text="Hair - Bone chain on edge strip")
+            AlxOperatorsTabBox.operator(Alx_OT_VXGroupBySeams.bl_idname, text="VxGroup - group/mask by seam")
 
+            AlxOperatorsTabBox.operator(Alx_OT_UVExtractIsland.bl_idname, text="UV - Extract islands")
             # AlxOperatorsTabBox.row().operator(Alx_OT_UVRetopology.bl_idname, text="Grid Retopology")
-            AlxOperatorsTabBox.row().operator(Alx_OT_Armature_MatchIKByMirroredName.bl_idname, text="Symmetrize IK")
-            
+
+            AlxOperatorsTabBox.operator(Alx_OT_Armature_BoneChainOnSelection.bl_idname, text="Hair - Bone chain on edge strip")
+            ArmatureTabBox.row().operator(Alx_OT_Armature_MatchIKByMirroredName.bl_idname, text="Symmetrize IK")
+
+
 
         if (GeneralPanelProperties.panel_tabs == "RENDER") and (context.area.type == "VIEW_3D"):
             RenderTabBox = TabsLayout.column()
@@ -303,16 +319,16 @@ class Alx_PT_Panel_AlexandriaGeneral(bpy.types.Panel):
 
             if (context.area.spaces.active.shading.type == "MATERIAL"):
                 scene_shading_options = RenderTabBox.column()
-                scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_lights", text="Scene Lights")
-                scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_world", text="Scene World")
+                scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_lights", text="scene Lights")
+                scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_world", text="Scene world")
 
                 if (context.area.spaces.active.shading.use_scene_world == False):
                     scene_shading_options.row().template_icon_view(context.area.spaces.active.shading, "studio_light", scale=4.3, scale_popup=3.0)
                     scene_world_shading = scene_shading_options.column()
-                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_rotate_z", text="Rotation")
-                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_intensity", text="Intensity")
-                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_background_alpha", text="Opacity")
-                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_background_blur", text="Opacity")
+                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_rotate_z", text="rotation")
+                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_intensity", text="intensity")
+                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_background_alpha", text="opacity")
+                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_background_blur", text="blur")
 
                 if (context.area.spaces.active.shading.use_scene_world == True):
                     scene_shading_options.row().prop(context.scene.world, "use_nodes", text="Use Scene World Nodes", toggle=True)
@@ -326,20 +342,20 @@ class Alx_PT_Panel_AlexandriaGeneral(bpy.types.Panel):
 
             if (context.area.spaces.active.shading.type == "RENDERED"):
                 scene_shading_options = RenderTabBox.column()
-                scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_lights_render", text="Scene Lights")
-                scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_world_render", text="Scene World")
+                scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_lights_render", text="scene lights")
+                scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_world_render", text="scene world")
 
                 if (context.area.spaces.active.shading.use_scene_world_render == False):
                     hdri_shading = scene_shading_options
                     hdri_shading.row().template_icon_view(context.area.spaces.active.shading, "studio_light", scale=4.3, scale_popup=3.0)
                     scene_world_shading = hdri_shading.column()
-                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_rotate_z", text="Rotation")
-                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_intensity", text="Intensity")
-                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_background_alpha", text="Opacity")
-                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_background_blur", text="Opacity")
+                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_rotate_z", text="rotation")
+                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_intensity", text="intensity")
+                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_background_alpha", text="opacity")
+                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_background_blur", text="blur")
 
                 if (context.area.spaces.active.shading.use_scene_world_render == True):
-                    scene_shading_options.row().prop(context.scene.world, "use_nodes", text="Use Scene World Nodes", toggle=True)
+                    scene_shading_options.row().prop(context.scene.world, "use_nodes", text="Use Scene world Nodes", toggle=True)
 
                     if (context.scene.world.use_nodes == True):
                         if (context.scene.world.node_tree is not None):
@@ -355,8 +371,8 @@ class Alx_PT_Panel_AlexandriaGeneral(bpy.types.Panel):
                 if (context.area.spaces.active.shading.show_cavity == True):
                     solid_shading_options.row().prop(context.area.spaces.active.shading, "cavity_type", text="")
                     cavity_options = solid_shading_options.row()
-                    cavity_options.prop(context.area.spaces.active.shading, "curvature_ridge_factor", text="Ridge")
-                    cavity_options.prop(context.area.spaces.active.shading, "curvature_valley_factor", text="Valley")
+                    cavity_options.prop(context.area.spaces.active.shading, "curvature_ridge_factor", text="ridge")
+                    cavity_options.prop(context.area.spaces.active.shading, "curvature_valley_factor", text="valley")
 
 
 
@@ -413,17 +429,57 @@ class Alx_PT_Panel_AlexandriaGeneral(bpy.types.Panel):
         # MMenuSectionR.row().operator(AlxOperators.Alx_OT_Mesh_EditAttributes.bl_idname, text="Edit Attributes")
         # 
 
-AlxKeymapRegister(keymap_call_type="PANEL", region_type="WINDOW", item_idname=Alx_PT_Panel_AlexandriaGeneral.bl_idname, key="A", use_ctrl=True, use_alt=True, trigger_type="CLICK")
+
+class Alx_PT_AlexandriaModifierPanel(bpy.types.Panel):
+    """"""
+
+    bl_label = "Alexandria Modifier Panel"
+    bl_idname = "ALX_PT_panel_alexandria_modifier_popover"
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "WINDOW"
+
+    bl_options = {"INSTANCED"}
+
+    @classmethod
+    def poll(self, context: bpy.types.Context):
+        return context.area.type == "VIEW_3D"
+    
+    def draw(self, context: bpy.types.Context):
+        AlxLayout = self.layout
+        AlxLayout.ui_units_x = 35.0
+        
+        ModifierSpace = AlxLayout.box().grid_flow(columns=5, even_columns=True, row_major=True)
+
+        for Modifier in ["DATA_TRANSFER", "MIRROR", "BEVEL", "BOOLEAN", "ARMATURE",
+                         "WEIGHTED_NORMAL", "ARRAY", "SUBSURF", "SOLIDIFY", "SURFACE_DEFORM",
+                         "SEPARATOR", "CURVE", "MULTIRES", "WELD", "DISPLACE"
+                         ]:
+            
+            if (Modifier == "SEPARATOR"):
+                ModifierSpace.separator()
+
+            if (Modifier != "SEPARATOR"):
+                mod_name = bpy.types.Modifier.bl_rna.properties['type'].enum_items[Modifier].name
+                mod_icon = bpy.types.Modifier.bl_rna.properties['type'].enum_items[Modifier].icon
+                mod_identifier = bpy.types.Modifier.bl_rna.properties['type'].enum_items[Modifier].identifier
+
+                modifier_button = ModifierSpace.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, text=mod_name, icon=mod_icon)
+                modifier_button.modifier_type = mod_identifier
+                modifier_button.create_modifier = True
+                modifier_button.remove_modifier = False
+
 
 class Alx_MT_UnlockedModesPie(bpy.types.Menu):
     """"""
 
-    bl_label = "This is a a way to show how it works"
+    bl_label = "Unlocked Modes"
     bl_idname = "ALX_MT_menu_unlocked_modes"
 
+
     @classmethod
-    def poll(self, context):
-        return context.area.type == "VIEW_3D"
+    def poll(self, context: bpy.types.Context):
+        return (context.area.type == "VIEW_3D")
     
     def draw(self, context):
         AlxLayout = self.layout
@@ -466,7 +522,8 @@ class Alx_MT_UnlockedModesPie(bpy.types.Menu):
                 AlxOPS_AutoMode_WEIGHT.DefaultBehaviour = True
                 AlxOPS_AutoMode_WEIGHT.TargetMode = "PAINT_WEIGHT"
         
-        if (AlxContextObject is not None) and (AlxContextObject.type == "MESH"):
+
+        if (AlxContextObject is not None) and (AlxContextObject.type == "MESH") and (len(context.selected_objects) != 0):
             VertexMode = PieUI.operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="Edge", icon="EDGESEL")
             VertexMode.DefaultBehaviour = True
             VertexMode.TargetObject = AlxContextObject.name
@@ -487,17 +544,16 @@ class Alx_MT_UnlockedModesPie(bpy.types.Menu):
             VertexMode.TargetMode = "EDIT"
             VertexMode.TargetType = "MESH"
             VertexMode.TargetSubMode = "FACE"
+
         else:
-            if (AlxContextObject is not None):
-                if (AlxContextObject.type != "MESH"):
+            for i in range(0, 3):
+                if (AlxContextObject is None) and (AlxContextArmature is None) or (len(context.selected_objects) == 0):
+                    PieUI.box().row().label(text="[Selection] [Missing]")
+
+                if (AlxContextObject is None) and (AlxContextArmature is not None) and ((len(context.selected_objects) != 0)):
                     PieUI.box().row().label(text="[Selection] [Incorrect] | [Mesh] [Only]")
-                    PieUI.box().row().label(text="[Selection] [Incorrect] | [Mesh] [Only]")
-                    PieUI.box().row().label(text="[Selection] [Incorrect] | [Mesh] [Only]")
-            else: 
-                PieUI.box().row().label(text="[Selection] [Incorrect] | [Mesh] [Only]")
-                PieUI.box().row().label(text="[Selection] [Incorrect] | [Mesh] [Only]")
-                PieUI.box().row().label(text="[Selection] [Incorrect] | [Mesh] [Only]")
-        
+
+
         if (len(context.selected_objects) != 0):
         
             GeneralEditTab = PieUI.box().row().split(factor=0.33)
@@ -574,3 +630,53 @@ class Alx_MT_UnlockedModesPie(bpy.types.Menu):
             else:
                 if (AlxContextObject is None):
                     SculptMBox.label(text="[Active Object] [Incorrect] | [Mesh] [Only]")
+
+
+class Alx_PT_Scene_GeneralPivot(bpy.types.Panel):
+    """"""
+
+    bl_label = ""
+    bl_idname = "ALX_PT_panel_scene_general_pivot"
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "WINDOW"
+
+    bl_options = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(self, context):
+        return True
+    
+    def draw(self, context):
+        self.layout.ui_units_x = 20.0
+
+        PivotLayout = self.layout.row().split(factor=0.5)
+
+        pivot_column = PivotLayout.column()
+        pivot_column.prop(context.tool_settings, "transform_pivot_point", expand=True)
+        pivot_column.prop(context.space_data.overlay, "grid_scale")
+        pivot_column.prop(context.space_data.overlay, "grid_subdivisions")
+        pivot_column.prop(context.scene.transform_orientation_slots[0], "type", expand=True)
+
+        pivot_column.operator(Alx_OT_Object_UnlockedQOrigin.bl_idname, text="Q-Origin")
+
+        snapping_column = PivotLayout.column()
+
+        if (bpy.app.version[0] == 3):
+            snapping_column.prop(context.tool_settings, "snap_elements", expand=True)
+
+        if ((bpy.app.version[0] == 4) and (bpy.app.version[1] in [0, 1])):
+            snapping_column.prop(context.tool_settings, "snap_elements_base", expand=True)
+            snapping_column.prop(context.tool_settings, "snap_elements_individual", expand=True)
+
+        snapping_column.prop(context.tool_settings, "use_snap", text="Snap")
+        snapping_column.prop(context.tool_settings, "snap_target", expand=True)
+
+        snapping_column.row().label(text="Snap to:")
+        snap_affect_type = snapping_column.row(align=True)
+        snap_affect_type.prop(context.tool_settings, "use_snap_translate", text="Move", toggle=True)
+        snap_affect_type.prop(context.tool_settings, "use_snap_rotate", text="Rotate", toggle=True)
+        snap_affect_type.prop(context.tool_settings, "use_snap_scale", text="Scale", toggle=True)
+
+        snapping_column.prop(context.tool_settings, "use_snap_align_rotation")
+        snapping_column.prop(context.tool_settings, "use_snap_grid_absolute")

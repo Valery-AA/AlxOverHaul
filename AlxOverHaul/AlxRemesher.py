@@ -1,49 +1,44 @@
-import bpy
-import bmesh
-import mathutils
+# import bpy
+# import bmesh
+# import mathutils
+
+# class Alx_PG_PropertyGroup_GizmoControlPointData(bpy.types.PropertyGroup):
+#     position_vector : bpy.props.FloatVectorProperty() #type:ignore
 
 
-
-class Alx_OT_RemeshObject(bpy.types.Operator):
-    """"""
-
-    bl_label = "Tool - Remesh Object"
-    bl_idname = "alx.operator_remesh_object"
-    bl_options = {"REGISTER", "UNDO"}
-
-    ContextBmesh : bmesh.types.BMesh = None
-
-    @classmethod
-    def poll(self, context: bpy.types.Context):
-        return (context.area is not None) and (context.area.type == "VIEW_3D") and (context.mode == "EDIT_MESH")
+# class Alx_OT_Remesh_Gizmo_ControlPoint(bpy.types.GizmoGroup):
+#     bl_label = ""
+#     bl_idname = "ALX_GGT_remesh_gizmo_control_point"
     
-    def execute(self, context: bpy.types.Context):
-        if (context.mode == "EDIT_MESH") and (context.edit_object.type == "MESH"):
-            self.ContextMesh = context.edit_object.data
-            if (self.ContextBmesh is None) or (not self.ContextBmesh.is_valid):
-                self.ContextBmesh = bmesh.from_edit_mesh(self.ContextMesh)
-
-        if (self.ContextBmesh is not None):
-            vert : bmesh.types.BMVert
-            edge : bmesh.types.BMEdge
-            face : bmesh.types.BMFace
+#     bl_space_type = 'VIEW_3D'
+#     bl_region_type = 'WINDOW'
+#     bl_options = {'3D', 'PERSISTENT'}
 
 
 
-            for edge in self.ContextBmesh.edges:
-                vert_co_1 = edge.verts[0].co
-                vert_co_2 = edge.verts[1].co
+#     @classmethod
+#     def poll(self, context: bpy.types.Context):
+#         return (context.object is not None) and (context.object.type == "MESH") and (context.object.mode == "EDIT")
 
-                delta_x = (vert_co_1[0] - vert_co_2[0])
-                delta_y = (vert_co_1[1] - vert_co_2[1])
-                delta_z = (vert_co_1[2] - vert_co_2[2])
+#     def setup(self, context):
+#         ContextObject = context.object
 
-                delta_vector = mathutils.Vector((delta_x, delta_y, delta_z))
-
-                print(delta_vector)
-            # edge_length = [math.sqrt(((edge.verts[0].co[0] - edge.verts[1].co[0])*(edge.verts[0].co[0] - edge.verts[1].co[0])) + ((edge.verts[0].co[1] - edge.verts[1].co[1])*(edge.verts[0].co[1] - edge.verts[1].co[1])) + ((edge.verts[0].co[2] - edge.verts[1].co[2])*(edge.verts[0].co[2] - edge.verts[1].co[2]))) for edge in self.ContextBmesh.edges]
-            # print("edge l min", min(edge_length), "edge l max", max(edge_length))
+#         control_arrow = self.gizmos.new("GIZMO_GT_box_3d")
+#         control_arrow.target_set_prop("offset", self, "")
 
 
+#         gz.matrix_basis = ob.matrix_world.normalized()
+#         gz.draw_style = 'BOX'
 
-        return {"FINISHED"}
+#         gz.color = 1.0, 0.5, 0.0
+#         gz.alpha = 0.5
+
+#         gz.color_highlight = 1.0, 0.5, 1.0
+#         gz.alpha_highlight = 0.5
+
+#         self.energy_gizmo = gz
+
+#     def refresh(self, context):
+#         ob = context.object
+#         gz = self.energy_gizmo
+#         gz.matrix_basis = ob.matrix_world.normalized()
