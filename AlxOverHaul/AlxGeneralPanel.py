@@ -118,13 +118,19 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
             modifier_delete_button.object_pointer_reference = item.ObjectPointer.name
             modifier_delete_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
             modifier_delete_button.create_modifier = False
+            modifier_delete_button.apply_modifier = False
             modifier_delete_button.remove_modifier = True
+            modifier_delete_button.move_modifier_up = False
+            modifier_delete_button.move_modifier_down = False
 
-            modifier_move_up_button : Alx_OT_Modifier_ManageOnSelected = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="FILE_TICK")
-            modifier_move_up_button.object_pointer_reference = item.ObjectPointer.name
-            modifier_move_up_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
-            modifier_move_up_button.create_modifier = False
-            modifier_move_up_button.apply_modifier = True
+            modifier_apply_button : Alx_OT_Modifier_ManageOnSelected = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="FILE_TICK")
+            modifier_apply_button.object_pointer_reference = item.ObjectPointer.name
+            modifier_apply_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
+            modifier_apply_button.create_modifier = False
+            modifier_apply_button.apply_modifier = True
+            modifier_apply_button.remove_modifier = False
+            modifier_apply_button.move_modifier_up = False
+            modifier_apply_button.move_modifier_down = False
             
             _show_options = item.ObjectPointer.alx_modifier_collection.get(f"{item.ObjectPointer.name}_{raw_object_modifier.name}").show_options
 
@@ -168,12 +174,20 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
             modifier_move_up_button : Alx_OT_Modifier_ManageOnSelected = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="TRIA_UP")
             modifier_move_up_button.object_pointer_reference = item.ObjectPointer.name
             modifier_move_up_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
+            modifier_move_up_button.create_modifier = False
+            modifier_move_up_button.apply_modifier = False
+            modifier_move_up_button.remove_modifier = False
             modifier_move_up_button.move_modifier_up = True
+            modifier_move_up_button.move_modifier_down = False
 
-            modifier_move_up_button = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="TRIA_DOWN")
-            modifier_move_up_button.object_pointer_reference = item.ObjectPointer.name
-            modifier_move_up_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
-            modifier_move_up_button.move_modifier_down = True
+            modifier_move_down_button = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="TRIA_DOWN")
+            modifier_move_down_button.object_pointer_reference = item.ObjectPointer.name
+            modifier_move_down_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
+            modifier_move_down_button.create_modifier = False
+            modifier_move_down_button.apply_modifier = False
+            modifier_move_down_button.remove_modifier = False
+            modifier_move_down_button.move_modifier_up = False
+            modifier_move_down_button.move_modifier_down = True
 
         LayoutBox.row().separator(factor=2.0)
 

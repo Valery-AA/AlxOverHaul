@@ -18,6 +18,8 @@ class Alx_OT_Modifier_ManageOnSelected(bpy.types.Operator):
     object_pointer_reference : bpy.props.StringProperty(name="", default="", options={"HIDDEN"}) #type:ignore
     object_modifier_index : bpy.props.IntProperty(name="", default=0, options={"HIDDEN"}) #type:ignore
 
+    modifier : bpy.types.Modifier = None
+
     modifier_type : bpy.props.StringProperty(name="", default="NONE", options={"HIDDEN"}) #type:ignore
 
     create_modifier : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"}) #type:ignore
@@ -32,11 +34,12 @@ class Alx_OT_Modifier_ManageOnSelected(bpy.types.Operator):
         return context.area.type == "VIEW_3D"
 
     def execute(self, context):
-        self.modifier = None
-        if (self.create_modifier is True):
-            for Object in context.selected_objects:
-                if (Object is not None):
-                    try:
+        if (self.modifier is None):
+
+            if (self.create_modifier == True):
+
+                for Object in context.selected_objects:
+                    if (Object is not None):
                         self.modifier = Object.modifiers.new(name="", type=self.modifier_type)
 
                         match self.modifier.type:
@@ -49,41 +52,39 @@ class Alx_OT_Modifier_ManageOnSelected(bpy.types.Operator):
                             case "SUBSURF":
                                 self.modifier.render_levels = 1
                                 self.modifier.quality = 6
-                    except:
-                        pass
-        else:
-            if (self.apply_modifier is True):
-                Object : bpy.types.Object = bpy.data.objects.get(self.object_pointer_reference)
+
+                return {"FINISHED"}
+
+
+            Object : bpy.types.Object = bpy.data.objects.get(self.object_pointer_reference)
+
+            if (self.apply_modifier == True):
                 if (Object is not None):
-                    mode = context.mode if (context.mode[0:4] != "EDIT") else "EDIT" if (context.mode[0:4] == "EDIT") else "OBJECT"
+                    _mode = context.mode if (context.mode[0:4] != "EDIT") else "EDIT" if (context.mode[0:4] == "EDIT") else "OBJECT"
                     bpy.ops.object.mode_set(mode="OBJECT")
                     bpy.ops.object.modifier_apply(modifier=Object.modifiers[self.object_modifier_index].name)
-                    bpy.ops.object.mode_set(mode=mode)
-            else:
-                if (self.remove_modifier is True):
-                    Object : bpy.types.Object = bpy.data.objects.get(self.object_pointer_reference)
-                    if (Object is not None):
-                        Object.modifiers.remove(Object.modifiers.get(Object.modifiers[self.object_modifier_index].name))
+                    bpy.ops.object.mode_set(mode=_mode)
+                return {"FINISHED"}
 
+
+            if (self.remove_modifier == True):
+                if (Object is not None):
+                    Object.modifiers.remove(Object.modifiers.get(Object.modifiers[self.object_modifier_index].name))
+                return {"FINISHED"}
 
         try:
             if (self.move_modifier_up == True) and (self.move_modifier_down == False):
-                Object = bpy.data.objects.get(self.object_pointer_reference)
                 if (Object is not None):
                     if ((self.object_modifier_index - 1) >= 0):
                         Object.modifiers.move(self.object_modifier_index, self.object_modifier_index - 1)
-            else:
-                    print("Move Up Failed")
+                return {"FINISHED"}
+
 
             if (self.move_modifier_up == False) and (self.move_modifier_down == True):
-                Object = bpy.data.objects.get(self.object_pointer_reference)
                 if (Object is not None):
                     if ((self.object_modifier_index + 1) < len(Object.modifiers)):
                         Object.modifiers.move(self.object_modifier_index, self.object_modifier_index + 1)
-                else:
-                    print(self.object_pointer_reference)
-                    print(Object)
-                    print("Move Down Failed")
+                return {"FINISHED"}
 
         except Exception as error:
             print(error)
@@ -158,9 +159,11 @@ class Alx_OT_Modifier_BatchVisibility(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO", "INTERNAL"}
 
     def auto_object_modifier(scene, context: bpy.types.Context):
-        if (context.object is not None):
-            modifier_list = [(modifier.type, modifier.name, "") for modifier in context.object.modifiers]
-        return modifier_list
+        if (len(context.selectable_objects) != 0):
+            modifier_set = set()
+            [modifier_set.add((modifier.type, modifier.name, "")) for object in context.selectable_objects for modifier in object.modifiers]
+
+        return modifier_set
 
     modifier_type : bpy.props.EnumProperty(name="modifier type", items=auto_object_modifier) #type:ignore
     show_viewport : bpy.props.BoolProperty(name="show",default=False) #type:ignore
