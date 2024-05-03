@@ -1,7 +1,7 @@
 # Features
 https://github.com/Valery-AA/AlxOverHaul/assets/99111953/5cea1b99-aeaf-4b93-8b3e-16ca7da12c0a
 
-
+ 
 
 
 # Project Info
@@ -23,7 +23,8 @@ The goal of this addon is to provide easy access to tools, functions, panels
 with a(alpha) and b(beta) for changes that are possibly unstable/need more testing respectively
 
 # Code Changes And Contribution
-The **_main_** branch has been set to be read-only to not hinder the stability
+*note:* `main_branch_latest` does not correspond to the lastes commit rather it's used to maintain a "static" download link for the release page across sites
+The **_main_** branch has been set to be read-only to not hinder the main line of development
 Pull requests are the core of where changes can be proposed so that they can be verified
 
 Before Rasing an issue check discussions, or issues with [dev_bug_notice](https://github.com/Valery-AA/AlxOverHaul/issues?q=is%3Aissue+is%3Aopen+label%3A%22dev+bug+notice%22)
