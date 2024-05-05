@@ -8,6 +8,7 @@ from .AlxObjectOperator import Alx_OT_Object_UnlockedQOrigin
 
 from .AlxUVRetopology import Alx_OT_VXGroupBySeams, Alx_OT_UVExtractIsland
 from .AlxHairTools import Alx_OT_Armature_BoneChainOnSelection
+from .AlxShapeKeyTransfer import Alx_OT_Shapekey_TransferShapekeysToTarget
 
 from .AlxVisibilityOperators import Alx_Tool_SceneIsolator_Properties, Alx_OT_Scene_VisibilityIsolator, Alx_OT_Object_VisibilitySwitch
 from .AlxModifierOperators import Alx_OT_Modifier_ManageOnSelected, Alx_OT_Modifier_ApplyReplace, Alx_OT_Modifier_BatchVisibility
@@ -100,94 +101,105 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
 
         self.use_filter_show = True
 
-        object_info = LayoutBox.row().box()
+        object_header = LayoutBox.row()
+
+        object_info = object_header.box()
         object_info.scale_y = 0.5
         object_info.label(text=item.ObjectPointer.name)
 
+        object_header.prop(item.ObjectPointer, "alx_modifier_expand_settings", text="", icon="TRIA_UP" if item.ObjectPointer.alx_modifier_expand_settings == True else "TRIA_DOWN" )
 
+        if (item.ObjectPointer.alx_modifier_expand_settings == True):
 
-        for raw_object_modifier in item.ObjectPointer.modifiers:
-            modifier_slots = LayoutBox.row().box()
-            modifier_header = modifier_slots.row(align=True)
+            for raw_object_modifier in item.ObjectPointer.modifiers:
+                modifier_slots = LayoutBox.row().box()
+                modifier_header = modifier_slots.row(align=True)
 
-            raw_object_modifier : bpy.types.Modifier
+                raw_object_modifier : bpy.types.Modifier
 
-            icon_name = bpy.types.Modifier.bl_rna.properties['type'].enum_items.get(raw_object_modifier.type).icon
+                icon_name = bpy.types.Modifier.bl_rna.properties['type'].enum_items.get(raw_object_modifier.type).icon
 
-            modifier_delete_button : Alx_OT_Modifier_ManageOnSelected = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="PANEL_CLOSE")
-            modifier_delete_button.object_pointer_reference = item.ObjectPointer.name
-            modifier_delete_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
-            modifier_delete_button.create_modifier = False
-            modifier_delete_button.apply_modifier = False
-            modifier_delete_button.remove_modifier = True
-            modifier_delete_button.move_modifier_up = False
-            modifier_delete_button.move_modifier_down = False
+                modifier_delete_button : Alx_OT_Modifier_ManageOnSelected = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="PANEL_CLOSE")
+                modifier_delete_button.object_pointer_reference = item.ObjectPointer.name
+                modifier_delete_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
+                modifier_delete_button.create_modifier = False
+                modifier_delete_button.apply_modifier = False
+                modifier_delete_button.remove_modifier = True
+                modifier_delete_button.move_modifier_up = False
+                modifier_delete_button.move_modifier_down = False
 
-            modifier_apply_button : Alx_OT_Modifier_ManageOnSelected = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="FILE_TICK")
-            modifier_apply_button.object_pointer_reference = item.ObjectPointer.name
-            modifier_apply_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
-            modifier_apply_button.create_modifier = False
-            modifier_apply_button.apply_modifier = True
-            modifier_apply_button.remove_modifier = False
-            modifier_apply_button.move_modifier_up = False
-            modifier_apply_button.move_modifier_down = False
-            
-            _show_options = item.ObjectPointer.alx_modifier_collection.get(f"{item.ObjectPointer.name}_{raw_object_modifier.name}").show_options
+                modifier_apply_button : Alx_OT_Modifier_ManageOnSelected = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="FILE_TICK")
+                modifier_apply_button.object_pointer_reference = item.ObjectPointer.name
+                modifier_apply_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
+                modifier_apply_button.create_modifier = False
+                modifier_apply_button.apply_modifier = True
+                modifier_apply_button.remove_modifier = False
+                modifier_apply_button.move_modifier_up = False
+                modifier_apply_button.move_modifier_down = False
+                
+                _show_options = item.ObjectPointer.alx_modifier_collection.get(f"{item.ObjectPointer.name}_{raw_object_modifier.name}").show_options
 
-            modifier_operator = modifier_header.row()
-            modifier_operator.scale_x = 0.6
-            modifier_change_settings : Alx_PT_Operator_ModifierChangeSettings = modifier_operator.operator(Alx_PT_Operator_ModifierChangeSettings.bl_idname, text= "-" if (_show_options) else "+", depress= _show_options)
-            modifier_change_settings.object_name = item.ObjectPointer.name
-            modifier_change_settings.modifier_name = raw_object_modifier.name
-
-
-
-            if (item.ObjectPointer.alx_modifier_collection.get(f"{item.ObjectPointer.name}_{raw_object_modifier.name}").show_options == True):
-                ModifierOptionBox = modifier_slots.row().column()
-
-                if (raw_object_modifier.type == "SUBSURF"):
-                    ModifierOptionBox.row().prop(raw_object_modifier, "show_only_control_edges", text="optimal")
-
-                if (raw_object_modifier.type == "ARMATURE"):
-                    ModifierOptionBox.row().prop(raw_object_modifier, "object", text="")
-                    ModifierOptionBox.row().prop(raw_object_modifier, "use_deform_preserve_volume", text="preserve volume")
-
-                if (raw_object_modifier.type == "BEVEL"):
-                    row = ModifierOptionBox.row().split(factor=0.33, align=True)
-
-                    row.prop(raw_object_modifier, "offset_type", text="")
-                    row.prop(raw_object_modifier, "width", text="width")
-                    row.prop(raw_object_modifier, "segments", text="segments")
-                    ModifierOptionBox.row().prop(raw_object_modifier, "limit_method", text="")
-
-                    ModifierOptionBox.row().prop(raw_object_modifier, "miter_outer", text="miter outer")
-                    ModifierOptionBox.row().prop(raw_object_modifier, "harden_normals", text="harden")
+                modifier_operator = modifier_header.row()
+                modifier_operator.scale_x = 0.6
+                modifier_change_settings : Alx_PT_Operator_ModifierChangeSettings = modifier_operator.operator(Alx_PT_Operator_ModifierChangeSettings.bl_idname, text= "-" if (_show_options) else "+", depress= _show_options)
+                modifier_change_settings.object_name = item.ObjectPointer.name
+                modifier_change_settings.modifier_name = raw_object_modifier.name
 
 
 
-            modifier_header.prop(raw_object_modifier, "name", text="", icon=icon_name, emboss=True)
+                if (item.ObjectPointer.alx_modifier_collection.get(f"{item.ObjectPointer.name}_{raw_object_modifier.name}").show_options == True):
+                    ModifierOptionBox = modifier_slots.row().column()
 
-            modifier_header.prop(raw_object_modifier, "show_in_editmode", text="", emboss=True)
-            modifier_header.prop(raw_object_modifier, "show_viewport", text="", emboss=True)
-            modifier_header.prop(raw_object_modifier, "show_render", text="", emboss=True)
+                    if (raw_object_modifier.type == "SUBSURF"):
+                        ModifierOptionBox.row().prop(raw_object_modifier, "show_only_control_edges", text="optimal")
 
-            modifier_move_up_button : Alx_OT_Modifier_ManageOnSelected = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="TRIA_UP")
-            modifier_move_up_button.object_pointer_reference = item.ObjectPointer.name
-            modifier_move_up_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
-            modifier_move_up_button.create_modifier = False
-            modifier_move_up_button.apply_modifier = False
-            modifier_move_up_button.remove_modifier = False
-            modifier_move_up_button.move_modifier_up = True
-            modifier_move_up_button.move_modifier_down = False
+                    if (raw_object_modifier.type == "ARMATURE"):
+                        ModifierOptionBox.row().prop(raw_object_modifier, "object", text="")
+                        ModifierOptionBox.row().prop(raw_object_modifier, "use_deform_preserve_volume", text="preserve volume")
 
-            modifier_move_down_button = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="TRIA_DOWN")
-            modifier_move_down_button.object_pointer_reference = item.ObjectPointer.name
-            modifier_move_down_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
-            modifier_move_down_button.create_modifier = False
-            modifier_move_down_button.apply_modifier = False
-            modifier_move_down_button.remove_modifier = False
-            modifier_move_down_button.move_modifier_up = False
-            modifier_move_down_button.move_modifier_down = True
+                    if (raw_object_modifier.type == "BEVEL"):
+                        row = ModifierOptionBox.row().split(factor=0.33, align=True)
+
+                        row.prop(raw_object_modifier, "offset_type", text="")
+                        row.prop(raw_object_modifier, "width", text="width")
+                        row.prop(raw_object_modifier, "segments", text="segments")
+                        ModifierOptionBox.row().prop(raw_object_modifier, "limit_method", text="")
+
+                        ModifierOptionBox.row().prop(raw_object_modifier, "miter_outer", text="miter outer")
+                        ModifierOptionBox.row().prop(raw_object_modifier, "harden_normals", text="harden")
+
+                    if (raw_object_modifier.type == "TRIANGULATE"):
+                        ModifierOptionBox.row().prop(raw_object_modifier, "keep_custom_normals", text="keep normals")
+
+                    if (raw_object_modifier.type == "SOLIDIFY"):
+                        row = ModifierOptionBox.row().split(factor=0.5, align=True)
+                        row.prop(raw_object_modifier, "thickness")
+                        row.prop(raw_object_modifier, "offset")
+
+
+                modifier_header.prop(raw_object_modifier, "name", text="", icon=icon_name, emboss=True)
+
+                modifier_header.prop(raw_object_modifier, "show_in_editmode", text="", emboss=True)
+                modifier_header.prop(raw_object_modifier, "show_viewport", text="", emboss=True)
+                modifier_header.prop(raw_object_modifier, "show_render", text="", emboss=True)
+
+                modifier_move_up_button : Alx_OT_Modifier_ManageOnSelected = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="TRIA_UP")
+                modifier_move_up_button.object_pointer_reference = item.ObjectPointer.name
+                modifier_move_up_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
+                modifier_move_up_button.create_modifier = False
+                modifier_move_up_button.apply_modifier = False
+                modifier_move_up_button.remove_modifier = False
+                modifier_move_up_button.move_modifier_up = True
+                modifier_move_up_button.move_modifier_down = False
+
+                modifier_move_down_button = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="TRIA_DOWN")
+                modifier_move_down_button.object_pointer_reference = item.ObjectPointer.name
+                modifier_move_down_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
+                modifier_move_down_button.create_modifier = False
+                modifier_move_down_button.apply_modifier = False
+                modifier_move_down_button.remove_modifier = False
+                modifier_move_down_button.move_modifier_up = False
+                modifier_move_down_button.move_modifier_down = True
 
         LayoutBox.row().separator(factor=2.0)
 
@@ -296,10 +308,10 @@ class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
             AlxOperatorsTabBox.operator(Alx_OT_VXGroupBySeams.bl_idname, text="VxGroup - group/mask by seam")
 
             AlxOperatorsTabBox.operator(Alx_OT_UVExtractIsland.bl_idname, text="UV - Extract islands")
-            # AlxOperatorsTabBox.row().operator(Alx_OT_UVRetopology.bl_idname, text="Grid Retopology")
+            AlxOperatorsTabBox.row().operator(Alx_OT_Shapekey_TransferShapekeysToTarget.bl_idname, text="Transfer Shapekeys")
 
             AlxOperatorsTabBox.operator(Alx_OT_Armature_BoneChainOnSelection.bl_idname, text="Hair - Bone chain on edge strip")
-            ArmatureTabBox.row().operator(Alx_OT_Armature_MatchIKByMirroredName.bl_idname, text="Symmetrize IK")
+            AlxOperatorsTabBox.row().operator(Alx_OT_Armature_MatchIKByMirroredName.bl_idname, text="Symmetrize IK")
 
 
 
@@ -467,7 +479,10 @@ class Alx_PT_AlexandriaModifierPanel(bpy.types.Panel):
 
         for Modifier in ["DATA_TRANSFER", "MIRROR", "BEVEL", "BOOLEAN", "ARMATURE",
                          "WEIGHTED_NORMAL", "ARRAY", "SUBSURF", "SOLIDIFY", "SURFACE_DEFORM",
-                         "SEPARATOR", "CURVE", "MULTIRES", "WELD", "DISPLACE"
+                         "SEPARATOR", "CURVE", "MULTIRES", "WELD", "DISPLACE",
+                         "SEPARATOR", "SEPARATOR", "TRIANGULATE", "SEPARATOR", "SEPARATOR",
+                         "SEPARATOR", "SEPARATOR", "DECIMATE", "SEPARATOR", "SEPARATOR"
+
                          ]:
             
             if (Modifier == "SEPARATOR"):
@@ -667,10 +682,10 @@ class Alx_PT_Scene_GeneralPivot(bpy.types.Panel):
         PivotLayout = self.layout.row().split(factor=0.5)
 
         pivot_column = PivotLayout.column()
+        pivot_column.prop(context.scene.transform_orientation_slots[0], "type", expand=True)
         pivot_column.prop(context.tool_settings, "transform_pivot_point", expand=True)
         pivot_column.prop(context.space_data.overlay, "grid_scale")
         pivot_column.prop(context.space_data.overlay, "grid_subdivisions")
-        pivot_column.prop(context.scene.transform_orientation_slots[0], "type", expand=True)
 
         pivot_column.operator(Alx_OT_Object_UnlockedQOrigin.bl_idname, text="Q-Origin")
 
@@ -679,7 +694,7 @@ class Alx_PT_Scene_GeneralPivot(bpy.types.Panel):
         if (bpy.app.version[0] == 3):
             snapping_column.prop(context.tool_settings, "snap_elements", expand=True)
 
-        if ((bpy.app.version[0] == 4) and (bpy.app.version[1] in [0, 1])):
+        if ((bpy.app.version[0] == 4) and (bpy.app.version[1] in [0, 1, 2])):
             snapping_column.prop(context.tool_settings, "snap_elements_base", expand=True)
             snapping_column.prop(context.tool_settings, "snap_elements_individual", expand=True)
 

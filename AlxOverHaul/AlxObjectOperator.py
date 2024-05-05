@@ -1,5 +1,5 @@
 import bpy
-from mathutils import Matrix, Vector
+import mathutils
 
 import bmesh
 
@@ -27,12 +27,7 @@ class Alx_OT_Object_UnlockedQOrigin(bpy.types.Operator):
 
 
     def execute(self, context):
-        if (self.origin_set_mode == "CURSOR_TO_WORLD"):
-            context.scene.cursor.location = (0.0, 0.0, 0.0)
-            return {"FINISHED"}
-
-        if (self.origin_set_mode == "ORIGIN_TO_SELECTION"):
-            if (context.mode == "EDIT_MESH") and (context.edit_object.type == "MESH"):
+        if (context.mode == "EDIT_MESH") and (context.edit_object.type == "MESH"):
                 self.ContextMesh = context.edit_object.data
                 if (self.ContextBMesh is None) or (not self.ContextBMesh.is_valid):
                     self.ContextBMesh = bmesh.from_edit_mesh(self.ContextMesh)
@@ -41,23 +36,30 @@ class Alx_OT_Object_UnlockedQOrigin(bpy.types.Operator):
                 self.ContextBMesh.edges.ensure_lookup_table()
                 self.ContextBMesh.faces.ensure_lookup_table()
 
-                if (self.ContextBMesh is not None):
-                    selection = [vert.index for vert in self.ContextBMesh.verts if (vert.select == True)]
+        if (self.origin_set_mode == "CURSOR_TO_WORLD"):
+            context.scene.cursor.location = (0.0, 0.0, 0.0)
+            return {"FINISHED"}
 
-                    object_mesh : bpy.types.Mesh = context.object.data
-                    object_Wmatrix : Matrix = context.object.matrix_world
+        if (self.origin_set_mode == "ORIGIN_TO_SELECTION"):
+            if (self.ContextBMesh is not None):
+                object_mesh : bpy.types.Mesh = context.object.data
+                object_Wmatrix : mathutils.Matrix = context.object.matrix_world
 
-                    vertex_co_set = [object_Wmatrix @ self.ContextBMesh.verts[vert_index].co for vert_index in selection]
+                selection = [vert.index for vert in self.ContextBMesh.verts if (vert.select == True)]
 
-                    average_co = sum(vertex_co_set, Vector()) / len(vertex_co_set)
+                selection_vertex_Wco_list = list( [self.ContextBMesh.verts[vert_index].co for vert_index in selection] )
+                selection_average_Wco : mathutils.Vector = sum(selection_vertex_Wco_list, mathutils.Vector()) / len(selection_vertex_Wco_list)
 
-                    pre_origin_matrix = object_Wmatrix.copy()
-                    object_Wmatrix.translation = average_co
+                WM_vertex_corrective_value = mathutils.Matrix.Translation(-selection_average_Wco)
 
-                    _mode = context.mode if (context.mode[0:4] != "EDIT") else "EDIT" if (context.mode[0:4] == "EDIT") else "OBJECT"
-                    bpy.ops.object.mode_set(mode="OBJECT")
-                    object_mesh.transform(pre_origin_matrix @ Matrix.Translation(-average_co))
-                    bpy.ops.object.mode_set(mode=_mode)
+
+                _mode = context.mode if (context.mode[0:4] != "EDIT") else "EDIT" if (context.mode[0:4] == "EDIT") else "OBJECT"
+                bpy.ops.object.mode_set(mode="OBJECT")
+                object_mesh.transform(WM_vertex_corrective_value)
+                bpy.ops.object.mode_set(mode=_mode)
+
+                object_Wmatrix.translation = object_Wmatrix @ selection_average_Wco
+                
             return {"FINISHED"}
 
         return {"FINISHED"}

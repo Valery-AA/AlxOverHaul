@@ -158,21 +158,23 @@ class Alx_OT_Modifier_BatchVisibility(bpy.types.Operator):
     bl_idname = "alx.operator_modifier_batch_visibility"
     bl_options = {"REGISTER", "UNDO", "INTERNAL"}
 
-    def auto_object_modifier(scene, context: bpy.types.Context):
+    def auto_retrieve_selection_modifier(scene, context: bpy.types.Context):
+        unique_modifier_type_set = set()
+        unique_modifier_type_set.add(("NONE", "none", ""))
+
         if (len(context.selectable_objects) != 0):
-            modifier_set = set()
-            [modifier_set.add((modifier.type, modifier.name, "")) for object in context.selectable_objects for modifier in object.modifiers]
+            [unique_modifier_type_set.add((modifier.type, modifier.name, "")) for object in context.selectable_objects for modifier in object.modifiers]
 
-        return modifier_set
+        return unique_modifier_type_set
 
-    modifier_type : bpy.props.EnumProperty(name="modifier type", items=auto_object_modifier) #type:ignore
-    show_viewport : bpy.props.BoolProperty(name="show",default=False) #type:ignore
+    modifier_type : bpy.props.EnumProperty(name="modifier type", items=auto_retrieve_selection_modifier) #type:ignore
+    modifier_settings : dict = None
 
 
     @classmethod
     def poll(self, context: bpy.types.Context):
         return True
-    
+
     def execute(self, context: bpy.types.Context):
         if (self.modifier_type != ""):
             for object in context.selected_objects:
@@ -183,5 +185,11 @@ class Alx_OT_Modifier_BatchVisibility(bpy.types.Operator):
         
         return {"FINISHED"}
     
+    def draw(self, context: bpy.types.Context):
+        self.any_type_modifier : getattr(bpy.types, f"{self.modifier_type}") #type:ignore
+
+        for option in dir( self.any_type_modifier ):
+            self.layout.row().prop(self.any_type_modifier, )
+
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self, width=300)

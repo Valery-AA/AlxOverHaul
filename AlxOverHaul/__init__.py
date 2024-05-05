@@ -36,6 +36,8 @@ alx_class_object_list = tuple(alx_class[1] for file in addon_files for alx_class
 AlxClassQueue = alx_class_object_list
 
 
+from . import AlxProperties
+
 from . import AlxHandlers
 from . import AlxKeymapUtils
 
@@ -50,7 +52,14 @@ AlxToolQueue = [
                [AlxUnlockedModeling.Alx_WT_WorkSpaceTool_UnlockedModeling, None, True, False] #tool_class, after, separator, group
                ]
 
+# def test(self,context):
+#     layout = self.layout       
+#     row = layout.row()
+#     row.label(text="Hello world!")
 
+# # def AlxAppendPanels():
+# #     bpy.types.
+# #     .append(test)
 
 def AlxRegisterClassQueue():
     for AlxClass in AlxClassQueue:
@@ -81,6 +90,10 @@ def AlxUnregisterToolQueue():
             print("Can't Unregister", AlxTool)
 
 def RegisterProperties():
+    bpy.types.WindowManager.alx_session_properties = bpy.props.PointerProperty(type=AlxProperties.Alx_PG_PropertyGroup_SessionProperties)
+
+
+
     bpy.types.Scene.alx_object_selection_properties = bpy.props.CollectionProperty(type=AlxGeneralPanel.Alx_PG_PropertyGroup_ObjectSelectionListItem)
     bpy.types.Scene.alx_object_selection_properties_index = bpy.props.IntProperty(default=0)
 
@@ -96,8 +109,14 @@ def RegisterProperties():
 
     bpy.types.Object.alx_particle_surface_object = bpy.props.PointerProperty(type=bpy.types.Object)
     bpy.types.Object.alx_particle_generator_source_object = bpy.props.PointerProperty(type=bpy.types.Object)
+
+    bpy.types.Object.alx_modifier_expand_settings = bpy.props.BoolProperty(default=False)
     bpy.types.Object.alx_modifier_collection = bpy.props.CollectionProperty(type=AlxGeneralPanel.Alx_PG_PropertyGroup_ModifierSettings)
 def UnRegisterProperties():
+    del bpy.types.WindowManager.alx_session_properties
+
+
+
     del bpy.types.Scene.alx_object_selection_properties
     del bpy.types.Scene.alx_object_selection_properties_index
 
@@ -113,6 +132,8 @@ def UnRegisterProperties():
 
     del bpy.types.Object.alx_particle_surface_object
     del bpy.types.Object.alx_particle_generator_source_object
+
+    del bpy.types.Object.alx_modifier_expand_settings
     del bpy.types.Object.alx_modifier_collection
 
 def RegisterHandlers():
