@@ -50,6 +50,4 @@ class Alx_OT_Particle_ConvertToType(bpy.types.Operator):
                 curve_object.surface_uv_map = "UVMap" if surface_source.data.uv_layers.get("UVMap") is not None else ""
 
         bpy.ops.curves.convert_to_particle_system()
-        bpy.ops.object.delete()
-
         return {"FINISHED"}

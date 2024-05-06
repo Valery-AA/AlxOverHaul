@@ -295,7 +295,12 @@ class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
         if (GeneralPanelProperties.panel_tabs == "MODIFIER") and (context.area.type == "VIEW_3D"):
             ModifierTabBox = TabsLayout.column()
 
-            ModifierTabBox.popover(Alx_PT_AlexandriaModifierPanel.bl_idname, text="Create Modifier")
+            modifier_tab_box_header = ModifierTabBox.row().split(factor=0.33)
+
+            modifier_tab_box_header.separator()
+            modifier_tab_box_header.popover(Alx_PT_AlexandriaModifierPanel.bl_idname, text="Create Modifier")
+            modifier_tab_box_header.separator()
+
             ModifierTabBox.operator(Alx_OT_Modifier_ApplyReplace.bl_idname, text="Apply-Replace Modifier")
             ModifierTabBox.operator(Alx_OT_Modifier_BatchVisibility.bl_idname, text="Batch Visibility")
 
@@ -473,22 +478,32 @@ class Alx_PT_AlexandriaModifierPanel(bpy.types.Panel):
     
     def draw(self, context: bpy.types.Context):
         AlxLayout = self.layout
-        AlxLayout.ui_units_x = 35.0
+        AlxLayout.ui_units_x = 40.0
         
         ModifierSpace = AlxLayout.box().grid_flow(columns=5, even_columns=True, row_major=True)
 
-        for Modifier in ["DATA_TRANSFER", "MIRROR", "BEVEL", "BOOLEAN", "ARMATURE",
-                         "WEIGHTED_NORMAL", "ARRAY", "SUBSURF", "SOLIDIFY", "SURFACE_DEFORM",
-                         "SEPARATOR", "CURVE", "MULTIRES", "WELD", "DISPLACE",
-                         "SEPARATOR", "SEPARATOR", "TRIANGULATE", "SEPARATOR", "SEPARATOR",
-                         "SEPARATOR", "SEPARATOR", "DECIMATE", "SEPARATOR", "SEPARATOR"
-
+        for Modifier in ["LABEL_Data:", "LABEL_Copy:", "LABEL_Generate:", "LABEL_Alter:", "LABEL_Rig:",
+                        "DATA_TRANSFER", "MIRROR", "BEVEL", "BOOLEAN", "ARMATURE",
+                        "MESH_CACHE", "ARRAY", "SOLIDIFY", "EDGE_SPLIT", "SKIN",
+                        "MESH_SEQUENCE_CACHE", "LABEL_Re-generate:", "WIREFRAME", "WELD", "LABEL_Deform:",
+                        "LABEL_Normals:", "REMESH", "SCREW", "LABEL_Smooth:", "SURFACE_DEFORM",
+                        "NORMAL_EDIT", "BUILD", "LABEL_Resolution:", "SMOOTH", "MESH_DEFORM",
+                        "WEIGHTED_NORMAL", "TRIANGULATE", "SUBSURF", "CORRECTIVE_SMOOTH", "LAPLACIANDEFORM",
+                        "LABEL_UVs:", "SEPARATOR", "MULTIRES", "LAPLACIANSMOOTH", "LATTICE",
+                        "UV_PROJECT", "SEPARATOR", "DECIMATE", "LABEL_Mask:", "LABEL_Displace:",
+                        "UV_WARP", "SEPARATOR", "SEPARATOR", "MASK", "DISPLACE",
+                        "SEPARATOR", "SEPARATOR", "SEPARATOR", "SEPARATOR", "CURVE",
+                        "SEPARATOR", "SEPARATOR", "SEPARATOR", "SEPARATOR","LABEL_Project:",
+                        "SEPARATOR", "SEPARATOR", "SEPARATOR", "SEPARATOR","SHRINKWRAP"
                          ]:
-            
+
+            if (Modifier[0:6] == "LABEL_"):
+                ModifierSpace.label(text=Modifier[6:])
+
             if (Modifier == "SEPARATOR"):
                 ModifierSpace.separator()
 
-            if (Modifier != "SEPARATOR"):
+            if (Modifier[0:6] != "LABEL_") and (Modifier != "SEPARATOR"):
                 mod_name = bpy.types.Modifier.bl_rna.properties['type'].enum_items[Modifier].name
                 mod_icon = bpy.types.Modifier.bl_rna.properties['type'].enum_items[Modifier].icon
                 mod_identifier = bpy.types.Modifier.bl_rna.properties['type'].enum_items[Modifier].identifier

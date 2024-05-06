@@ -168,7 +168,9 @@ class Alx_OT_Modifier_BatchVisibility(bpy.types.Operator):
         return unique_modifier_type_set
 
     modifier_type : bpy.props.EnumProperty(name="modifier type", items=auto_retrieve_selection_modifier) #type:ignore
-    modifier_settings : dict = None
+    show_edit : bpy.props.BoolProperty(name="edit", default=False) #type:ignore
+    show_viewport : bpy.props.BoolProperty(name="viewport", default=False) #type:ignore
+    show_render : bpy.props.BoolProperty(name="render", default=False) #type:ignore
 
 
     @classmethod
@@ -181,15 +183,19 @@ class Alx_OT_Modifier_BatchVisibility(bpy.types.Operator):
                 modifier = AlxRetirive_ModifierList(object, self.modifier_type)
 
                 for mod in modifier:
+                    mod.show_in_editmode = self.show_edit
                     mod.show_viewport = self.show_viewport
+                    mod.show_render = self.show_render
         
         return {"FINISHED"}
-    
-    def draw(self, context: bpy.types.Context):
-        self.any_type_modifier : getattr(bpy.types, f"{self.modifier_type}") #type:ignore
 
-        for option in dir( self.any_type_modifier ):
-            self.layout.row().prop(self.any_type_modifier, )
+
+    def draw(self, context: bpy.types.Context):
+        row = self.layout.row().split(factor=0.33)
+        row.prop(self, "show_edit", toggle=True, icon="EDITMODE_HLT")
+        row.prop(self, "show_viewport", toggle=True, icon="RESTRICT_VIEW_OFF")
+        row.prop(self, "show_render", toggle=True, icon="RESTRICT_RENDER_OFF")
+
 
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self, width=300)
