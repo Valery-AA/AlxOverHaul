@@ -1,9 +1,3 @@
-# Features
-https://github.com/Valery-AA/AlxOverHaul/assets/99111953/5cea1b99-aeaf-4b93-8b3e-16ca7da12c0a
-
- 
-
-
 # Project Info
 The goal of this addon is to provide easy access to tools, functions, panels 
  or anything that may stand in the way of a fast workflow
