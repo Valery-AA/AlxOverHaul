@@ -191,6 +191,7 @@ class Alx_OT_Modifier_BatchVisibility(bpy.types.Operator):
 
 
     def draw(self, context: bpy.types.Context):
+        self.layout.row().prop(self, "modifier_type", text="modifier")
         row = self.layout.row().split(factor=0.33)
         row.prop(self, "show_edit", toggle=True, icon="EDITMODE_HLT")
         row.prop(self, "show_viewport", toggle=True, icon="RESTRICT_VIEW_OFF")
