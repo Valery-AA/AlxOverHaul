@@ -1,4 +1,5 @@
 # Project Info
+Showcase playlist: [Youtube Playlist](https://www.youtube.com/playlist?list=PL4xpVkSLysF_woteFcGzFhTD_yLKEx6Y_) <br>
 The goal of this addon is to provide easy access to tools, functions, panels 
  or anything that may stand in the way of a fast workflow
 
