@@ -4,7 +4,6 @@ import bpy
 from .AlxCallbacks import notify_context_mode_update, notify_workspace_tool_update
 from .AlxKeymapUtils import AlxCreateKeymaps
 
-
 @bpy.app.handlers.persistent
 def AlxMsgBusSubscriptions(self, context: bpy.types.Context):
     override_window = bpy.context.window
@@ -15,7 +14,6 @@ def AlxMsgBusSubscriptions(self, context: bpy.types.Context):
     with bpy.context.temp_override(window=override_window, area=override_area[0], region=override_region[0]):
         bpy.msgbus.subscribe_rna(key=bpy.context.path_resolve("mode", False), owner=bpy.context.object, args=(), notify=notify_context_mode_update, options={"PERSISTENT"})
         bpy.msgbus.subscribe_rna(key=bpy.context.workspace.path_resolve("tools", False), owner=bpy.context.workspace, args=(), notify=notify_workspace_tool_update,  options={"PERSISTENT"})
-
 
 
 @bpy.app.handlers.persistent

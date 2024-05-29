@@ -10,15 +10,26 @@ class Alx_OT_Sculpt_ConditionMasking(bpy.types.Operator):
     ContextMesh : bpy.types.Mesh = None
     ContextBMesh : bmesh.types.BMesh = None
 
+    mask_condition : bpy.props.EnumProperty(name="", default="EDGE_SEAM", 
+        items=[
+            ("EDGE_SEAM", "edge seam", "", 1),
+            ("BOUNDARY", "boundary", "", 1<<1)
+        ]) #type:ignore
+
     @classmethod
     def poll(self, context: bpy.types.Context):
-        return (context.area is not None) and (context.area.type == "VIEW_3D") and (context.mode == "EDIT_MESH")
+        return (context.area is not None) and (context.area.type == "VIEW_3D") and (context.object is not None)
     
     def execute(self, context: bpy.types.Context):
-        if (context.mode == "EDIT_MESH") and (context.edit_object.type == "MESH"):
-            self.ContextMesh = context.edit_object.data
-            if (self.ContextBMesh is None) or (not self.ContextBMesh.is_valid):
-                self.ContextBMesh = bmesh.from_edit_mesh(self.ContextMesh)
+        if (context.object is not None) and (context.object.type == "MESH"):
+            self.ContextMesh = context.object.data
+
+            if (self.ContextBMesh is None):
+                self.ContextBMesh = bmesh.new()
+                self.ContextBMesh.from_mesh(self.ContextMesh)
+
+            if (self.ContextBMesh.is_valid == False):
+                self.ContextBMesh.from_mesh(self.ContextMesh)
 
             self.ContextBMesh.verts.ensure_lookup_table()
             self.ContextBMesh.edges.ensure_lookup_table()
@@ -29,15 +40,35 @@ class Alx_OT_Sculpt_ConditionMasking(bpy.types.Operator):
             face : bmesh.types.BMFace
             loop : bmesh.types.BMLoop
 
-        selection = set(vert.index for vert in self.ContextBMesh.verts if (vert.select == True))
 
-        sculpt_mask_layer = self.ContextBMesh.verts.layers.float.get(".sculpt_mask")
-        if (sculpt_mask_layer is None):
-            sculpt_mask_layer = self.ContextBMesh.verts.layers.float.new(".sculpt_mask")
+            condition_vertex = None
+            match self.mask_condition:
+                case "EDGE_SEAM":
+                    condition_vertex = set(vert.index for edge in self.ContextBMesh.edges if (edge.seam == True) for vert in edge.verts)
 
-        for vert in selection:
-            self.ContextBMesh.verts[vert][sculpt_mask_layer] = 1.0
+            if (condition_vertex is not None):
+                sculpt_mask_layer = self.ContextBMesh.verts.layers.float.get(".sculpt_mask")
+                if (sculpt_mask_layer is None):
+                    sculpt_mask_layer = self.ContextBMesh.verts.layers.float.new(".sculpt_mask")
 
-        bmesh.update_edit_mesh(self.ContextMesh)
+                for vert in self.ContextBMesh.verts:
+                    if (vert.index in condition_vertex):
+                        self.ContextBMesh.verts[vert.index][sculpt_mask_layer] = 1.0
+                    else:
+                        self.ContextBMesh.verts[vert.index][sculpt_mask_layer] = 0.0
+
+                if (context.mode in ["OBJECT", "SCULPT"]):
+                    self.ContextBMesh.to_mesh(self.ContextMesh)
+                if (context.mode == "EDIT"):
+                    bmesh.update_edit_mesh(self.ContextMesh)
+                
+                if (context.area is not None) and (context.area.type == "VIEW_3D"):
+                    context.area.tag_redraw()
 
         return {"FINISHED"}
+    
+    def draw(self, context: bpy.types.Context):
+        self.layout.prop(self, "mask_condition", text="condition")
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self, width=300)

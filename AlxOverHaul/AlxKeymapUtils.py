@@ -1,5 +1,7 @@
 import bpy
 
+from .UnlockedTools import AlxUnlockedObjectModes
+
 from . import AlxPreferences
 from . import AlxGeneralPanel
 
@@ -131,7 +133,7 @@ def AlxCreateKeymaps():
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Image", ItemidName="object.mode_set", Active=False)
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Object Non-modal", ItemidName="view3d.object_mode_pie_or_toggle", Active=False)
     AlxEditKeymaps(KeyconfigSource="Blender addon", ConfigSpaceName="Object Non-modal", ItemidName="wm.call_menu_pie", OperatorID="MACHIN3_MT_modes_pie", Active=False)
-    AlxKeymapRegister(keymap_call_type="PIE", space_type="VIEW_3D", item_idname=AlxGeneralPanel.Alx_MT_UnlockedModesPie.bl_idname, key="TAB", trigger_type="PRESS")
+    AlxKeymapRegister(keymap_call_type="PIE", space_type="VIEW_3D", item_idname=AlxUnlockedObjectModes.Alx_MT_MenuPie_UnlockedObjectModes.bl_idname, key="TAB", trigger_type="PRESS")
 
    
 

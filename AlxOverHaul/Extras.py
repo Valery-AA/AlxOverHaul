@@ -1,5 +1,6 @@
 #https://blender.stackexchange.com/questions/187655/facing-problem-in-drawing-ui-previews-dynamic-enumproperty
 
+# Python: bpy.ops.object.modifier_add_node_group(asset_library_type='ESSENTIALS', asset_library_identifier="", relative_asset_identifier="geometry_nodes\\smooth_by_angle.blend\\NodeTree\\Smooth by Angle")
 
 # obj.button_pointer = bpy.data.objects['Cube'].modifiers["Build"]
 

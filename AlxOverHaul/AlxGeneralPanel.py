@@ -3,8 +3,10 @@ from bpy_extras import node_utils
 
 from .AlxUtils import AlxRetrieveContextObject, AlxRetrieveContextArmature
 
-from .AlxOperators import Alx_OT_Mode_UnlockedModes, Alx_OT_Armature_MatchIKByMirroredName
-from .AlxObjectOperator import Alx_OT_Object_UnlockedQOrigin
+from .AlxOperators import Alx_OT_Armature_MatchIKByMirroredName
+from .AlxObjectOperator import Alx_OT_Object_UnlockedQOrigin, Alx_OT_Object_BatchMaterial
+
+from .AlxSculptTools import Alx_OT_Sculpt_ConditionMasking
 
 from .AlxUVRetopology import Alx_OT_VXGroupBySeams, Alx_OT_UVExtractIsland
 from .AlxHairTools import Alx_OT_Armature_BoneChainOnSelection
@@ -41,30 +43,27 @@ class Alx_UL_UIList_ObjectSelectionProperties(bpy.types.UIList):
     bl_idname = "ALX_UL_ui_list_object_selection_properties"
 
     def draw_item(self, context: bpy.types.Context, layout: bpy.types.UILayout, data: bpy.types.AnyType, item: Alx_PG_PropertyGroup_ObjectSelectionListItem, icon: int, active_data: bpy.types.AnyType, active_property: str, index: int = 0, flt_flag: int = 0):
-        ItemBox = layout.row().grid_flow(columns=1)
-        UISplit = ItemBox.row()
+        self.use_filter_show = True
 
-        NameColumn = UISplit.column()
-        NameColumn.prop(item.ObjectPointer, "name", text="", icon="OBJECT_DATA", emboss=True)
-        NameColumn.prop(item.ObjectPointer.data, "name", text="", icon="OUTLINER_DATA_MESH", emboss=True)
-        VisibilityColumn = UISplit.column()
-        ToggleRow = VisibilityColumn.row()
-        ToggleRow.prop(item.ObjectPointer, "hide_select", text="", emboss=True)
-        ToggleRow.operator(Alx_OT_Object_VisibilitySwitch.bl_idname, text="", icon="HIDE_OFF", emboss=True).object_pointer_reference = item.ObjectPointer.name
-        ToggleRow.prop(item.ObjectPointer, "hide_render", text="", emboss=True)
-        VisibilityColumn.row().prop(item.ObjectPointer, "display_type", text="")
+        box_column = layout.column()
+        box_layout = box_column.box()
 
-        PropertiesRow = ItemBox.row().split(factor=0.25, align=True)
-        PropertiesRow.prop(item.ObjectPointer, "show_name", text="", icon="SORTALPHA", emboss=True)
-        PropertiesRow.prop(item.ObjectPointer, "show_axis", text="", icon="EMPTY_ARROWS", emboss=True)
+        name_row = box_layout.row(align=True)
+        name_row.prop(item.ObjectPointer, "name", text="", icon="OBJECT_DATA", emboss=True)
+        name_row.prop(item.ObjectPointer.data, "name", text="", icon="OUTLINER_DATA_MESH", emboss=True)
+        
+
+        properties_row = box_layout.row()
+        sub_row_l = properties_row.row(align=True)
+        sub_row_r = properties_row.row()
+        sub_row_l.prop(item.ObjectPointer, "show_name", text="", icon="SORTALPHA", emboss=True)
+        sub_row_l.prop(item.ObjectPointer, "show_axis", text="", icon="EMPTY_ARROWS", emboss=True)
         if (item.ObjectPointer.type in ["MESH", "META"]):
-            PropertiesRow.prop(item.ObjectPointer, "show_wire", text="", icon="MOD_WIREFRAME", emboss=True)
-        PropertiesRow.prop(item.ObjectPointer, "show_in_front", text="", icon="OBJECT_HIDDEN", emboss=True)
-        if (item.ObjectPointer.type in ["MESH"]):
-            PropertiesRow.prop(item.ObjectPointer, "color", text="")
+            sub_row_l.prop(item.ObjectPointer, "show_wire", text="", icon="MOD_WIREFRAME", emboss=True)
+        sub_row_l.prop(item.ObjectPointer, "show_in_front", text="", icon="OBJECT_HIDDEN", emboss=True)
+        sub_row_l.prop(item.ObjectPointer, "display_type", text="")
 
-        ItemBox.row().separator(factor=2.0)
-
+        box_column.row().separator(factor=2.0)
 
 class Alx_PG_PropertyGroup_ModifierSettings(bpy.types.PropertyGroup):
     """"""
@@ -175,6 +174,15 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
                         row = ModifierOptionBox.row().split(factor=0.5, align=True)
                         row.prop(raw_object_modifier, "thickness")
                         row.prop(raw_object_modifier, "offset")
+
+                    if (raw_object_modifier.type == "SHRINKWRAP"):
+                        row = ModifierOptionBox.row().split(factor=0.5, align=True)
+                        row.prop(raw_object_modifier, "target", text="")
+                        row.prop(raw_object_modifier, "vertex_group", text="")
+
+                        row = ModifierOptionBox.row().split(factor=0.5, align=True)
+                        row.prop(raw_object_modifier, "wrap_method", text="")
+                        row.prop(raw_object_modifier, "wrap_mode", text="")
 
 
                 modifier_header.prop(raw_object_modifier, "name", text="", icon=icon_name, emboss=True)
@@ -312,6 +320,9 @@ class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
 
             AlxOperatorsTabBox.operator(Alx_OT_VXGroupBySeams.bl_idname, text="VxGroup - group/mask by seam")
 
+            AlxOperatorsTabBox.operator(Alx_OT_Object_BatchMaterial.bl_idname, text="Batch Material")
+            AlxOperatorsTabBox.operator(Alx_OT_Sculpt_ConditionMasking.bl_idname, text="mask by condition")
+            
             AlxOperatorsTabBox.operator(Alx_OT_UVExtractIsland.bl_idname, text="UV - Extract islands")
             AlxOperatorsTabBox.row().operator(Alx_OT_Shapekey_TransferShapekeysToTarget.bl_idname, text="Transfer Shapekeys")
 
@@ -512,168 +523,6 @@ class Alx_PT_AlexandriaModifierPanel(bpy.types.Panel):
                 modifier_button.modifier_type = mod_identifier
                 modifier_button.create_modifier = True
                 modifier_button.remove_modifier = False
-
-
-class Alx_MT_UnlockedModesPie(bpy.types.Menu):
-    """"""
-
-    bl_label = "Unlocked Modes"
-    bl_idname = "ALX_MT_menu_unlocked_modes"
-
-
-    @classmethod
-    def poll(self, context: bpy.types.Context):
-        return (context.area.type == "VIEW_3D")
-    
-    def draw(self, context):
-        AlxLayout = self.layout
-
-        AlxContextObject = AlxRetrieveContextObject(context=context)
-        AlxContextArmature = AlxRetrieveContextArmature(context=context)
-
-        PieUI = AlxLayout.menu_pie()
-
-        AlxOPS_AutoMode_OBJECT = PieUI.operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="OBJECT", icon="OBJECT_DATAMODE")
-        AlxOPS_AutoMode_OBJECT.DefaultBehaviour = True
-        AlxOPS_AutoMode_OBJECT.TargetMode = "OBJECT"
-
-        if (context.mode != "POSE") and (AlxContextArmature is not None):
-            AlxOPS_AutoMode_POSE = PieUI.operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="A-POSE", icon="ARMATURE_DATA")
-            AlxOPS_AutoMode_POSE.DefaultBehaviour = False
-            AlxOPS_AutoMode_POSE.TargetMode = "POSE"
-            AlxOPS_AutoMode_POSE.TargetArmature = AlxContextArmature.name
-        else:
-            if (context.mode == "POSE"):
-                PoseMBox = PieUI.box()
-                PoseMBox.label(text="[Mode] | [Pose]")
-            else:
-                AlxOPS_AutoMode_POSE = PieUI.operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="POSE", icon="ARMATURE_DATA")
-                AlxOPS_AutoMode_POSE.DefaultBehaviour = True
-                AlxOPS_AutoMode_POSE.TargetMode = "POSE"
-
-        if (context.mode != "PAINT_WEIGHT") and (AlxContextObject is not None) and (AlxContextArmature is not None):
-            AlxOPS_AutoMode_WEIGHT = PieUI.operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="A-WPAINT", icon="WPAINT_HLT")
-            AlxOPS_AutoMode_WEIGHT.DefaultBehaviour = False
-            AlxOPS_AutoMode_WEIGHT.TargetMode = "PAINT_WEIGHT"
-            AlxOPS_AutoMode_WEIGHT.TargetObject = AlxRetrieveContextObject(context=context).name
-            AlxOPS_AutoMode_WEIGHT.TargetArmature = AlxContextArmature.name
-        else:
-            if (context.mode == "PAINT_WEIGHT"):
-                WeightPaintMBox = PieUI.box()
-                WeightPaintMBox.label(text="[Mode] | [Weight Paint]")
-            else:
-                AlxOPS_AutoMode_WEIGHT = PieUI.operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="WPAINT", icon="WPAINT_HLT")
-                AlxOPS_AutoMode_WEIGHT.DefaultBehaviour = True
-                AlxOPS_AutoMode_WEIGHT.TargetMode = "PAINT_WEIGHT"
-        
-
-        if (AlxContextObject is not None) and (AlxContextObject.type == "MESH") and (len(context.selected_objects) != 0):
-            VertexMode = PieUI.operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="Edge", icon="EDGESEL")
-            VertexMode.DefaultBehaviour = True
-            VertexMode.TargetObject = AlxContextObject.name
-            VertexMode.TargetMode = "EDIT"
-            VertexMode.TargetType = "MESH"
-            VertexMode.TargetSubMode = "EDGE"
-
-            VertexMode = PieUI.operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="Vertex", icon="VERTEXSEL")
-            VertexMode.DefaultBehaviour = True
-            VertexMode.TargetObject = AlxContextObject.name
-            VertexMode.TargetMode = "EDIT"
-            VertexMode.TargetType = "MESH"
-            VertexMode.TargetSubMode = "VERT"
-            
-            VertexMode = PieUI.operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="Face", icon="FACESEL")
-            VertexMode.DefaultBehaviour = True
-            VertexMode.TargetObject = AlxContextObject.name
-            VertexMode.TargetMode = "EDIT"
-            VertexMode.TargetType = "MESH"
-            VertexMode.TargetSubMode = "FACE"
-
-        else:
-            for i in range(0, 3):
-                if (AlxContextObject is None) and (AlxContextArmature is None) or (len(context.selected_objects) == 0):
-                    PieUI.box().row().label(text="[Selection] [Missing]")
-
-                if (AlxContextObject is None) and (AlxContextArmature is not None) and ((len(context.selected_objects) != 0)):
-                    PieUI.box().row().label(text="[Selection] [Incorrect] | [Mesh] [Only]")
-
-
-        if (len(context.selected_objects) != 0):
-        
-            GeneralEditTab = PieUI.box().row().split(factor=0.33)
-            GeneralEditSectionL = GeneralEditTab.column()
-            GeneralEditSectionM = GeneralEditTab.column()
-            GeneralEditSectionR = GeneralEditTab.column()
-
-            GeneralEditFont = GeneralEditSectionL.row().operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="Armature", icon="ARMATURE_DATA")
-            GeneralEditFont.DefaultBehaviour = True
-            GeneralEditFont.TargetMode = "EDIT"
-            GeneralEditFont.TargetType = "ARMATURE"
-            GeneralEditFont.TargetSubMode = ""
-
-            GeneralEditFont = GeneralEditSectionL.row().operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="Curve", icon="CURVE_DATA")
-            GeneralEditFont.DefaultBehaviour = True
-            GeneralEditFont.TargetMode = "EDIT"
-            GeneralEditFont.TargetType = "CURVE"
-            GeneralEditFont.TargetSubMode = ""
-
-            GeneralEditFont = GeneralEditSectionL.row().operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="Surface", icon="SURFACE_DATA")
-            GeneralEditFont.DefaultBehaviour = True
-            GeneralEditFont.TargetMode = "EDIT"
-            GeneralEditFont.TargetType = "SURFACE"
-            GeneralEditFont.TargetSubMode = ""
-
-            GeneralEditFont = GeneralEditSectionM.row().operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="MetaShape", icon="META_DATA")
-            GeneralEditFont.DefaultBehaviour = True
-            GeneralEditFont.TargetMode = "EDIT"
-            GeneralEditFont.TargetType = "META"
-            GeneralEditFont.TargetSubMode = ""
-
-            GeneralEditFont = GeneralEditSectionM.row().operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="Text", icon="FILE_FONT")
-            GeneralEditFont.DefaultBehaviour = True
-            GeneralEditFont.TargetMode = "EDIT"
-            GeneralEditFont.TargetType = "FONT"
-            GeneralEditFont.TargetSubMode = ""
-
-            GPencilRow = GeneralEditSectionR.row()
-            GeneralEditGPencilPoint = GPencilRow.operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="GPencil", icon="GP_SELECT_POINTS")
-            GeneralEditGPencilPoint.DefaultBehaviour = True
-            GeneralEditGPencilPoint.TargetMode = "EDIT"
-            GeneralEditGPencilPoint.TargetType = "GPENCIL"
-            GeneralEditGPencilPoint.TargetSubMode = "POINT"
-            
-
-            GeneralEditGPencilStroke = GPencilRow.operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="", icon="GP_SELECT_STROKES")
-            GeneralEditGPencilStroke.DefaultBehaviour = True
-            GeneralEditGPencilStroke.TargetMode = "EDIT"
-            GeneralEditGPencilStroke.TargetType = "GPENCIL"
-            GeneralEditGPencilStroke.TargetSubMode = "STROKE"
-
-            GeneralEditGPencilSegment = GPencilRow.operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="", icon="GP_SELECT_BETWEEN_STROKES")
-            GeneralEditGPencilSegment.DefaultBehaviour = True
-            GeneralEditGPencilSegment.TargetMode = "EDIT"
-            GeneralEditGPencilSegment.TargetType = "GPENCIL"
-            GeneralEditGPencilSegment.TargetSubMode = "SEGMENT"
-
-            GeneralEditLattice = GeneralEditSectionR.row().operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="Lattice", icon="LATTICE_DATA")
-            GeneralEditLattice.DefaultBehaviour = True
-            GeneralEditLattice.TargetMode = "EDIT"
-            GeneralEditLattice.TargetType = "LATTICE"
-            GeneralEditLattice.TargetSubMode = ""
-        else:
-            PieUI.box().label(text="[Selection] [Missing]")
-            
-        if (context.mode != "SCULPT") and (AlxContextObject is not None):
-            SculptMode = PieUI.operator(Alx_OT_Mode_UnlockedModes.bl_idname, text="Sculpt", icon="SCULPTMODE_HLT")
-            SculptMode.DefaultBehaviour = True
-            SculptMode.TargetMode = "SCULPT"
-        else:
-            SculptMBox = PieUI.box()
-            if (context.mode == "SCULPT"):
-                SculptMBox.label(text="[Mode] | [Sculpt]")
-            else:
-                if (AlxContextObject is None):
-                    SculptMBox.label(text="[Active Object] [Incorrect] | [Mesh] [Only]")
 
 
 class Alx_PT_Scene_GeneralPivot(bpy.types.Panel):

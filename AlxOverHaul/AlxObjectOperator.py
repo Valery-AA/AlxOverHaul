@@ -66,3 +66,53 @@ class Alx_OT_Object_UnlockedQOrigin(bpy.types.Operator):
     
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self, width=300)
+    
+
+
+class Alx_OT_Object_BatchMaterial(bpy.types.Operator):
+    """"""
+
+    bl_label = ""
+    bl_idname = "alx.operator_object_batch_material"
+    bl_options = {"REGISTER", "UNDO", "INTERNAL"}
+
+    def auto_retrieve_file_materials(scene, context: bpy.types.Context):
+        unique_modifier_type_set = set()
+        unique_modifier_type_set.add(("NONE", "none", "", 1))
+
+        material : bpy.types.Material
+
+        if (len(context.selectable_objects) != 0):
+            for i, material in enumerate(bpy.data.materials, start=1):
+                unique_modifier_type_set.add((material.name, material.name, "", 1<<i))
+
+        return unique_modifier_type_set
+
+    user_material : bpy.props.EnumProperty(name="material", items=auto_retrieve_file_materials) #type:ignore
+
+    @classmethod
+    def poll(self, context: bpy.types.Context):
+        return (context.area.type == "VIEW_3D") and (context.object is not None)
+
+
+    def execute(self, context: bpy.types.Context):
+        for object in context.selected_objects:
+            if (object.type == "MESH"):
+                if (len(object.material_slots) > 0):
+                    slot : bpy.types.MaterialSlot = object.material_slots[0] 
+                else:
+                    bpy.context.view_layer.objects.active = object
+                    bpy.ops.object.material_slot_add()
+
+
+                if (self.user_material == "NONE"):
+                    slot.material = None   
+                else:
+                    material = bpy.data.materials.get(self.user_material)
+                    if (material is not None):
+                        slot.material = material
+
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self, width=300)

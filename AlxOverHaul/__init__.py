@@ -1,73 +1,87 @@
 bl_info = {
     "name" : "AlxOverHaul",
     "author" : "Valeria Bosco[Valy Arhal]",
-    "description" : "For proper functionality [Blender] keymaps preset shoudl be used, [Blender 27x and Industry Compatible] will result in severe keymap conflicts",
-    "version" : (0, 5, 6),
+    "description" : "",
+    "version" : (0, 6, 0, 0),
     "warning" : "[Heavly Under Development] And Subject To Substantial Changes",
     "category" : "3D View",
     "location" : "[Ctrl Alt A] General Menu, [Shift S] Pivot Menu, [Tab] Auto Mode Pie Menu",
-    "blender" : (3, 6, 0)
+    "blender" : (3, 6, 0),
+    "tracker_url": "https://github.com/Valery-AA/AlxOverHaul/issues",
 }
 
 
-
 import bpy
+from . import addon_updater_ops
 
-# Class Import/Reload
+
 import os
 import importlib
 
-addon_files = [file_name[0:-3] for file_name in os.listdir(__path__[0]) if (file_name[0:3] == "Alx") and (file_name.endswith(".py"))]
+folder_blacklist = ["__pycache__", "alxoverhaul_updater"]
+file_blacklist = ["__init__.py", "addon_updater_ops", "addon_updater.py", "Extras.py", ]
 
-for file in addon_files:
-    if (file not in locals()):
-        import_line = f"from . import {file}"
-        exec(import_line)
+addon_folders = list([__path__[0]])
+addon_folders.extend( [os.path.join(__path__[0], folder_name) for folder_name in os.listdir(__path__[0]) if ( os.path.isdir( os.path.join(__path__[0], folder_name) ) ) and (folder_name not in folder_blacklist) ] )
+
+addon_files = [[folder_path, file_name[0:-3]] for folder_path in addon_folders for file_name in os.listdir(folder_path) if (file_name not in file_blacklist) and (file_name.endswith(".py"))]
+
+for folder_file_batch in addon_files:
+    if (os.path.basename(folder_file_batch[0]) == os.path.basename(__path__[0])):
+        file = folder_file_batch[1]
+
+        if (file not in locals()):
+            import_line = f"from . import {file}"
+            exec(import_line)
+        else:
+            reload_line = f"{file} = importlib.reload({file})"
+            exec(reload_line)
+    
     else:
-        reload_line = f"{file} = importlib.reload({file})"
-        exec(reload_line)
+        if (os.path.basename(folder_file_batch[0]) != os.path.basename(__path__[0])):
+            file = folder_file_batch[1]
 
-# Class Queue
+            if (file not in locals()):
+                import_line = f"from . {os.path.basename(folder_file_batch[0])} import {file}"
+                exec(import_line)
+            else:
+                reload_line = f"{file} = importlib.reload({file})"
+                exec(reload_line)
+
+
 import inspect
 
-bpy_class_object_list = tuple(bpy_class[1] for bpy_class in inspect.getmembers(bpy.types, inspect.isclass))
-alx_class_object_list = tuple(alx_class[1] for file in addon_files for alx_class in inspect.getmembers(eval(file), inspect.isclass) if issubclass(alx_class[1], bpy_class_object_list) and (not issubclass(alx_class[1], bpy.types.WorkSpaceTool)))
+class_blacklist = ["PSA_UL_SequenceList"]
+
+bpy_class_object_list = tuple(bpy_class[1] for bpy_class in inspect.getmembers(bpy.types, inspect.isclass) if (bpy_class not in class_blacklist))
+alx_class_object_list = tuple(alx_class[1] for file_batch in addon_files for alx_class in inspect.getmembers(eval(file_batch[1]), inspect.isclass) if issubclass(alx_class[1], bpy_class_object_list) and (not issubclass(alx_class[1], bpy.types.WorkSpaceTool)))
 
 AlxClassQueue = alx_class_object_list
 
 
 from . import AlxProperties
-
 from . import AlxHandlers
 from . import AlxKeymapUtils
-
-from .import AlxGeneralPanel
+from . import AlxGeneralPanel
 from . import AlxVisibilityOperators
-
 from . import AlxUnlockedModeling
-
 
 
 AlxToolQueue = [
                [AlxUnlockedModeling.Alx_WT_WorkSpaceTool_UnlockedModeling, None, True, False] #tool_class, after, separator, group
                ]
 
-# def test(self,context):
-#     layout = self.layout       
-#     row = layout.row()
-#     row.label(text="Hello world!")
-
-# # def AlxAppendPanels():
-# #     bpy.types.
-# #     .append(test)
 
 def AlxRegisterClassQueue():
     for AlxClass in AlxClassQueue:
         try:
             bpy.utils.register_class(AlxClass)
         except:
-            bpy.utils.unregister_class(AlxClass)
-            bpy.utils.register_class(AlxClass)
+            try:
+                bpy.utils.unregister_class(AlxClass)
+                bpy.utils.register_class(AlxClass)
+            except:
+                pass
 def AlxUnregisterClassQueue():
     for AlxClass in AlxClassQueue:
         try:
@@ -89,9 +103,9 @@ def AlxUnregisterToolQueue():
         except:
             print("Can't Unregister", AlxTool)
 
+
 def RegisterProperties():
     bpy.types.WindowManager.alx_session_properties = bpy.props.PointerProperty(type=AlxProperties.Alx_PG_PropertyGroup_SessionProperties)
-
 
 
     bpy.types.Scene.alx_object_selection_properties = bpy.props.CollectionProperty(type=AlxGeneralPanel.Alx_PG_PropertyGroup_ObjectSelectionListItem)
@@ -136,6 +150,7 @@ def UnRegisterProperties():
     del bpy.types.Object.alx_modifier_expand_settings
     del bpy.types.Object.alx_modifier_collection
 
+
 def RegisterHandlers():
     bpy.app.handlers.load_post.append(AlxHandlers.AlxMsgBusSubscriptions)
     bpy.app.handlers.load_post.append(AlxHandlers.AlxAddonKeymapHandler)
@@ -148,8 +163,12 @@ def UnRegisterHandlers():
     bpy.app.handlers.depsgraph_update_post.remove(AlxHandlers.AlxUpdateSceneSelectionObjectList)
 
 
-
 def register():
+    try:
+        addon_updater_ops.register(bl_info)
+    except:
+        pass
+
     AlxRegisterClassQueue()
     AlxRegisterToolQueue()
 
@@ -160,7 +179,10 @@ def register():
 
     bpy.context.preferences.use_preferences_save = True
 
+
 def unregister():
+    addon_updater_ops.unregister()
+
     AlxUnregisterClassQueue()
     AlxUnregisterToolQueue()
 
