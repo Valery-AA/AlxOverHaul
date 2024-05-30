@@ -1,3 +1,7 @@
+*.zip
+alxoverhaul_updater
+AlxOverHaul_updater_status.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

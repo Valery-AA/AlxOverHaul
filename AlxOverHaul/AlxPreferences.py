@@ -7,7 +7,7 @@ from . import AlxKeymapUtils
 
 
 @addon_updater_ops.make_annotations
-class AlxOverHaulAddonPreferences(bpy.types.AddonPreferences):
+class AlxOverHaul_AddonPreferences(bpy.types.AddonPreferences):
     """"""
 
     bl_idname = __package__

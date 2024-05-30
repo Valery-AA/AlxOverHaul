@@ -33,36 +33,7 @@
 #             print("color not set")
 
 
-# class Alx_OT_VertexGroupCleanEmpty(bpy.types.Operator):
-#     """"""
-
-#     bl_label = ""
-#     bl_idname = "alx.vertex_group_clean_empty"
-
-#     VertexDataObject : bpy.props.StringProperty(options={"HIDDEN"})
-
-#     @classmethod
-#     def poll(self, context):
-#         return True
-    
-#     def execute(self, context):
-#         if (self.VertexDataObject != "") and (bpy.data.objects.get(self.VertexDataObject) is not None):
-#             for VGroup in bpy.data.objects.get(self.VertexDataObject).vertex_groups:
-#                 i = 0
-#                 HasAtLeastOneVertex = False
-#                 while i < len(bpy.data.objects.get(self.VertexDataObject).data.vertices):
-#                     if(i < 0): break
-#                     try:
-#                         VGroup.weight(i)
-#                     except:
-#                         pass
-
-#                     else:
-#                         HasAtLeastOneVertex = True    
-#                     i += 1
-#                 if(HasAtLeastOneVertex == False):
-#                     bpy.data.objects.get(self.VertexDataObject).vertex_groups.remove(VGroup)
-#         return{"FINISHED"}
+# 
 
 
 # class Alx_OT_ArmatureCloneIKPuppet(bpy.types.Operator):

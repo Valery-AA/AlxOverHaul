@@ -15,6 +15,7 @@ from .AlxShapeKeyTransfer import Alx_OT_Shapekey_TransferShapekeysToTarget
 from .AlxVisibilityOperators import Alx_Tool_SceneIsolator_Properties, Alx_OT_Scene_VisibilityIsolator, Alx_OT_Object_VisibilitySwitch
 from .AlxModifierOperators import Alx_OT_Modifier_ManageOnSelected, Alx_OT_Modifier_ApplyReplace, Alx_OT_Modifier_BatchVisibility
 
+from .MeshTools.AlxMeshCleaners import Alx_OT_Mesh_VertexGroup_CleanEmpty
 
 class Alx_PG_PropertyGroup_AlexandriaGeneral(bpy.types.PropertyGroup):
     """"""
@@ -53,15 +54,15 @@ class Alx_UL_UIList_ObjectSelectionProperties(bpy.types.UIList):
         name_row.prop(item.ObjectPointer.data, "name", text="", icon="OUTLINER_DATA_MESH", emboss=True)
         
 
-        properties_row = box_layout.row()
-        sub_row_l = properties_row.row(align=True)
-        sub_row_r = properties_row.row()
-        sub_row_l.prop(item.ObjectPointer, "show_name", text="", icon="SORTALPHA", emboss=True)
-        sub_row_l.prop(item.ObjectPointer, "show_axis", text="", icon="EMPTY_ARROWS", emboss=True)
+        properties_row = box_layout.grid_flow(row_major=True, align=True, columns=6)
+        properties_row.prop(item.ObjectPointer, "show_name", text="", icon="SORTALPHA", emboss=True)
+        properties_row.prop(item.ObjectPointer, "show_axis", text="", icon="EMPTY_ARROWS", emboss=True)
         if (item.ObjectPointer.type in ["MESH", "META"]):
-            sub_row_l.prop(item.ObjectPointer, "show_wire", text="", icon="MOD_WIREFRAME", emboss=True)
-        sub_row_l.prop(item.ObjectPointer, "show_in_front", text="", icon="OBJECT_HIDDEN", emboss=True)
-        sub_row_l.prop(item.ObjectPointer, "display_type", text="")
+            properties_row.prop(item.ObjectPointer, "show_wire", text="", icon="MOD_WIREFRAME", emboss=True)
+        properties_row.prop(item.ObjectPointer, "show_in_front", text="", icon="OBJECT_HIDDEN", emboss=True)
+        properties_row.prop(item.ObjectPointer, "display_type", text="")
+        properties_row.prop(item.ObjectPointer, "color", text="")
+        
 
         box_column.row().separator(factor=2.0)
 
@@ -319,6 +320,9 @@ class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
             AlxOperatorsTabBox = TabsLayout.column()
 
             AlxOperatorsTabBox.operator(Alx_OT_VXGroupBySeams.bl_idname, text="VxGroup - group/mask by seam")
+
+            AlxOperatorsTabBox.operator(Alx_OT_Mesh_VertexGroup_CleanEmpty.bl_idname, text="VxGroup - clean empty vertex groups")
+            
 
             AlxOperatorsTabBox.operator(Alx_OT_Object_BatchMaterial.bl_idname, text="Batch Material")
             AlxOperatorsTabBox.operator(Alx_OT_Sculpt_ConditionMasking.bl_idname, text="mask by condition")
