@@ -15,7 +15,7 @@ from .AlxShapeKeyTransfer import Alx_OT_Shapekey_TransferShapekeysToTarget
 from .AlxVisibilityOperators import Alx_Tool_SceneIsolator_Properties, Alx_OT_Scene_VisibilityIsolator, Alx_OT_Object_VisibilitySwitch
 from .AlxModifierOperators import Alx_OT_Modifier_ManageOnSelected, Alx_OT_Modifier_ApplyReplace, Alx_OT_Modifier_BatchVisibility
 
-from .MeshTools.AlxMeshCleaners import Alx_OT_Mesh_VertexGroup_CleanEmpty
+from . MeshTools.AlxMeshCleaners import Alx_OT_Mesh_VertexGroup_Clean
 
 class Alx_PG_PropertyGroup_AlexandriaGeneral(bpy.types.PropertyGroup):
     """"""
@@ -321,7 +321,7 @@ class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
 
             AlxOperatorsTabBox.operator(Alx_OT_VXGroupBySeams.bl_idname, text="VxGroup - group/mask by seam")
 
-            AlxOperatorsTabBox.operator(Alx_OT_Mesh_VertexGroup_CleanEmpty.bl_idname, text="VxGroup - clean empty vertex groups")
+            AlxOperatorsTabBox.operator(Alx_OT_Mesh_VertexGroup_Clean.bl_idname, text="Cleaner - VXGroups")
             
 
             AlxOperatorsTabBox.operator(Alx_OT_Object_BatchMaterial.bl_idname, text="Batch Material")
