@@ -13,3 +13,6 @@ if ( Test-Path ".\$target_subfolder")
 {
     Compress-Archive -Force -Path .\$target_subfolder -Destination ".\$target_subfolder.zip"
 } 
+
+write-host "Press any key to continue..."
+[void][System.Console]::ReadKey($true)
