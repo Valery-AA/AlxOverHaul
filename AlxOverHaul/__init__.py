@@ -2,7 +2,7 @@ bl_info = {
     "name" : "AlxOverHaul",
     "author" : "Valeria Bosco[Valy Arhal]",
     "description" : "",
-    "version" : (0, 6, 0, 4),
+    "version" : (0, 6, 0, 5),
     "warning" : "[Heavly Under Development] And Subject To Substantial Changes",
     "category" : "3D View",
     "location" : "[Ctrl Alt A] General Menu, [Shift S] Pivot Menu, [Tab] Auto Mode Pie Menu",
@@ -106,7 +106,6 @@ def AlxUnregisterToolQueue():
 
 def RegisterProperties():
     bpy.types.WindowManager.alx_session_properties = bpy.props.PointerProperty(type=AlxProperties.Alx_PG_PropertyGroup_SessionProperties)
-
 
     bpy.types.Scene.alx_object_selection_properties = bpy.props.CollectionProperty(type=AlxGeneralPanel.Alx_PG_PropertyGroup_ObjectSelectionListItem)
     bpy.types.Scene.alx_object_selection_properties_index = bpy.props.IntProperty(default=0)

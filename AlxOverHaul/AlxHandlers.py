@@ -18,6 +18,9 @@ def AlxMsgBusSubscriptions(self, context: bpy.types.Context):
 
 @bpy.app.handlers.persistent
 def AlxAddonKeymapHandler(self, context):
+    addon_keymaps_lambda()
+
+def addon_keymaps_lambda():
     AlxCreateKeymaps()
 
 

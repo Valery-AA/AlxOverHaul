@@ -228,21 +228,42 @@ class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
         return True
 
     def draw(self, context: bpy.types.Context):
-        self.layout.ui_units_x = 20.0
-        TabsLayout = self.layout.row()
-
         AlxContextObject = AlxRetrieveContextObject(context)
         AlxContextArmature = AlxRetrieveContextArmature(context)
-
 
         GeneralPanelProperties : Alx_PG_PropertyGroup_AlexandriaGeneral = context.scene.alx_panel_alexandria_general_properties
         SceneIsolatorProperties : Alx_Tool_SceneIsolator_Properties = context.scene.alx_tool_scene_isolator_properties
 
+        self.layout.ui_units_x = 30.0
 
-        Tabs = TabsLayout.column().prop(GeneralPanelProperties, "panel_tabs", icon_only=True, expand=True)
+        layout = self.layout.row().split(factor=0.6)
+        main_layout = layout.column().row()
+        side_layout = layout.column()
+
+        tabs = main_layout.column().prop(GeneralPanelProperties, "panel_tabs", icon_only=True, expand=True)
+        tabs_panels = main_layout.column()
+
+        
+
+        pose_prop = side_layout.row()
+        if (AlxContextArmature is not None):
+            pose_prop.prop(bpy.data.armatures.get(AlxContextArmature.data.name), "pose_position", expand=True)
+        else:
+            pose_prop.label(text="[Armature] [Missing]")
+
+        overlay_prop = side_layout.row(align=True)
+        overlay_prop.prop(context.space_data.overlay, "show_overlays", text="", icon="OVERLAY")
+        overlay_prop.prop(context.area.spaces.active.shading, "show_xray", text="Mesh", icon="XRAY")
+        overlay_prop.prop(context.space_data.overlay, "show_xray_bone", text="Bone", icon="XRAY")
+        poly_prop = side_layout.row(align=True)
+        poly_prop.prop(context.space_data.overlay, "show_face_orientation", text="", icon="NORMALS_FACE")
+        poly_prop.prop(context.space_data.overlay, "show_wireframes", text="Wireframe", icon="MOD_WIREFRAME")
+        poly_prop.prop(context.space_data.overlay, "show_retopology", text="Retopology", icon="MESH_GRID")
+        
+
 
         if (GeneralPanelProperties.panel_tabs == "OBJECT") and (context.area.type == "VIEW_3D"):
-            ObjectTabBox = TabsLayout.column()
+            ObjectTabBox = tabs_panels.column()
 
             isolator_box = ObjectTabBox.row().row()
 
@@ -263,22 +284,6 @@ class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
             isolator_panik : Alx_OT_Scene_VisibilityIsolator = isolator_panik_placement.operator(Alx_OT_Scene_VisibilityIsolator.bl_idname, text="", icon="LOOP_BACK", emboss=True)
             isolator_panik.PanicReset = True
 
-
-
-            OverlayBox = ObjectTabBox.row().row()
-
-            overlay_toggle = OverlayBox.column()
-            overlay_toggle.prop(context.space_data.overlay, "show_overlays", text="", icon="OVERLAY")
-            overlay_toggle.prop(context.space_data.overlay, "show_face_orientation", text="", icon="NORMALS_FACE")
-
-            xray_toggle = OverlayBox.column()
-            xray_toggle.prop(context.area.spaces.active.shading, "show_xray", text="XRay-Mesh", icon="XRAY")
-            xray_toggle.prop(context.space_data.overlay, "show_xray_bone", text="XRay-Bone", icon="XRAY")
-
-            topology_toggle = OverlayBox.column()
-            topology_toggle.prop(context.space_data.overlay, "show_wireframes", text="Wireframe", icon="MOD_WIREFRAME")
-            topology_toggle.prop(context.space_data.overlay, "show_retopology", text="Retopology", icon="MESH_GRID")
-            
             ObjectTabBox.row().separator(factor=1.75)
 
             ObjectTabBox.row().prop(GeneralPanelProperties, "show_object_properties", text="- Object Properties -" if (GeneralPanelProperties.show_object_properties == True) else "+ Object Properties +", toggle=True, emboss=True)
@@ -289,20 +294,17 @@ class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
 
 
         if (GeneralPanelProperties.panel_tabs == "ARMATURE") and (context.area.type == "VIEW_3D"):
-            ArmatureTabBox = TabsLayout.column()
+            ArmatureTabBox = tabs_panels.column()
 
             if (AlxContextArmature is not None):
-                ArmatureTabBox.row().prop(bpy.data.armatures.get(AlxContextArmature.data.name), "pose_position", expand=True)
-
                 armature_display_options = ArmatureTabBox.column()
                 armature_display_options.prop(bpy.data.armatures.get(AlxContextArmature.data.name), "show_names")
                 armature_display_options.prop(bpy.data.armatures.get(AlxContextArmature.data.name), "show_axes")
                 armature_display_options.prop(bpy.data.armatures.get(AlxContextArmature.data.name), "display_type", text="", expand=False)
 
 
-
         if (GeneralPanelProperties.panel_tabs == "MODIFIER") and (context.area.type == "VIEW_3D"):
-            ModifierTabBox = TabsLayout.column()
+            ModifierTabBox = tabs_panels.column()
 
             modifier_tab_box_header = ModifierTabBox.row().split(factor=0.33)
 
@@ -317,7 +319,7 @@ class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
             
 
         if (GeneralPanelProperties.panel_tabs == "ALXOPERATORS") and (context.area.type == "VIEW_3D"):
-            AlxOperatorsTabBox = TabsLayout.column()
+            AlxOperatorsTabBox = tabs_panels.column()
 
             AlxOperatorsTabBox.operator(Alx_OT_VXGroupBySeams.bl_idname, text="VxGroup - group/mask by seam")
 
@@ -336,7 +338,7 @@ class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
 
 
         if (GeneralPanelProperties.panel_tabs == "RENDER") and (context.area.type == "VIEW_3D"):
-            RenderTabBox = TabsLayout.column()
+            RenderTabBox = tabs_panels.column()
 
             render_engine_option = RenderTabBox.row()
             render_engine_option.prop(context.scene.render, "engine", text="")
