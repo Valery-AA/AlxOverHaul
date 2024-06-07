@@ -2,12 +2,13 @@ bl_info = {
     "name" : "AlxOverHaul",
     "author" : "Valeria Bosco[Valy Arhal]",
     "description" : "",
-    "version" : (0, 6, 0, 5),
     "warning" : "[Heavly Under Development] And Subject To Substantial Changes",
+    "version" : (0, 6, 0, 6),
+    "blender" : (3, 6, 0),
     "category" : "3D View",
     "location" : "[Ctrl Alt A] General Menu, [Shift S] Pivot Menu, [Tab] Auto Mode Pie Menu",
-    "blender" : (3, 6, 0),
-    "tracker_url": "https://github.com/Valery-AA/AlxOverHaul/issues",
+    "doc_url" : "https://github.com/Valery-AA/AlxOverHaul/wiki",
+    "tracker_url" : "https://github.com/Valery-AA/AlxOverHaul/issues",
 }
 
 

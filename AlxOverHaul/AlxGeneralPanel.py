@@ -49,10 +49,8 @@ class Alx_UL_UIList_ObjectSelectionProperties(bpy.types.UIList):
         box_column = layout.column()
         box_layout = box_column.box()
 
-        name_row = box_layout.row(align=True)
+        name_row = box_layout.column()
         name_row.prop(item.ObjectPointer, "name", text="", icon="OBJECT_DATA", emboss=True)
-        name_row.prop(item.ObjectPointer.data, "name", text="", icon="OUTLINER_DATA_MESH", emboss=True)
-        
 
         properties_row = box_layout.grid_flow(row_major=True, align=True, columns=6)
         properties_row.prop(item.ObjectPointer, "show_name", text="", icon="SORTALPHA", emboss=True)
@@ -243,7 +241,30 @@ class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
         tabs = main_layout.column().prop(GeneralPanelProperties, "panel_tabs", icon_only=True, expand=True)
         tabs_panels = main_layout.column()
 
+
+        isolator_box = side_layout.row()
+        isolator_l_column = isolator_box.column()
+        isolator_r_column= isolator_box.column()
+
+        isolatior_options = isolator_l_column.row()
+        isolatior_options.column().prop(SceneIsolatorProperties, "scene_isolator_type_target", expand=True)
+        isolatior_options.column().prop(SceneIsolatorProperties, "scene_isolator_visibility_target", expand=True)
         
+
+        isolator_show_hide = isolator_l_column.row()
+        isolator_hide : Alx_OT_Scene_VisibilityIsolator = isolator_show_hide.operator(Alx_OT_Scene_VisibilityIsolator.bl_idname, text="Isolate", icon="HIDE_ON", emboss=True)
+        isolator_hide.PanicReset = False
+        isolator_hide.TargetVisibility = False
+
+        isolator_show : Alx_OT_Scene_VisibilityIsolator = isolator_show_hide.operator(Alx_OT_Scene_VisibilityIsolator.bl_idname, text="Show", icon="HIDE_OFF", emboss=True)
+        isolator_show.PanicReset = False
+        isolator_show.TargetVisibility = True
+
+        isolator_r_column.scale_y = 3.1
+        isolator_panik : Alx_OT_Scene_VisibilityIsolator = isolator_r_column.operator(Alx_OT_Scene_VisibilityIsolator.bl_idname, text="", icon="LOOP_BACK", emboss=True)
+        isolator_panik.PanicReset = True
+        
+
 
         pose_prop = side_layout.row()
         if (AlxContextArmature is not None):
@@ -265,31 +286,7 @@ class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
         if (GeneralPanelProperties.panel_tabs == "OBJECT") and (context.area.type == "VIEW_3D"):
             ObjectTabBox = tabs_panels.column()
 
-            isolator_box = ObjectTabBox.row().row()
-
-            isolator_options = isolator_box.row()
-            isolator_options.column().prop(SceneIsolatorProperties, "scene_isolator_type_target", expand=True)
-            isolator_options.column().prop(SceneIsolatorProperties, "scene_isolator_visibility_target", expand=True)
-            
-            isolator_show_hide = isolator_box.column()
-            isolator_hide : Alx_OT_Scene_VisibilityIsolator = isolator_show_hide.operator(Alx_OT_Scene_VisibilityIsolator.bl_idname, text="Isolate", icon="HIDE_ON", emboss=True)
-            isolator_hide.PanicReset = False
-            isolator_hide.TargetVisibility = False
-            isolator_show : Alx_OT_Scene_VisibilityIsolator = isolator_show_hide.operator(Alx_OT_Scene_VisibilityIsolator.bl_idname, text="Show", icon="HIDE_OFF", emboss=True)
-            isolator_show.PanicReset = False
-            isolator_show.TargetVisibility = True
-
-            isolator_panik_placement = isolator_box.column()
-            isolator_panik_placement.scale_y = 2.0
-            isolator_panik : Alx_OT_Scene_VisibilityIsolator = isolator_panik_placement.operator(Alx_OT_Scene_VisibilityIsolator.bl_idname, text="", icon="LOOP_BACK", emboss=True)
-            isolator_panik.PanicReset = True
-
-            ObjectTabBox.row().separator(factor=1.75)
-
-            ObjectTabBox.row().prop(GeneralPanelProperties, "show_object_properties", text="- Object Properties -" if (GeneralPanelProperties.show_object_properties == True) else "+ Object Properties +", toggle=True, emboss=True)
-
-            if (GeneralPanelProperties.show_object_properties == True):
-                ObjectTabBox.template_list(Alx_UL_UIList_ObjectSelectionProperties.bl_idname, list_id="", dataptr=context.scene, propname="alx_object_selection_properties", active_dataptr=context.scene, active_propname="alx_object_selection_properties_index")
+            ObjectTabBox.template_list(Alx_UL_UIList_ObjectSelectionProperties.bl_idname, list_id="", dataptr=context.scene, propname="alx_object_selection_properties", active_dataptr=context.scene, active_propname="alx_object_selection_properties_index")
 
 
 
