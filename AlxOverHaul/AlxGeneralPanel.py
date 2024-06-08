@@ -46,13 +46,14 @@ class Alx_UL_UIList_ObjectSelectionProperties(bpy.types.UIList):
     def draw_item(self, context: bpy.types.Context, layout: bpy.types.UILayout, data: bpy.types.AnyType, item: Alx_PG_PropertyGroup_ObjectSelectionListItem, icon: int, active_data: bpy.types.AnyType, active_property: str, index: int = 0, flt_flag: int = 0):
         self.use_filter_show = True
 
-        box_column = layout.column()
-        box_layout = box_column.box()
+        item_box = layout.column()
 
-        name_row = box_layout.column()
+        box_column = item_box.box().column(align=True)
+
+        name_row = box_column.column()
         name_row.prop(item.ObjectPointer, "name", text="", icon="OBJECT_DATA", emboss=True)
 
-        properties_row = box_layout.grid_flow(row_major=True, align=True, columns=6)
+        properties_row = box_column.grid_flow(row_major=True, align=True, columns=6)
         properties_row.prop(item.ObjectPointer, "show_name", text="", icon="SORTALPHA", emboss=True)
         properties_row.prop(item.ObjectPointer, "show_axis", text="", icon="EMPTY_ARROWS", emboss=True)
         if (item.ObjectPointer.type in ["MESH", "META"]):
@@ -62,7 +63,7 @@ class Alx_UL_UIList_ObjectSelectionProperties(bpy.types.UIList):
         properties_row.prop(item.ObjectPointer, "color", text="")
         
 
-        box_column.row().separator(factor=2.0)
+        item_box.separator(factor=2.0)
 
 class Alx_PG_PropertyGroup_ModifierSettings(bpy.types.PropertyGroup):
     """"""
@@ -242,9 +243,18 @@ class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
         tabs_panels = main_layout.column()
 
 
-        isolator_box = side_layout.row()
-        isolator_l_column = isolator_box.column()
-        isolator_r_column= isolator_box.column()
+        pose_prop = side_layout.column()
+        if (AlxContextArmature is not None):
+            pose_prop.row().prop(bpy.data.armatures.get(AlxContextArmature.data.name), "pose_position", expand=True)
+        else:
+            pose_prop.label(text="[Armature] [Missing]")
+        pose_prop.separator()
+
+
+        isolator_box = side_layout.column()
+        isolator_row = isolator_box.row()
+        isolator_l_column = isolator_row.column()
+        isolator_r_column= isolator_row.column()
 
         isolatior_options = isolator_l_column.row()
         isolatior_options.column().prop(SceneIsolatorProperties, "scene_isolator_type_target", expand=True)
@@ -263,14 +273,9 @@ class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
         isolator_r_column.scale_y = 3.1
         isolator_panik : Alx_OT_Scene_VisibilityIsolator = isolator_r_column.operator(Alx_OT_Scene_VisibilityIsolator.bl_idname, text="", icon="LOOP_BACK", emboss=True)
         isolator_panik.PanicReset = True
-        
 
+        isolator_box.separator()
 
-        pose_prop = side_layout.row()
-        if (AlxContextArmature is not None):
-            pose_prop.prop(bpy.data.armatures.get(AlxContextArmature.data.name), "pose_position", expand=True)
-        else:
-            pose_prop.label(text="[Armature] [Missing]")
 
         overlay_prop = side_layout.row(align=True)
         overlay_prop.prop(context.space_data.overlay, "show_overlays", text="", icon="OVERLAY")
@@ -341,39 +346,31 @@ class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
             render_engine_option.prop(context.scene.render, "engine", text="")
             render_engine_option.prop(context.area.spaces.active.shading, "type", text="", expand=True)
 
-            if (context.scene.render.engine in ["BLENDER_EEVEE", "BLENDER_EEVEE_NEXT"]):
-                eevee_viewport_sample = RenderTabBox.row(align=True).split(factor=0.4)
-                eevee_viewport_sample.prop(context.scene.eevee, "use_taa_reprojection", text="Denoise")
-                eevee_viewport_sample.prop(context.scene.eevee, "taa_samples", text="Viewport")
-                eevee_render_sample = RenderTabBox.row(align=True).split(factor=0.4)
-                eevee_render_sample.separator()
-                eevee_render_sample.prop(context.scene.eevee, "taa_render_samples", text="Render")
-
-            if (context.scene.render.engine == "CYCLES"):
-                cycles_samples = RenderTabBox.row(align=True)
-                cycles_samples.prop(context.scene.cycles, "preview_samples", text="Viewport")
-                cycles_samples.prop(context.scene.cycles, "samples", text="Render")
 
             if (context.area.spaces.active.shading.type == "SOLID"):
                 matcap_preview = RenderTabBox.column()
                 matcap_preview.row().prop(context.area.spaces.active.shading, "light", expand=True)
-                matcap_preview.row().template_icon_view(context.area.spaces.active.shading, "studio_light")
 
-                matcap_preview.row().grid_flow(columns=2, align=True).prop(context.area.spaces.active.shading, "color_type", expand=True)
-                matcap_preview.row().prop(context.area.spaces.active.shading, "single_color", text="")
+                material_display = matcap_preview.row().split(factor=0.5)
+
+                material_display.template_icon_view(context.area.spaces.active.shading, "studio_light", scale=3.2)
+                material_display.grid_flow(columns=2, align=True).prop(context.area.spaces.active.shading, "color_type", expand=True)
+
 
             if (context.area.spaces.active.shading.type == "MATERIAL"):
                 scene_shading_options = RenderTabBox.column()
-                scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_lights", text="scene Lights")
-                scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_world", text="Scene world")
-
+                
                 if (context.area.spaces.active.shading.use_scene_world == False):
-                    scene_shading_options.row().template_icon_view(context.area.spaces.active.shading, "studio_light", scale=4.3, scale_popup=3.0)
-                    scene_world_shading = scene_shading_options.column()
+                    material_preview = scene_shading_options.row().split(factor=0.5)
+                    material_preview.template_icon_view(context.area.spaces.active.shading, "studio_light", scale=4.3, scale_popup=3.0)
+                    scene_world_shading = material_preview.column()
                     scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_rotate_z", text="rotation")
                     scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_intensity", text="intensity")
                     scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_background_alpha", text="opacity")
                     scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_background_blur", text="blur")
+
+                scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_lights", text="scene lights")
+                scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_world", text="scene world")
 
                 if (context.area.spaces.active.shading.use_scene_world == True):
                     scene_shading_options.row().prop(context.scene.world, "use_nodes", text="Use Scene World Nodes", toggle=True)
@@ -385,19 +382,22 @@ class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
                             Surface = node_utils.find_node_input(MaterialOutput, "Surface")
                             scene_shading_options.column().template_node_view(WorldMaterial, MaterialOutput, Surface)
 
+
             if (context.area.spaces.active.shading.type == "RENDERED"):
                 scene_shading_options = RenderTabBox.column()
-                scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_lights_render", text="scene lights")
-                scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_world_render", text="scene world")
+                
 
                 if (context.area.spaces.active.shading.use_scene_world_render == False):
-                    hdri_shading = scene_shading_options
-                    hdri_shading.row().template_icon_view(context.area.spaces.active.shading, "studio_light", scale=4.3, scale_popup=3.0)
-                    scene_world_shading = hdri_shading.column()
+                    material_preview = scene_shading_options.row().split(factor=0.5)
+                    material_preview.template_icon_view(context.area.spaces.active.shading, "studio_light", scale=4.3, scale_popup=3.0)
+                    scene_world_shading = material_preview.column()
                     scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_rotate_z", text="rotation")
                     scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_intensity", text="intensity")
                     scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_background_alpha", text="opacity")
                     scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_background_blur", text="blur")
+
+                scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_lights_render", text="scene lights")
+                scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_world_render", text="scene world")
 
                 if (context.area.spaces.active.shading.use_scene_world_render == True):
                     scene_shading_options.row().prop(context.scene.world, "use_nodes", text="Use Scene world Nodes", toggle=True)
@@ -420,6 +420,18 @@ class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
                     cavity_options.prop(context.area.spaces.active.shading, "curvature_valley_factor", text="valley")
 
 
+            if (context.scene.render.engine in ["BLENDER_EEVEE", "BLENDER_EEVEE_NEXT"]):
+                eevee_viewport_sample = RenderTabBox.row(align=True).split(factor=0.4)
+                eevee_viewport_sample.prop(context.scene.eevee, "use_taa_reprojection", text="Denoise")
+                eevee_viewport_sample.prop(context.scene.eevee, "taa_samples", text="Viewport")
+                eevee_render_sample = RenderTabBox.row(align=True).split(factor=0.4)
+                eevee_render_sample.separator()
+                eevee_render_sample.prop(context.scene.eevee, "taa_render_samples", text="Render")
+
+            if (context.scene.render.engine == "CYCLES"):
+                cycles_samples = RenderTabBox.row(align=True)
+                cycles_samples.prop(context.scene.cycles, "preview_samples", text="Viewport")
+                cycles_samples.prop(context.scene.cycles, "samples", text="Render")
 
         # if (context.scene.alx_panel_alexandria_general_properties.alx_panel_tab == "UI_DESIGNER"):
         #     AlxSpace = AlxLayout.box().row().split(factor=0.5, align=True)
