@@ -7,52 +7,6 @@ from . import AlxUtils
 
 
 
-class Alx_OT_UI_SimpleDesigner(bpy.types.Operator):
-    """"""
-
-    bl_label = ""
-    bl_idname = "alx.operator_ui_simple_designer"
-    bl_options = {"INTERNAL"}
-
-    UseAreaSplit : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"})
-    AreaSplitDirection : bpy.props.EnumProperty(name="", default="VERTICAL", items=[("VERTICAL", "Vertical", "", 1), ("HORIZONTAL", "Horizontal", "", 1<<1)])
-    AreaSplitFactor : bpy.props.FloatProperty(name="", default=0.5, options={"HIDDEN"})
-
-    UseCloseArea : bpy.props.BoolProperty(name="", default=False, options={"HIDDEN"})
-
-
-    @classmethod
-    def poll(self, context: bpy.types.Context):
-        return True
-    
-    def modal(self, context: bpy.types.Context, event: bpy.types.Event):
-        ScreenAreas = []
-        if (context is not None) and (context.screen is not None):
-            ScreenAreas = [area for area in context.screen.areas if (area is None) and (area.type != "EMPTY")]
-
-        if (event.type == "MOUSE_MOVE"):
-            try:
-                ScreenAreas[0]
-                
-                for area in ScreenAreas:
-                    if (area.x <= event.mouse_x) and ((area.x + area.width) >= event.mouse_x):
-                        pass
-
-            except Exception as error:
-                print(error)
-            
-            event.mouse_x
-            event.mouse_y
-
-        if (event.type == "ESC"):
-            return {"CANCELLED"}
-
-        return {"RUNNING_MODAL"}
-
-    def invoke(self, context, event):
-        context.window_manager.modal_handler_add(self)
-        return {'RUNNING_MODAL'}
-
 class Alx_OT_Armature_MatchIKByMirroredName(bpy.types.Operator):
     """"""
 

@@ -3,7 +3,7 @@ import bpy
 from .UnlockedTools import AlxUnlockedObjectModes
 
 from . import AlxPreferences
-from . import AlxGeneralPanel
+from . import AlxAlexandriaGeneralPanel
 from . MeshTools.AlxVEFTools import Alx_OT_Mesh_VEF_Utility
 
 AlxAddonKeymaps = []
@@ -87,6 +87,8 @@ def AlxKeymapRegister(keymap_call_type="", config_space_name="", space_type="EMP
             print(f"KeymapItem.properties: {KeymapItem.properties}")
 
         AlxAddonKeymaps.append((Keymap, KeymapItem))
+    else:
+        print("keymap error")
 
 
 def AlxCreateKeymaps():
@@ -125,8 +127,8 @@ def AlxCreateKeymaps():
 
 
     AlxKeymapRegister(keymap_call_type="PIE", config_space_name="3D View", space_type="VIEW_3D", addon_class=AlxUnlockedObjectModes.Alx_MT_MenuPie_UnlockedObjectModes, key="TAB", trigger_type="PRESS")
-    AlxKeymapRegister(keymap_call_type="PANEL", config_space_name="3D View", space_type="VIEW_3D", addon_class=AlxGeneralPanel.Alx_PT_Panel_AlexandriaGeneralModeling, key="A", use_ctrl=True, use_alt=True, trigger_type="CLICK")
-    AlxKeymapRegister(keymap_call_type="PANEL", config_space_name="3D View", space_type="VIEW_3D", addon_class=AlxGeneralPanel.Alx_PT_Scene_GeneralPivot, key="S", use_shift=True, trigger_type="CLICK")
+    AlxKeymapRegister(keymap_call_type="PANEL", config_space_name="3D View", space_type="VIEW_3D", addon_class=AlxAlexandriaGeneralPanel.Alx_PT_Panel_AlexandriaGeneralPanel, key="A", use_ctrl=True, use_alt=True, trigger_type="CLICK")
+    AlxKeymapRegister(keymap_call_type="PANEL", config_space_name="3D View", space_type="VIEW_3D", addon_class=AlxAlexandriaGeneralPanel.Alx_PT_Scene_GeneralPivot, key="S", use_shift=True, trigger_type="CLICK")
 
     AlxKeymapRegister(keymap_call_type="OPERATOR", config_space_name="Mesh", addon_class=Alx_OT_Mesh_VEF_Utility, key="ONE", use_alt=True, trigger_type="CLICK")
 

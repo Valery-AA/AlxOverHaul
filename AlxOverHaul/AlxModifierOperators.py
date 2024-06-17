@@ -40,18 +40,21 @@ class Alx_OT_Modifier_ManageOnSelected(bpy.types.Operator):
 
                 for Object in context.selected_objects:
                     if (Object is not None):
-                        self.modifier = Object.modifiers.new(name="", type=self.modifier_type)
+                        try:
+                            self.modifier = Object.modifiers.new(name="", type=self.modifier_type)
 
-                        match self.modifier.type:
-                            case "BEVEL":
-                                self.modifier.width = 0.01
-                                self.modifier.segments = 1
-                                self.modifier.miter_outer = "MITER_ARC"
-                                self.modifier.harden_normals = True
-                            
-                            case "SUBSURF":
-                                self.modifier.render_levels = 1
-                                self.modifier.quality = 6
+                            match self.modifier.type:
+                                case "BEVEL":
+                                    self.modifier.width = 0.01
+                                    self.modifier.segments = 1
+                                    self.modifier.miter_outer = "MITER_ARC"
+                                    self.modifier.harden_normals = True
+                                
+                                case "SUBSURF":
+                                    self.modifier.render_levels = 1
+                                    self.modifier.quality = 6
+                        except:
+                            pass
 
                 return {"FINISHED"}
 

@@ -15,7 +15,9 @@ from .AlxShapeKeyTransfer import Alx_OT_Shapekey_TransferShapekeysToTarget
 from .AlxVisibilityOperators import Alx_Tool_SceneIsolator_Properties, Alx_OT_Scene_VisibilityIsolator, Alx_OT_Object_VisibilitySwitch
 from .AlxModifierOperators import Alx_OT_Modifier_ManageOnSelected, Alx_OT_Modifier_ApplyReplace, Alx_OT_Modifier_BatchVisibility
 
-from . MeshTools.AlxMeshCleaners import Alx_OT_Mesh_VertexGroup_Clean
+from .UITools.Alx_OT_UI_SimpleDesigner import Alx_OT_UI_SimpleDesigner
+
+from .MeshTools.AlxMeshCleaners import Alx_OT_Mesh_VertexGroup_Clean
 
 class Alx_PG_PropertyGroup_AlexandriaGeneral(bpy.types.PropertyGroup):
     """"""
@@ -38,32 +40,42 @@ class Alx_PG_PropertyGroup_ObjectSelectionListItem(bpy.types.PropertyGroup):
     name : bpy.props.StringProperty() #type:ignore
     ObjectPointer : bpy.props.PointerProperty(type=bpy.types.Object) #type:ignore
 
+
+
 class Alx_UL_UIList_ObjectSelectionProperties(bpy.types.UIList):
     """"""
 
     bl_idname = "ALX_UL_ui_list_object_selection_properties"
 
+
     def draw_item(self, context: bpy.types.Context, layout: bpy.types.UILayout, data: bpy.types.AnyType, item: Alx_PG_PropertyGroup_ObjectSelectionListItem, icon: int, active_data: bpy.types.AnyType, active_property: str, index: int = 0, flt_flag: int = 0):
         self.use_filter_show = True
 
+        layout.ui_units_x = 10
         item_box = layout.column()
+
 
         box_column = item_box.box().column(align=True)
 
-        name_row = box_column.column()
-        name_row.prop(item.ObjectPointer, "name", text="", icon="OBJECT_DATA", emboss=True)
+        header = box_column.row(align=True)
+        header.prop(item.ObjectPointer, "name", text="", icon="OBJECT_DATA", emboss=True)
 
-        properties_row = box_column.grid_flow(row_major=True, align=True, columns=6)
-        properties_row.prop(item.ObjectPointer, "show_name", text="", icon="SORTALPHA", emboss=True)
-        properties_row.prop(item.ObjectPointer, "show_axis", text="", icon="EMPTY_ARROWS", emboss=True)
+        header.prop(item.ObjectPointer, "show_name", text="", icon="SORTALPHA", emboss=True)
+        header.prop(item.ObjectPointer, "show_axis", text="", icon="EMPTY_ARROWS", emboss=True)
         if (item.ObjectPointer.type in ["MESH", "META"]):
-            properties_row.prop(item.ObjectPointer, "show_wire", text="", icon="MOD_WIREFRAME", emboss=True)
-        properties_row.prop(item.ObjectPointer, "show_in_front", text="", icon="OBJECT_HIDDEN", emboss=True)
-        properties_row.prop(item.ObjectPointer, "display_type", text="")
-        properties_row.prop(item.ObjectPointer, "color", text="")
-        
+            header.prop(item.ObjectPointer, "show_wire", text="", icon="MOD_WIREFRAME", emboss=True)
+        header.prop(item.ObjectPointer, "show_in_front", text="", icon="OBJECT_HIDDEN", emboss=True)
+
+
+        body = box_column.row(align=True)
+
+        body.prop(item.ObjectPointer, "display_type", text="")
+        body.prop(item.ObjectPointer, "color", text="")
+
 
         item_box.separator(factor=2.0)
+
+
 
 class Alx_PG_PropertyGroup_ModifierSettings(bpy.types.PropertyGroup):
     """"""
@@ -96,29 +108,41 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
     bl_idname = "ALX_UL_ui_list_object_selection_modifiers"
 
     def draw_item(self, context: bpy.types.Context, layout: bpy.types.UILayout, data: bpy.types.AnyType, item: Alx_PG_PropertyGroup_ObjectSelectionListItem, icon: int, active_data: bpy.types.AnyType, active_property: str, index: int = 0, flt_flag: int = 0):
-        LayoutBox = layout.row().grid_flow(columns=1)
+        LayoutBox = layout.row().box().grid_flow(columns=1)
 
         self.use_filter_show = True
 
         object_header = LayoutBox.row()
+        object_header.prop(item.ObjectPointer, "alx_modifier_expand_settings", text="", icon="TRIA_DOWN" if item.ObjectPointer.alx_modifier_expand_settings == True else "TRIA_RIGHT", emboss=False)
 
-        object_info = object_header.box()
-        object_info.scale_y = 0.5
-        object_info.label(text=item.ObjectPointer.name)
+        object_header.label(text=item.ObjectPointer.name)
 
-        object_header.prop(item.ObjectPointer, "alx_modifier_expand_settings", text="", icon="TRIA_UP" if item.ObjectPointer.alx_modifier_expand_settings == True else "TRIA_DOWN" )
-
+        
+        indented_layout = LayoutBox.row()
+        indented_layout.separator()
+        modifier_area = indented_layout.column()
         if (item.ObjectPointer.alx_modifier_expand_settings == True):
 
             for raw_object_modifier in item.ObjectPointer.modifiers:
-                modifier_slots = LayoutBox.row().box()
+                modifier_slots = modifier_area.column()
+                
                 modifier_header = modifier_slots.row(align=True)
 
                 raw_object_modifier : bpy.types.Modifier
 
                 icon_name = bpy.types.Modifier.bl_rna.properties['type'].enum_items.get(raw_object_modifier.type).icon
 
-                modifier_delete_button : Alx_OT_Modifier_ManageOnSelected = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="PANEL_CLOSE")
+                show_options = item.ObjectPointer.alx_modifier_collection.get(f"{item.ObjectPointer.name}_{raw_object_modifier.name}").show_options
+
+                modifier_operator = modifier_header.row()
+                modifier_change_settings : Alx_PT_Operator_ModifierChangeSettings = modifier_operator.operator(Alx_PT_Operator_ModifierChangeSettings.bl_idname, icon="TRIA_DOWN" if (show_options) else "TRIA_RIGHT", emboss=False, depress=show_options)
+                modifier_change_settings.object_name = item.ObjectPointer.name
+                modifier_change_settings.modifier_name = raw_object_modifier.name
+
+                modifier_header.separator()
+                
+
+                modifier_delete_button : Alx_OT_Modifier_ManageOnSelected = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="PANEL_CLOSE", emboss=False)
                 modifier_delete_button.object_pointer_reference = item.ObjectPointer.name
                 modifier_delete_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
                 modifier_delete_button.create_modifier = False
@@ -127,7 +151,7 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
                 modifier_delete_button.move_modifier_up = False
                 modifier_delete_button.move_modifier_down = False
 
-                modifier_apply_button : Alx_OT_Modifier_ManageOnSelected = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="FILE_TICK")
+                modifier_apply_button : Alx_OT_Modifier_ManageOnSelected = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="FILE_TICK", emboss=False)
                 modifier_apply_button.object_pointer_reference = item.ObjectPointer.name
                 modifier_apply_button.object_modifier_index = item.ObjectPointer.modifiers.find(raw_object_modifier.name)
                 modifier_apply_button.create_modifier = False
@@ -136,18 +160,35 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
                 modifier_apply_button.move_modifier_up = False
                 modifier_apply_button.move_modifier_down = False
                 
-                _show_options = item.ObjectPointer.alx_modifier_collection.get(f"{item.ObjectPointer.name}_{raw_object_modifier.name}").show_options
-
-                modifier_operator = modifier_header.row()
-                modifier_operator.scale_x = 0.6
-                modifier_change_settings : Alx_PT_Operator_ModifierChangeSettings = modifier_operator.operator(Alx_PT_Operator_ModifierChangeSettings.bl_idname, text= "-" if (_show_options) else "+", depress= _show_options)
-                modifier_change_settings.object_name = item.ObjectPointer.name
-                modifier_change_settings.modifier_name = raw_object_modifier.name
-
+                
 
 
                 if (item.ObjectPointer.alx_modifier_collection.get(f"{item.ObjectPointer.name}_{raw_object_modifier.name}").show_options == True):
                     ModifierOptionBox = modifier_slots.row().column()
+
+                    if (raw_object_modifier.type == "DATA_TRANSFER"):
+                        row = ModifierOptionBox.row().split(factor=0.65, align=True)
+                        row.prop(raw_object_modifier, "object", text="")
+                        split = row.row(align=True)
+                        split.prop(raw_object_modifier, "use_object_transform", text="", toggle=True, icon="OBJECT_ORIGIN")
+                        split.operator("object.datalayout_transfer", text="Transfer Layers")
+
+                        row = ModifierOptionBox.row()
+                        row.prop(raw_object_modifier, "use_vert_data", text="")
+                        row.prop(raw_object_modifier, "data_types_verts")
+
+                        row = ModifierOptionBox.row()
+                        row.prop(raw_object_modifier, "use_edge_data", text="")
+                        row.prop(raw_object_modifier, "data_types_edges")
+
+                        row = ModifierOptionBox.row()
+                        row.prop(raw_object_modifier, "use_loop_data", text="")
+                        row.prop(raw_object_modifier, "data_types_loops")
+                        
+                        row = ModifierOptionBox.row()
+                        row.prop(raw_object_modifier, "use_poly_data", text="")
+                        row.prop(raw_object_modifier, "data_types_polys")
+
 
                     if (raw_object_modifier.type == "SUBSURF"):
                         ModifierOptionBox.row().prop(raw_object_modifier, "show_only_control_edges", text="optimal")
@@ -167,6 +208,11 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
                         ModifierOptionBox.row().prop(raw_object_modifier, "miter_outer", text="miter outer")
                         ModifierOptionBox.row().prop(raw_object_modifier, "harden_normals", text="harden")
 
+                    if (raw_object_modifier.type == "BOOLEAN"):
+                        row = ModifierOptionBox.row()
+                        row.prop(raw_object_modifier, "object", text="")
+                        row.prop(raw_object_modifier, "operation", expand=True)
+
                     if (raw_object_modifier.type == "TRIANGULATE"):
                         ModifierOptionBox.row().prop(raw_object_modifier, "keep_custom_normals", text="keep normals")
 
@@ -184,6 +230,7 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
                         row.prop(raw_object_modifier, "wrap_method", text="")
                         row.prop(raw_object_modifier, "wrap_mode", text="")
 
+                    modifier_slots.label(text="------------------------------------------------------------------------------------------------------------------------------------------------------")
 
                 modifier_header.prop(raw_object_modifier, "name", text="", icon=icon_name, emboss=True)
 
@@ -209,14 +256,15 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
                 modifier_move_down_button.move_modifier_up = False
                 modifier_move_down_button.move_modifier_down = True
 
+                    
+
         LayoutBox.row().separator(factor=2.0)
 
-
-class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
+class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
     """"""
 
-    bl_label = "Alexandria General Modeling Panel"
-    bl_idname = "ALX_PT_panel_alexandria_general_modeling"
+    bl_label = "Alexandria General Panel"
+    bl_idname = "ALX_PT_panel_alexandria_general_panel"
 
     bl_space_type = "VIEW_3D"
     bl_region_type = "WINDOW"
@@ -233,17 +281,21 @@ class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
         GeneralPanelProperties : Alx_PG_PropertyGroup_AlexandriaGeneral = context.scene.alx_panel_alexandria_general_properties
         SceneIsolatorProperties : Alx_Tool_SceneIsolator_Properties = context.scene.alx_tool_scene_isolator_properties
 
-        self.layout.ui_units_x = 30.0
+        self.layout.ui_units_x = 25.0
 
-        layout = self.layout.row().split(factor=0.6)
-        main_layout = layout.column().row()
-        side_layout = layout.column()
 
-        tabs = main_layout.column().prop(GeneralPanelProperties, "panel_tabs", icon_only=True, expand=True)
+
+        layout = self.layout.column()
+        header_layout = layout.column()
+        main_layout = layout.row()
+        
+
+
+        tabs = main_layout.column().prop(GeneralPanelProperties, "panel_tabs", icon_only=True, expand=True, emboss=False)
         tabs_panels = main_layout.column()
 
 
-        pose_prop = side_layout.column()
+        pose_prop = header_layout.column()
         if (AlxContextArmature is not None):
             pose_prop.row().prop(bpy.data.armatures.get(AlxContextArmature.data.name), "pose_position", expand=True)
         else:
@@ -251,7 +303,7 @@ class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
         pose_prop.separator()
 
 
-        isolator_box = side_layout.column()
+        isolator_box = header_layout.column()
         isolator_row = isolator_box.row()
         isolator_l_column = isolator_row.column()
         isolator_r_column= isolator_row.column()
@@ -277,21 +329,21 @@ class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
         isolator_box.separator()
 
 
-        overlay_prop = side_layout.row(align=True)
+        overlay_prop = header_layout.row(align=True)
         overlay_prop.prop(context.space_data.overlay, "show_overlays", text="", icon="OVERLAY")
         overlay_prop.prop(context.area.spaces.active.shading, "show_xray", text="Mesh", icon="XRAY")
         overlay_prop.prop(context.space_data.overlay, "show_xray_bone", text="Bone", icon="XRAY")
-        poly_prop = side_layout.row(align=True)
+        poly_prop = header_layout.row(align=True)
         poly_prop.prop(context.space_data.overlay, "show_face_orientation", text="", icon="NORMALS_FACE")
         poly_prop.prop(context.space_data.overlay, "show_wireframes", text="Wireframe", icon="MOD_WIREFRAME")
         poly_prop.prop(context.space_data.overlay, "show_retopology", text="Retopology", icon="MESH_GRID")
         
-
+        header_layout.separator()
 
         if (GeneralPanelProperties.panel_tabs == "OBJECT") and (context.area.type == "VIEW_3D"):
             ObjectTabBox = tabs_panels.column()
 
-            ObjectTabBox.template_list(Alx_UL_UIList_ObjectSelectionProperties.bl_idname, list_id="", dataptr=context.scene, propname="alx_object_selection_properties", active_dataptr=context.scene, active_propname="alx_object_selection_properties_index")
+            ObjectTabBox.template_list(Alx_UL_UIList_ObjectSelectionProperties.bl_idname, list_id="", dataptr=context.scene, propname="alx_object_selection_properties", active_dataptr=context.scene, active_propname="alx_object_selection_properties_index", type="GRID", columns=2)
 
 
 
@@ -317,7 +369,7 @@ class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
             ModifierTabBox.operator(Alx_OT_Modifier_ApplyReplace.bl_idname, text="Apply-Replace Modifier")
             ModifierTabBox.operator(Alx_OT_Modifier_BatchVisibility.bl_idname, text="Batch Visibility")
 
-            ModifierTabBox.row().template_list(Alx_UL_UIList_ObjectSelectionModifiers.bl_idname, list_id="", dataptr=context.scene, propname="alx_object_selection_properties", active_dataptr=context.scene, active_propname="alx_object_selection_properties_index", maxrows=3)
+            ModifierTabBox.row().template_list(Alx_UL_UIList_ObjectSelectionModifiers.bl_idname, list_id="", dataptr=context.scene, propname="alx_object_selection_modifier", active_dataptr=context.scene, active_propname="alx_object_selection_modifier_index", maxrows=3)
             
 
         if (GeneralPanelProperties.panel_tabs == "ALXOPERATORS") and (context.area.type == "VIEW_3D"):
@@ -433,14 +485,14 @@ class Alx_PT_Panel_AlexandriaGeneralModeling(bpy.types.Panel):
                 cycles_samples.prop(context.scene.cycles, "preview_samples", text="Viewport")
                 cycles_samples.prop(context.scene.cycles, "samples", text="Render")
 
-        # if (context.scene.alx_panel_alexandria_general_properties.alx_panel_tab == "UI_DESIGNER"):
-        #     AlxSpace = AlxLayout.box().row().split(factor=0.5, align=True)
 
-        #     WindowAreaSpace = AlxSpace.box()
-        #     AreaUITypeSelector = WindowAreaSpace.row()
-        #     AreaUITypeSelector.template_header()
-        #     CloseArea = AreaUITypeSelector.operator(Alx_OT_UI_SimpleDesigner.bl_idname, text="Close Area")
-        #     CloseArea.UseCloseArea = True
+        if (GeneralPanelProperties.panel_tabs == "UI_DESIGNER"):
+            AlxUIDesignerTabBox = tabs_panels.column()
+
+            AlxUIDesignerTabBox.row().operator(Alx_OT_UI_SimpleDesigner.bl_idname, text="UI Designer")
+        
+            #AreaUITypeSelector.template_header()
+            # 
 
         #     WindowAreaSpace.row().label(text="Split Vertical:")
         #     SplitVertical = WindowAreaSpace.row()

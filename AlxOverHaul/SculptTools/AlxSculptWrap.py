@@ -36,7 +36,8 @@ class Alx_OT_Operator_ReProjectVertex(bpy.types.Operator):
     retopo_mesh : bpy.types.Mesh = None
     retopo_bmesh : bmesh.types.BMesh = None
 
-
+    tree_source_mesh : bmesh.types.BMesh = None
+    tree_source_bmesh : bmesh.types.BMesh = None
 
     reproject_target_object : bpy.types.Object = None
 
@@ -53,8 +54,11 @@ class Alx_OT_Operator_ReProjectVertex(bpy.types.Operator):
         elif (context.area is not None) and (context.area.type != "VIEW_3D"):
             return {"CANCELLED"}
 
-        self.retopo_mesh = context.object.data
-        tree_source = context.window_manager.alx_session_properties.vertex_reproject_target_object
+        if (self.retopo_mesh is None) or (self.retopo_mesh is not context.object.data):
+            self.retopo_mesh = context.object.data
+        
+        if (self.tree_source_mesh is None) or (self.tree_source_bmesh is not context.window_manager.alx_session_properties.vertex_reproject_target_object):
+            self.tree_source_mesh = context.window_manager.alx_session_properties.vertex_reproject_target_object
 
     
         self.retopo_bmesh = bmesh.new()
@@ -69,8 +73,20 @@ class Alx_OT_Operator_ReProjectVertex(bpy.types.Operator):
             self.retopo_bmesh.faces.ensure_lookup_table()
 
 
+        self.tree_source_bmesh = bmesh.new()
+        if (context.mode in ["OBJECT", "SCULPT"]):
+            self.tree_source_bmesh.from_mesh(self.tree_source_mesh)
+        if (context.mode in ["EDIT"]):
+            self.tree_source_bmesh = bmesh.from_edit_mesh(self.tree_source_mesh)
+
+        if (self.tree_source_bmesh is None) or (self.tree_source_bmesh.is_valid == False):
+            self.tree_source_bmesh.verts.ensure_lookup_table()
+            self.tree_source_bmesh.edges.ensure_lookup_table()
+            self.tree_source_bmesh.faces.ensure_lookup_table()
+
+
         if (self.target_bvh_tree is None):
-            self.target_bvh_tree = bvhtree.BVHTree.FromObject(tree_source, context.evaluated_depsgraph_get())
+            self.target_bvh_tree = bvhtree.BVHTree.FromObject(self.tree_source_mesh, context.evaluated_depsgraph_get())
 
         if (self.target_bvh_tree is not None):
             b_has_changed = False
@@ -78,6 +94,22 @@ class Alx_OT_Operator_ReProjectVertex(bpy.types.Operator):
                 for vert in self.retopo_bmesh.verts:
                     hit_location, hit_normal, hit_index, hit_distance = self.target_bvh_tree.find_nearest(vert.co)
                     
+                    # vx_1 = self.tree_source_bmesh.faces[hit_index].verts[0]
+                    # vx_2 = self.tree_source_bmesh.faces[hit_index].verts[1]
+                    # vx_3 = self.tree_source_bmesh.faces[hit_index].verts[2]
+                    
+                    # w_vx_1 = 
+                    # w_vx_2 = 
+                    # w_vx_3 = 
+
+                    # p_x = (vx_1.co.x * w_vx_1) + (vx_2.co.x * w_vx_2) + (vx_3.co.x * w_vx_3)
+                    # p_y = (vx_1.co.y * w_vx_1) + (vx_2.co.y * w_vx_2) + (vx_3.co.y * w_vx_3)
+                    # p_z = (vx_1.co.z * w_vx_1) + (vx_2.co.z * w_vx_2) + (vx_3.co.z * w_vx_3)
+
+                    # p = {"x":0, "y": 0, "z": 0}
+
+
+
                     if (hit_location is not None) and (hit_distance != 0):
                         vert.co = (hit_location.x, hit_location.y, hit_location.z)
                         b_has_changed = True

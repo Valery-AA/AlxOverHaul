@@ -3,7 +3,7 @@ bl_info = {
     "author" : "Valeria Bosco[Valy Arhal]",
     "description" : "",
     "warning" : "[Heavly Under Development] And Subject To Substantial Changes",
-    "version" : (0, 6, 0, 7),
+    "version" : (0, 6, 0, 8),
     "blender" : (3, 6, 0),
     "category" : "3D View",
     "location" : "[Ctrl Alt A] General Menu, [Shift S] Pivot Menu, [Tab] Auto Mode Pie Menu",
@@ -63,7 +63,7 @@ AlxClassQueue = alx_class_object_list
 from . import AlxProperties
 from . import AlxHandlers
 from . import AlxKeymapUtils
-from . import AlxGeneralPanel
+from . import AlxAlexandriaGeneralPanel
 from . import AlxVisibilityOperators
 from . import AlxUnlockedModeling
 
@@ -108,14 +108,17 @@ def AlxUnregisterToolQueue():
 def RegisterProperties():
     bpy.types.WindowManager.alx_session_properties = bpy.props.PointerProperty(type=AlxProperties.Alx_PG_PropertyGroup_SessionProperties)
 
-    bpy.types.Scene.alx_object_selection_properties = bpy.props.CollectionProperty(type=AlxGeneralPanel.Alx_PG_PropertyGroup_ObjectSelectionListItem)
+    bpy.types.Scene.alx_object_selection_properties = bpy.props.CollectionProperty(type=AlxAlexandriaGeneralPanel.Alx_PG_PropertyGroup_ObjectSelectionListItem)
     bpy.types.Scene.alx_object_selection_properties_index = bpy.props.IntProperty(default=0)
+
+    bpy.types.Scene.alx_object_selection_modifier = bpy.props.CollectionProperty(type=AlxAlexandriaGeneralPanel.Alx_PG_PropertyGroup_ObjectSelectionListItem)
+    bpy.types.Scene.alx_object_selection_modifier_index = bpy.props.IntProperty(default=0)
 
     bpy.types.Scene.alx_scene_isolator_visibility_object_list = []
     bpy.types.Scene.alx_scene_isolator_visibility_collection_list = []
     bpy.types.Scene.alx_tool_scene_isolator_properties = bpy.props.PointerProperty(type=AlxVisibilityOperators.Alx_Tool_SceneIsolator_Properties)
 
-    bpy.types.Scene.alx_panel_alexandria_general_properties = bpy.props.PointerProperty(type=AlxGeneralPanel.Alx_PG_PropertyGroup_AlexandriaGeneral)
+    bpy.types.Scene.alx_panel_alexandria_general_properties = bpy.props.PointerProperty(type=AlxAlexandriaGeneralPanel.Alx_PG_PropertyGroup_AlexandriaGeneral)
 
     bpy.types.Object.alx_self_bmesh_datablock = []
     bpy.types.Scene.alx_draw_handler_unlocked_modeling = None
@@ -125,7 +128,7 @@ def RegisterProperties():
     bpy.types.Object.alx_particle_generator_source_object = bpy.props.PointerProperty(type=bpy.types.Object)
 
     bpy.types.Object.alx_modifier_expand_settings = bpy.props.BoolProperty(default=False)
-    bpy.types.Object.alx_modifier_collection = bpy.props.CollectionProperty(type=AlxGeneralPanel.Alx_PG_PropertyGroup_ModifierSettings)
+    bpy.types.Object.alx_modifier_collection = bpy.props.CollectionProperty(type=AlxAlexandriaGeneralPanel.Alx_PG_PropertyGroup_ModifierSettings)
 def UnRegisterProperties():
     del bpy.types.WindowManager.alx_session_properties
 
@@ -133,6 +136,9 @@ def UnRegisterProperties():
 
     del bpy.types.Scene.alx_object_selection_properties
     del bpy.types.Scene.alx_object_selection_properties_index
+
+    del bpy.types.Scene.alx_object_selection_modifier
+    del bpy.types.Scene.alx_object_selection_modifier_index
 
     del bpy.types.Scene.alx_scene_isolator_visibility_object_list
     del bpy.types.Scene.alx_scene_isolator_visibility_collection_list

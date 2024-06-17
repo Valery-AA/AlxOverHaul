@@ -443,7 +443,6 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
         return {"RUNNING_MODAL"}
 
 
-
 class Alx_WT_WorkSpaceTool_UnlockedModeling(bpy.types.WorkSpaceTool):
     """"""
 

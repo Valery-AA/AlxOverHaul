@@ -30,14 +30,19 @@ def AlxUpdateSceneSelectionObjectListLambda():
 
     for scene in bpy.data.scenes:
         scene.alx_object_selection_properties.clear()
-
+        scene.alx_object_selection_modifier.clear()
 
 
     for scene in bpy.data.scenes:
         for Object in SelectedObjects:
             Item = scene.alx_object_selection_properties.add()
             Item.name = Object.name
+
             Item.ObjectPointer = Object
+            if (Object.type in ["MESH", "FONT", "LATTICE", "CURVE", "SURFACE", "GPENCIL", "VOLUME"]):
+                Item = scene.alx_object_selection_modifier.add()
+                Item.name = Object.name
+                Item.ObjectPointer = Object
 
     for Object in SelectedObjects:
         for Modifier in Object.modifiers:
