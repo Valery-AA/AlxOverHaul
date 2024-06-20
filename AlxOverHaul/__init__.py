@@ -15,7 +15,7 @@ bl_info = {
 import bpy
 from . import addon_updater_ops
 
-
+### AUTO-LOADER
 import os
 import importlib
 
@@ -89,6 +89,8 @@ def AlxUnregisterClassQueue():
             bpy.utils.unregister_class(AlxClass)
         except:
             print("Can't Unregister", AlxClass)
+#########
+
 
 def AlxRegisterToolQueue():
     for AlxTool in AlxToolQueue:
