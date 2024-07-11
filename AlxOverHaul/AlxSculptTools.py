@@ -13,7 +13,8 @@ class Alx_OT_Sculpt_ConditionMasking(bpy.types.Operator):
     mask_condition : bpy.props.EnumProperty(name="", default="EDGE_SEAM", 
         items=[
             ("EDGE_SEAM", "edge seam", "", 1),
-            ("BOUNDARY", "boundary", "", 1<<1)
+            ("BOUNDARY", "boundary", "", 1<<1),
+            ("SELECTION", "selection", "", 1<<2)
         ]) #type:ignore
 
     @classmethod
@@ -45,8 +46,16 @@ class Alx_OT_Sculpt_ConditionMasking(bpy.types.Operator):
             match self.mask_condition:
                 case "EDGE_SEAM":
                     condition_vertex = set(vert.index for edge in self.ContextBMesh.edges if (edge.seam == True) for vert in edge.verts)
+                case "SELECTION":
+                    condition_vertex = set(vert.index for vert in self.ContextBMesh.verts if (vert.select == True))
+                case _:
+                    self.report({"WARNING"}, message="condition selection failed")
 
             if (condition_vertex is not None):
+                if (len(condition_vertex) == 0):
+                    self.report({"WARNING"}, message="no vertex matching condition")
+                    return {"FINISHED"}
+
                 sculpt_mask_layer = self.ContextBMesh.verts.layers.float.get(".sculpt_mask")
                 if (sculpt_mask_layer is None):
                     sculpt_mask_layer = self.ContextBMesh.verts.layers.float.new(".sculpt_mask")
@@ -59,11 +68,15 @@ class Alx_OT_Sculpt_ConditionMasking(bpy.types.Operator):
 
                 if (context.mode in ["OBJECT", "SCULPT"]):
                     self.ContextBMesh.to_mesh(self.ContextMesh)
-                if (context.mode == "EDIT"):
+                    print("to_mesh")
+                if (context.mode == "EDIT_MESH"):
                     bmesh.update_edit_mesh(self.ContextMesh)
-                
+                    print("update_edit_mesh")
+
                 if (context.area is not None) and (context.area.type == "VIEW_3D"):
                     context.area.tag_redraw()
+            else:
+                self.report({"WARNING"}, message="no vertex matching condition")
 
         return {"FINISHED"}
     

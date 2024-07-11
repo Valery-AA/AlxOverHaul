@@ -145,28 +145,50 @@ class Alx_OT_operator_UnlockedObjectModes(bpy.types.Operator):
 
 
             case "EDIT":
-                if (selection_size != 0):
+                if (selection_size > 0):
 
                     if (context.mode != "OBJECT"):
                         bpy.ops.object.mode_set(mode="OBJECT")
 
-                    for selected_object in context.selected_objects:
-                        if (selected_object.type == self.target_object_type):
-                            selected_object.select_set(True, view_layer=context.view_layer)
-                            context.view_layer.objects.active = selected_object
-
-                        else:
-                            selected_object.select_set(False, view_layer=context.view_layer)
-
-
                     match self.target_object_type:
                         case "MESH":
                             if (self.target_object_sub_mode in ["VERT", "EDGE", "FACE"]):
+                                for selected_object in context.selected_objects:
+                                    if (selected_object is not None) and (selected_object.type == "MESH"):
+                                        context.view_layer.objects.active = selected_object
+                                        
                                 bpy.ops.object.mode_set_with_submode(mode="EDIT", mesh_select_mode=set([self.target_object_sub_mode]))
+                                return {"FINISHED"}
                     
-                        case "ARMATURE" | "CURVE" | "SURFACE" | "META" | "FONT" | "LATTICE":
+                        case "ARMATURE":
                             if (self.target_object_sub_mode == ""):
+
+                                armature_selection_override = list(filter(
+                                    lambda object: object is not None,
+
+                                    [selected_object if (selected_object.type == "ARMATURE") else selected_object.find_armature()
+                                    for selected_object in context.selected_objects
+                                    if (selected_object is not None) and (selected_object.type in ["ARMATURE", "MESH"])]
+                                    ))
+
+                                if ( len(armature_selection_override) == 0 ):
+                                    return {"CANCELLED"}
+
+                                context.view_layer.objects.active = armature_selection_override[0]
+                                for object in armature_selection_override:
+                                    object.select_set(True)
+
                                 bpy.ops.object.mode_set(mode="EDIT")
+                                return {"FINISHED"}
+
+                        case "CURVE" | "SURFACE" | "META" | "FONT" | "LATTICE":
+                            if (self.target_object_sub_mode == ""):
+                                for selected_object in context.selected_objects:
+                                    if (selected_object is not None) and (selected_object in ["ARMATURE", "CURVE", "SURFACE", "META", "FONT", "LATTICE"]):
+                                        context.view_layer.objects.active = selected_object
+
+                                bpy.ops.object.mode_set(mode="EDIT")
+                                return {"FINISHED"}
 
                         case "GPENCIL":
                             if (self.target_object_sub_mode in ["POINT", "STROKE", "SEGMENT"]):
@@ -178,14 +200,16 @@ class Alx_OT_operator_UnlockedObjectModes(bpy.types.Operator):
 
             case "SCULPT":
                 if (context.mode != "SCULPT"):
-                    if (context.mode != "OBJECT"):
+                    if ( selection_size > 0):
+                        sculpt_selection_override = [selected_object for selected_object in context.selected_objects if (selected_object.type == "MESH")]
+                        
+                        if ( len(sculpt_selection_override) == 0 ):
+                            return {"CANCELLED"}
+                        
+
                         bpy.ops.object.mode_set(mode="OBJECT")
-                    if (context.active_object.type != "MESH"):
-                        for selected_object in context.selected_objects:
-                            if (selected_object.type == "MESH"):
-                                context.view_layer.objects.active = selected_object
-                                break
-                    bpy.ops.object.mode_set(mode="SCULPT")
+                        context.view_layer.objects.active = sculpt_selection_override[0]
+                        bpy.ops.object.mode_set(mode="SCULPT")
 
                 return {"FINISHED"}
 

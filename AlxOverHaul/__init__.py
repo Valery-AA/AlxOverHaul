@@ -3,7 +3,7 @@ bl_info = {
     "author" : "Valeria Bosco[Valy Arhal]",
     "description" : "",
     "warning" : "[Heavly Under Development] And Subject To Substantial Changes",
-    "version" : (0, 6, 0, 8),
+    "version" : (0, 6, 1, 0),
     "blender" : (3, 6, 0),
     "category" : "3D View",
     "location" : "[Ctrl Alt A] General Menu, [Shift S] Pivot Menu, [Tab] Auto Mode Pie Menu",
@@ -11,53 +11,58 @@ bl_info = {
     "tracker_url" : "https://github.com/Valery-AA/AlxOverHaul/issues",
 }
 
+from typing import Iterable
+import importlib
+from os import sep as os_separator
+from pathlib import Path
+
 
 import bpy
 from . import addon_updater_ops
 
 
-import os
-import importlib
+init_path: Iterable[str]  = __path__
+folder_name_blacklist: list[str]=["__pycache__"] 
+file_name_blacklist: list[str]=["__init__.py"]
+class_name_blacklist: list[str]=["PSA_UL_SequenceList"]
 
-folder_blacklist = ["__pycache__", "alxoverhaul_updater"]
-file_blacklist = ["__init__.py", "addon_updater_ops", "addon_updater.py", "Extras.py", ]
 
-addon_folders = list([__path__[0]])
-addon_folders.extend( [os.path.join(__path__[0], folder_name) for folder_name in os.listdir(__path__[0]) if ( os.path.isdir( os.path.join(__path__[0], folder_name) ) ) and (folder_name not in folder_blacklist) ] )
+addon_folders = set()
+addon_files = set()
 
-addon_files = [[folder_path, file_name[0:-3]] for folder_path in addon_folders for file_name in os.listdir(folder_path) if (file_name not in file_blacklist) and (file_name.endswith(".py"))]
+addon_path_iter = [ Path( init_path[0] ) ]
+addon_path_iter.extend(Path( init_path[0] ).iterdir())
+
+for folder_path in addon_path_iter:
+    
+    if ( folder_path.is_dir() ) and ( folder_path.exists() ) and ( folder_path.name not in folder_name_blacklist ):
+        addon_folders.add( folder_path )
+
+        for subfolder_path in folder_path.iterdir():
+            if ( subfolder_path.is_dir() ) and ( subfolder_path.exists()):
+                addon_path_iter.append( subfolder_path )
+                addon_folders.add( subfolder_path )
+
+
+addon_files = [[folder_path, file_name.name[0:-3]] for folder_path in addon_folders for file_name in folder_path.iterdir() if ( file_name.is_file() ) and ( file_name.name not in file_name_blacklist ) and ( file_name.suffix == ".py" )]
 
 for folder_file_batch in addon_files:
-    if (os.path.basename(folder_file_batch[0]) == os.path.basename(__path__[0])):
-        file = folder_file_batch[1]
-
-        if (file not in locals()):
-            import_line = f"from . import {file}"
-            exec(import_line)
-        else:
-            reload_line = f"{file} = importlib.reload({file})"
-            exec(reload_line)
+    file = folder_file_batch[1]
     
+    if (file not in locals()):
+        relative_path = str(folder_file_batch[0].relative_to( init_path[0] ) ).replace(os_separator,"." )
+
+        import_line = f"from . {relative_path if relative_path != '.' else ''} import {file}"
+        exec(import_line)
     else:
-        if (os.path.basename(folder_file_batch[0]) != os.path.basename(__path__[0])):
-            file = folder_file_batch[1]
-
-            if (file not in locals()):
-                import_line = f"from . {os.path.basename(folder_file_batch[0])} import {file}"
-                exec(import_line)
-            else:
-                reload_line = f"{file} = importlib.reload({file})"
-                exec(reload_line)
-
+        reload_line = f"{file} = importlib.reload({file})"
+        exec(reload_line)
 
 import inspect
-
-class_blacklist = ["PSA_UL_SequenceList"]
-
-bpy_class_object_list = tuple(bpy_class[1] for bpy_class in inspect.getmembers(bpy.types, inspect.isclass) if (bpy_class not in class_blacklist))
-alx_class_object_list = tuple(alx_class[1] for file_batch in addon_files for alx_class in inspect.getmembers(eval(file_batch[1]), inspect.isclass) if issubclass(alx_class[1], bpy_class_object_list) and (not issubclass(alx_class[1], bpy.types.WorkSpaceTool)))
+alx_class_object_list = tuple(alx_class[1] for file_batch in addon_files for alx_class in inspect.getmembers(eval(file_batch[1]), inspect.isclass) )
 
 AlxClassQueue = alx_class_object_list
+
 
 
 from . import AlxProperties
@@ -68,12 +73,13 @@ from . import AlxVisibilityOperators
 from . import AlxUnlockedModeling
 
 
+
 AlxToolQueue = [
                [AlxUnlockedModeling.Alx_WT_WorkSpaceTool_UnlockedModeling, None, True, False] #tool_class, after, separator, group
                ]
 
 
-def AlxRegisterClassQueue():
+def AlxRegisterClassQueue(AlxClassQueue):
     for AlxClass in AlxClassQueue:
         try:
             bpy.utils.register_class(AlxClass)
@@ -83,12 +89,13 @@ def AlxRegisterClassQueue():
                 bpy.utils.register_class(AlxClass)
             except:
                 pass
-def AlxUnregisterClassQueue():
+def AlxUnregisterClassQueue(AlxClassQueue):
     for AlxClass in AlxClassQueue:
         try:
             bpy.utils.unregister_class(AlxClass)
         except:
             print("Can't Unregister", AlxClass)
+
 
 def AlxRegisterToolQueue():
     for AlxTool in AlxToolQueue:
@@ -175,7 +182,7 @@ def register():
     except:
         pass
 
-    AlxRegisterClassQueue()
+    AlxRegisterClassQueue(AlxClassQueue)
     AlxRegisterToolQueue()
 
     AlxKeymapUtils.AlxCreateKeymaps()
@@ -189,7 +196,7 @@ def register():
 def unregister():
     addon_updater_ops.unregister()
 
-    AlxUnregisterClassQueue()
+    AlxUnregisterClassQueue(AlxClassQueue)
     AlxUnregisterToolQueue()
 
     for km, kmi in AlxKeymapUtils.AlxAddonKeymaps:

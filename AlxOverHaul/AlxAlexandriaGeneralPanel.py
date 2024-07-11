@@ -10,14 +10,17 @@ from .AlxSculptTools import Alx_OT_Sculpt_ConditionMasking
 
 from .AlxUVRetopology import Alx_OT_VXGroupBySeams, Alx_OT_UVExtractIsland
 from .AlxHairTools import Alx_OT_Armature_BoneChainOnSelection
-from .AlxShapeKeyTransfer import Alx_OT_Shapekey_TransferShapekeysToTarget
+
 
 from .AlxVisibilityOperators import Alx_Tool_SceneIsolator_Properties, Alx_OT_Scene_VisibilityIsolator, Alx_OT_Object_VisibilitySwitch
 from .AlxModifierOperators import Alx_OT_Modifier_ManageOnSelected, Alx_OT_Modifier_ApplyReplace, Alx_OT_Modifier_BatchVisibility
 
 from .UITools.Alx_OT_UI_SimpleDesigner import Alx_OT_UI_SimpleDesigner
 
+# Mesh Tools
 from .MeshTools.AlxMeshCleaners import Alx_OT_Mesh_VertexGroup_Clean
+from .MeshTools.AlxShapeKeyToolSet import Alx_OT_Shapekey_TransferShapekeysToTarget
+
 
 class Alx_PG_PropertyGroup_AlexandriaGeneral(bpy.types.PropertyGroup):
     """"""
@@ -39,7 +42,6 @@ class Alx_PG_PropertyGroup_ObjectSelectionListItem(bpy.types.PropertyGroup):
     """"""
     name : bpy.props.StringProperty() #type:ignore
     ObjectPointer : bpy.props.PointerProperty(type=bpy.types.Object) #type:ignore
-
 
 
 class Alx_UL_UIList_ObjectSelectionProperties(bpy.types.UIList):
@@ -70,11 +72,11 @@ class Alx_UL_UIList_ObjectSelectionProperties(bpy.types.UIList):
         body = box_column.row(align=True)
 
         body.prop(item.ObjectPointer, "display_type", text="")
-        body.prop(item.ObjectPointer, "color", text="")
+        if (item.ObjectPointer.type in ["MESH", "META"]):
+            body.prop(item.ObjectPointer, "color", text="")
 
 
         item_box.separator(factor=2.0)
-
 
 
 class Alx_PG_PropertyGroup_ModifierSettings(bpy.types.PropertyGroup):
@@ -189,6 +191,14 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
                         row.prop(raw_object_modifier, "use_poly_data", text="")
                         row.prop(raw_object_modifier, "data_types_polys")
 
+                    if (raw_object_modifier.type == "MIRROR"):
+                        row = ModifierOptionBox.column()
+
+                        row.prop(raw_object_modifier, "mirror_object", text="object")
+                        row.prop(raw_object_modifier, "use_clip", text="clip")
+                        row.prop(raw_object_modifier, "use_mirror_merge", text="merge")
+                        row.prop(raw_object_modifier, "merge_threshold", text="")
+                        
 
                     if (raw_object_modifier.type == "SUBSURF"):
                         ModifierOptionBox.row().prop(raw_object_modifier, "show_only_control_edges", text="optimal")
@@ -221,6 +231,8 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
                         row.prop(raw_object_modifier, "thickness")
                         row.prop(raw_object_modifier, "offset")
 
+
+
                     if (raw_object_modifier.type == "SHRINKWRAP"):
                         row = ModifierOptionBox.row().split(factor=0.5, align=True)
                         row.prop(raw_object_modifier, "target", text="")
@@ -230,7 +242,19 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
                         row.prop(raw_object_modifier, "wrap_method", text="")
                         row.prop(raw_object_modifier, "wrap_mode", text="")
 
-                    modifier_slots.label(text="------------------------------------------------------------------------------------------------------------------------------------------------------")
+
+
+
+                    if (raw_object_modifier.type == "DISPLACE"):
+                        row = ModifierOptionBox.row().split(factor=0.034)
+                        row.separator()
+
+                        options_layout = row.box()
+                        row = options_layout.row()
+                        row.prop(raw_object_modifier, "strength")
+                        row.prop(raw_object_modifier, "mid_level")
+
+
 
                 modifier_header.prop(raw_object_modifier, "name", text="", icon=icon_name, emboss=True)
 
@@ -329,10 +353,12 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
         isolator_box.separator()
 
 
-        overlay_prop = header_layout.row(align=True)
+        overlay_column = header_layout.column(align=True)
+        overlay_prop = overlay_column.row(align=True)
         overlay_prop.prop(context.space_data.overlay, "show_overlays", text="", icon="OVERLAY")
         overlay_prop.prop(context.area.spaces.active.shading, "show_xray", text="Mesh", icon="XRAY")
         overlay_prop.prop(context.space_data.overlay, "show_xray_bone", text="Bone", icon="XRAY")
+        overlay_prop.prop(context.area.spaces.active.shading, "type", text="", expand=True)
         poly_prop = header_layout.row(align=True)
         poly_prop.prop(context.space_data.overlay, "show_face_orientation", text="", icon="NORMALS_FACE")
         poly_prop.prop(context.space_data.overlay, "show_wireframes", text="Wireframe", icon="MOD_WIREFRAME")
@@ -340,24 +366,29 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
         
         header_layout.separator()
 
-        if (GeneralPanelProperties.panel_tabs == "OBJECT") and (context.area.type == "VIEW_3D"):
+        if (GeneralPanelProperties.panel_tabs == "OBJECT"):
             ObjectTabBox = tabs_panels.column()
 
             ObjectTabBox.template_list(Alx_UL_UIList_ObjectSelectionProperties.bl_idname, list_id="", dataptr=context.scene, propname="alx_object_selection_properties", active_dataptr=context.scene, active_propname="alx_object_selection_properties_index", type="GRID", columns=2)
 
 
 
-        if (GeneralPanelProperties.panel_tabs == "ARMATURE") and (context.area.type == "VIEW_3D"):
+        if (GeneralPanelProperties.panel_tabs == "ARMATURE"):
             ArmatureTabBox = tabs_panels.column()
 
             if (AlxContextArmature is not None):
                 armature_display_options = ArmatureTabBox.column()
-                armature_display_options.prop(bpy.data.armatures.get(AlxContextArmature.data.name), "show_names")
-                armature_display_options.prop(bpy.data.armatures.get(AlxContextArmature.data.name), "show_axes")
-                armature_display_options.prop(bpy.data.armatures.get(AlxContextArmature.data.name), "display_type", text="", expand=False)
+                armature_display_options.row().prop(bpy.data.armatures.get(AlxContextArmature.data.name), "display_type", expand=True)
+                armature_display_options.prop(bpy.data.armatures.get(AlxContextArmature.data.name), "show_names", text="names")
+                armature_display_options.prop(bpy.data.armatures.get(AlxContextArmature.data.name), "show_bone_custom_shapes", text="custom shapes")
+                armature_display_options.prop(bpy.data.armatures.get(AlxContextArmature.data.name), "show_bone_colors", text="colors")
+                
+            
+                armature_display_options.prop(bpy.data.armatures.get(AlxContextArmature.data.name), "show_axes", text="axis")
+                
 
 
-        if (GeneralPanelProperties.panel_tabs == "MODIFIER") and (context.area.type == "VIEW_3D"):
+        if (GeneralPanelProperties.panel_tabs == "MODIFIER"):
             ModifierTabBox = tabs_panels.column()
 
             modifier_tab_box_header = ModifierTabBox.row().split(factor=0.33)
@@ -372,7 +403,7 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
             ModifierTabBox.row().template_list(Alx_UL_UIList_ObjectSelectionModifiers.bl_idname, list_id="", dataptr=context.scene, propname="alx_object_selection_modifier", active_dataptr=context.scene, active_propname="alx_object_selection_modifier_index", maxrows=3)
             
 
-        if (GeneralPanelProperties.panel_tabs == "ALXOPERATORS") and (context.area.type == "VIEW_3D"):
+        if (GeneralPanelProperties.panel_tabs == "ALXOPERATORS"):
             AlxOperatorsTabBox = tabs_panels.column()
 
             AlxOperatorsTabBox.operator(Alx_OT_VXGroupBySeams.bl_idname, text="VxGroup - group/mask by seam")
@@ -391,7 +422,7 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
 
 
 
-        if (GeneralPanelProperties.panel_tabs == "RENDER") and (context.area.type == "VIEW_3D"):
+        if (GeneralPanelProperties.panel_tabs == "RENDER"):
             RenderTabBox = tabs_panels.column()
 
             render_engine_option = RenderTabBox.row()
@@ -515,7 +546,10 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
             
         #     AlxSpace.label(text=context.area.type)
 
-        # if (context.scene.alx_panel_alexandria_general_properties.alx_panel_tab == "SETTINGS"):
+        if (GeneralPanelProperties.panel_tabs == "SETTINGS"):
+            AlxSettingsTabBox = tabs_panels.column()
+
+            #AlxSettingsTabBox.operator("script.reload", text="reload scripts")
         #     AlxSpace = LayoutSpace.box().row()
 
             
@@ -538,6 +572,8 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
         # MMenuSectionR.row().operator(AlxOperators.Alx_OT_Mesh_EditAttributes.bl_idname, text="Edit Attributes")
         # 
 
+LABEL = "LABEL_"
+SEPARATOR = "SEPARATOR"
 
 class Alx_PT_AlexandriaModifierPanel(bpy.types.Panel):
     """"""
@@ -558,38 +594,93 @@ class Alx_PT_AlexandriaModifierPanel(bpy.types.Panel):
         AlxLayout = self.layout
         AlxLayout.ui_units_x = 40.0
         
-        ModifierSpace = AlxLayout.box().grid_flow(columns=5, even_columns=True, row_major=True)
+        ModifierLayout = AlxLayout.row()
+        
+        modifier_columns = [
+            [
+            LABEL + "data:",
+            "DATA_TRANSFER",
+            "MESH_CACHE",
+            "MESH_SEQUENCE_CACHE",
+            SEPARATOR + "3.4",
+            SEPARATOR + "3.4",
+        
+            LABEL + "normals:",
+            "NORMAL_EDIT",
+            "WEIGHTED_NORMAL",
 
-        for Modifier in ["LABEL_Data:", "LABEL_Copy:", "LABEL_Generate:", "LABEL_Alter:", "LABEL_Rig:",
-                        "DATA_TRANSFER", "MIRROR", "BEVEL", "BOOLEAN", "ARMATURE",
-                        "MESH_CACHE", "ARRAY", "SOLIDIFY", "EDGE_SPLIT", "SKIN",
-                        "MESH_SEQUENCE_CACHE", "LABEL_Re-generate:", "WIREFRAME", "WELD", "LABEL_Deform:",
-                        "LABEL_Normals:", "REMESH", "SCREW", "LABEL_Smooth:", "SURFACE_DEFORM",
-                        "NORMAL_EDIT", "BUILD", "LABEL_Resolution:", "SMOOTH", "MESH_DEFORM",
-                        "WEIGHTED_NORMAL", "TRIANGULATE", "SUBSURF", "CORRECTIVE_SMOOTH", "LAPLACIANDEFORM",
-                        "LABEL_UVs:", "SEPARATOR", "MULTIRES", "LAPLACIANSMOOTH", "LATTICE",
-                        "UV_PROJECT", "SEPARATOR", "DECIMATE", "LABEL_Mask:", "LABEL_Displace:",
-                        "UV_WARP", "SEPARATOR", "SEPARATOR", "MASK", "DISPLACE",
-                        "SEPARATOR", "SEPARATOR", "SEPARATOR", "SEPARATOR", "CURVE",
-                        "SEPARATOR", "SEPARATOR", "SEPARATOR", "SEPARATOR","LABEL_Project:",
-                        "SEPARATOR", "SEPARATOR", "SEPARATOR", "SEPARATOR","SHRINKWRAP"
-                         ]:
+            LABEL + "UVs:",
+            "UV_PROJECT",
+            "UV_WARP",
+            SEPARATOR + "1",
+            ],
+            
+            [
+            LABEL + "instances:",
+            "MIRROR",
+            "ARRAY",
+            "BUILD",
+            "SKIN",
+            SEPARATOR + "3.4",
 
-            if (Modifier[0:6] == "LABEL_"):
-                ModifierSpace.label(text=Modifier[6:])
+            LABEL + "edit:",
+            "BEVEL",
+            "BOOLEAN",
+            "EDGE_SPLIT",
+            "WELD",
+            "MASK",
+            "SOLIDIFY",
+            "WIREFRAME",
+            "SCREW",
+            ],
 
-            if (Modifier == "SEPARATOR"):
-                ModifierSpace.separator()
+            [
+            LABEL + "resolution:",
+            "SUBSURF",
+            "MULTIRES",
+            "TRIANGULATE",
+            "DECIMATE",
+            "REMESH",
+            
+            LABEL + "deform:",
+            "ARMATURE",
+            "SURFACE_DEFORM",
+            "MESH_DEFORM",
+            "LAPLACIANDEFORM",
+            "LATTICE",
+            "CURVE",
+            
 
-            if (Modifier[0:6] != "LABEL_") and (Modifier != "SEPARATOR"):
-                mod_name = bpy.types.Modifier.bl_rna.properties['type'].enum_items[Modifier].name
-                mod_icon = bpy.types.Modifier.bl_rna.properties['type'].enum_items[Modifier].icon
-                mod_identifier = bpy.types.Modifier.bl_rna.properties['type'].enum_items[Modifier].identifier
+            LABEL + "displace:",
+            "SHRINKWRAP",
+            "DISPLACE",
+            "SMOOTH",
+            "CORRECTIVE_SMOOTH",
+            "LAPLACIANSMOOTH"
+            ]
+        ]
 
-                modifier_button = ModifierSpace.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, text=mod_name, icon=mod_icon)
-                modifier_button.modifier_type = mod_identifier
-                modifier_button.create_modifier = True
-                modifier_button.remove_modifier = False
+
+        for modifier_column in modifier_columns:
+            modifier_space = ModifierLayout.column()
+
+            for Modifier in modifier_column:
+
+                if (Modifier[0:6] == "LABEL_"):
+                    modifier_space.label(text=Modifier[6:])
+
+                if (Modifier[0:9] == "SEPARATOR"):
+                    modifier_space.separator(factor= float(Modifier[9:]) )
+
+                if (Modifier[0:6] != "LABEL_") and (Modifier[0:9] != "SEPARATOR"):
+                    mod_name = bpy.types.Modifier.bl_rna.properties['type'].enum_items[Modifier].name
+                    mod_icon = bpy.types.Modifier.bl_rna.properties['type'].enum_items[Modifier].icon
+                    mod_identifier = bpy.types.Modifier.bl_rna.properties['type'].enum_items[Modifier].identifier
+
+                    modifier_button = modifier_space.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, text=mod_name, icon=mod_icon)
+                    modifier_button.modifier_type = mod_identifier
+                    modifier_button.create_modifier = True
+                    modifier_button.remove_modifier = False
 
 
 class Alx_PT_Scene_GeneralPivot(bpy.types.Panel):

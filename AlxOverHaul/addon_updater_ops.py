@@ -1383,7 +1383,9 @@ def register(bl_info):
     # essentially a staging folder used by the updater on its own
     # Needs to be within the same folder as the addon itself
     # Need to supply a full, absolute path to folder
-    # updater.updater_path = # set path of updater folder, by default:
+    from pathlib import Path
+    updater._updater_path = str( Path.absolute( Path(__path__[0]) ) )
+    # set path of updater folder, by default:
     # 			/addons/{__package__}/{__package__}_updater
 
     # Auto create a backup of the addon when installing other versions.
@@ -1484,7 +1486,7 @@ def register(bl_info):
     # Set the min and max versions allowed to install.
     # Optional, default None
     # min install (>=) will install this and higher
-    updater.version_min_update = (0, 6, 0)
+    updater.version_min_update = None
     # updater.version_min_update = None  # None or default for no minimum.
 
     # Max install (<) will install strictly anything lower than this version

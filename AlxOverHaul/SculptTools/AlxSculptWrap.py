@@ -2,28 +2,28 @@ import bpy
 import bmesh
 from mathutils import bvhtree
 
-class Alx_PT_Panel_ReProjectVertex(bpy.types.Panel):
-    """"""
+# class Alx_PT_Panel_ReProjectVertex(bpy.types.Panel):
+#     """"""
 
-    bl_label = "Alx Mesh Reprojection"
-    bl_idname = "ALX_PT_panel_reproject_vertex"
+#     bl_label = "Alx Mesh Reprojection"
+#     bl_idname = "ALX_PT_panel_reproject_vertex"
 
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
+#     bl_space_type = "VIEW_3D"
+#     bl_region_type = "UI"
 
-    bl_category = "Alx3D"
+#     bl_category = "Alx3D"
 
-    bl_order = 0
+#     bl_order = 0
 
-    @classmethod
-    def poll(self, context: bpy.types.Context):
-        return True
+#     @classmethod
+#     def poll(self, context: bpy.types.Context):
+#         return True
     
-    def draw(self, context: bpy.types.Context):
-        properties = context.window_manager.alx_session_properties
+#     def draw(self, context: bpy.types.Context):
+#         properties = context.window_manager.alx_session_properties
 
-        self.layout.row().prop(properties, "vertex_reproject_target_object", text="Target")
-        self.layout.row().operator(Alx_OT_Operator_ReProjectVertex.bl_idname, text="re-projection")
+#         self.layout.row().prop(properties, "vertex_reproject_target_object", text="Target")
+#         self.layout.row().operator(Alx_OT_Operator_ReProjectVertex.bl_idname, text="re-projection")
 
 class Alx_OT_Operator_ReProjectVertex(bpy.types.Operator):
     """"""

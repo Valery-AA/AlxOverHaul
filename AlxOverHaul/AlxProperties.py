@@ -5,6 +5,15 @@ import bpy
 class Alx_PG_PropertyGroup_SessionProperties(bpy.types.PropertyGroup):
     """"""
 
+    udim_texture_compressor_texture_target : bpy.props.PointerProperty(type=bpy.types.Image)
+
+    vertex_reproject_target_object : bpy.props.PointerProperty(type=bpy.types.Object)
+    vertex_reproject_object_use_deform : bpy.props.BoolProperty(default=False)
+    vertex_reproject_object_use_cage : bpy.props.BoolProperty(default=False)
+
+    shapekey_transfer_source_object : bpy.props.PointerProperty(type=bpy.types.Object)
+    shapekey_transfer_target_object : bpy.props.PointerProperty(type=bpy.types.Object)
+
     ui_simple_designer_user_ui_type : bpy.props.EnumProperty(items=[
         ("VIEW_3D", "View 3d", "", "VIEW3D", 1),
         ("IMAGE_EDITOR", "Image Editor", "", "IMAGE", 1<<1),
@@ -30,15 +39,6 @@ class Alx_PG_PropertyGroup_SessionProperties(bpy.types.PropertyGroup):
         ("SPREADSHEET", "Spreadsheet", "", "SPREADSHEET", 1<<21),
         ("PREFERENCES", "Preferences", "", "PREFERENCES", 1<<22)
     ]) #type:ignore
-
-    vertex_reproject_target_object : bpy.props.PointerProperty(type=bpy.types.Object)
-    vertex_reproject_object_use_deform : bpy.props.BoolProperty(default=False)
-    vertex_reproject_object_use_cage : bpy.props.BoolProperty(default=False)
-
-    shapekey_transfer_source_object : bpy.props.PointerProperty(type=bpy.types.Object)
-    shapekey_transfer_target_object : bpy.props.PointerProperty(type=bpy.types.Object)
-
-
 
 
 
