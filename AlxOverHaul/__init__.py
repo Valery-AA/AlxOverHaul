@@ -3,10 +3,10 @@ bl_info = {
     "author" : "Valeria Bosco[Valy Arhal]",
     "description" : "",
     "warning" : "[Heavly Under Development] And Subject To Substantial Changes",
-    "version" : (0, 6, 1, 0),
+    "version" : (0, 6, 2, 0),
     "blender" : (3, 6, 0),
     "category" : "3D View",
-    "location" : "[Ctrl Alt A] General Menu, [Shift S] Pivot Menu, [Tab] Auto Mode Pie Menu",
+    "location" : "[Ctrl Alt A] General Menu, [Shift Alt S] Pivot Menu, [Tab] Auto Mode Pie Menu",
     "doc_url" : "https://github.com/Valery-AA/AlxOverHaul/wiki",
     "tracker_url" : "https://github.com/Valery-AA/AlxOverHaul/issues",
 }
@@ -18,31 +18,33 @@ from pathlib import Path
 
 
 import bpy
-from . import addon_updater_ops
+
+if (bpy.app.version[0]<=4 and bpy.app.version[1]<=1):
+    from . import addon_updater_ops
 
 
-init_path: Iterable[str]  = __path__
 folder_name_blacklist: list[str]=["__pycache__"] 
 file_name_blacklist: list[str]=["__init__.py"]
-class_name_blacklist: list[str]=["PSA_UL_SequenceList"]
+if (bpy.app.version[0]<=4 and bpy.app.version[1]<=1):
+    file_name_blacklist.extend(["addon_updater", "addon_updater_ops"])
 
 
-addon_folders = set()
-addon_files = set()
+addon_folders = []
+addon_files = []
 
-addon_path_iter = [ Path( init_path[0] ) ]
-addon_path_iter.extend(Path( init_path[0] ).iterdir())
+addon_path_iter = [ Path( __path__[0] ) ]
+addon_path_iter.extend(Path( __path__[0] ).iterdir())
 
 for folder_path in addon_path_iter:
     
+    
     if ( folder_path.is_dir() ) and ( folder_path.exists() ) and ( folder_path.name not in folder_name_blacklist ):
-        addon_folders.add( folder_path )
+        addon_folders.append( folder_path )
 
         for subfolder_path in folder_path.iterdir():
             if ( subfolder_path.is_dir() ) and ( subfolder_path.exists()):
                 addon_path_iter.append( subfolder_path )
-                addon_folders.add( subfolder_path )
-
+                addon_folders.append( subfolder_path )
 
 addon_files = [[folder_path, file_name.name[0:-3]] for folder_path in addon_folders for file_name in folder_path.iterdir() if ( file_name.is_file() ) and ( file_name.name not in file_name_blacklist ) and ( file_name.suffix == ".py" )]
 
@@ -50,7 +52,7 @@ for folder_file_batch in addon_files:
     file = folder_file_batch[1]
     
     if (file not in locals()):
-        relative_path = str(folder_file_batch[0].relative_to( init_path[0] ) ).replace(os_separator,"." )
+        relative_path = str(folder_file_batch[0].relative_to( __path__[0] ) ).replace(os_separator,"." )
 
         import_line = f"from . {relative_path if relative_path != '.' else ''} import {file}"
         exec(import_line)
@@ -83,21 +85,20 @@ def AlxRegisterClassQueue(AlxClassQueue):
     for AlxClass in AlxClassQueue:
         try:
             bpy.utils.register_class(AlxClass)
-        except:
+        except Exception as error:
+            print(error)
             try:
                 bpy.utils.unregister_class(AlxClass)
                 bpy.utils.register_class(AlxClass)
-            except:
-                pass
+            except Exception as error:
+                print(error)
+
 def AlxUnregisterClassQueue(AlxClassQueue):
     for AlxClass in AlxClassQueue:
         try:
             bpy.utils.unregister_class(AlxClass)
         except:
             print("Can't Unregister", AlxClass)
-#########
-
-
 
 def AlxRegisterToolQueue():
     for AlxTool in AlxToolQueue:
@@ -179,10 +180,11 @@ def UnRegisterHandlers():
 
 
 def register():
-    try:
-        addon_updater_ops.register(bl_info)
-    except:
-        pass
+    if (bpy.app.version[0]<=4 and bpy.app.version[1]<=1):
+        try:
+            addon_updater_ops.register(bl_info)
+        except:
+            pass
 
     AlxRegisterClassQueue(AlxClassQueue)
     AlxRegisterToolQueue()
@@ -196,7 +198,8 @@ def register():
 
 
 def unregister():
-    addon_updater_ops.unregister()
+    if (bpy.app.version[0]<=4 and bpy.app.version[1]<=1):
+        addon_updater_ops.unregister()
 
     AlxUnregisterClassQueue(AlxClassQueue)
     AlxUnregisterToolQueue()

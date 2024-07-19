@@ -4,7 +4,7 @@ import bpy
 class Alx_MT_MenuPie_UnlockedObjectModes(bpy.types.Menu):
     """"""
 
-    bl_label = ""
+    bl_label = "unlocked object modes"
     bl_idname = "ALX_MT_menu_pie_unlocked_object_modes"
 
 

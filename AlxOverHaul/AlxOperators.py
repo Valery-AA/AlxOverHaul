@@ -5,67 +5,6 @@ import bmesh
 
 from . import AlxUtils
 
-
-
-class Alx_OT_Armature_MatchIKByMirroredName(bpy.types.Operator):
-    """"""
-
-    bl_label = ""
-    bl_idname = "alx.bone_match_ik_by_mirrored_name"
-
-    bl_description = "Requires [Pose Mode] Mirrors IK Data from the source side to the opposite"
-
-    bl_options = {"INTERNAL", "REGISTER", "UNDO"}
-
-    SourceSide : bpy.props.EnumProperty(name="Mirror From", default=1, items=[("LEFT", "Left", "", 1), ("RIGHT", "Right", "", 2)])
-
-    @classmethod
-    def poll(self, context):
-        return context.area.type == "VIEW_3D" and context.mode == "POSE"
-
-    def execute(self, context):
-        if (context.active_object is not None) and (context.active_object.type == "ARMATURE") and (context.mode == "POSE"):
-
-            ContextArmature = context.active_object
-
-            if (ContextArmature is not None):
-
-                PoseBoneData = ContextArmature.pose.bones
-
-                SymmetricPairBones = []
-                SymmetricUniqueBones = []
-                
-                if (self.SourceSide == "LEFT"):
-                    SymmetricPairBones = [PoseBone for PoseBone in PoseBoneData if ((PoseBone.name[-1].lower() == "l"))]
-                
-                if (self.SourceSide == "RIGHT"):
-                    SymmetricPairBones = [PoseBone for PoseBone in PoseBoneData if ((PoseBone.name[-1].lower() == "r"))]
-                
-                for PoseBone in SymmetricPairBones:
-                    if (PoseBone not in SymmetricUniqueBones):
-                        SymmetricUniqueBones.append(PoseBone)
-
-                for UniquePoseBone in SymmetricUniqueBones:
-                    ContextPoseBone = None
-                    ContextOppositeBone = None
-
-                    if (self.SourceSide == "LEFT"):
-                        ContextPoseBone = AlxUtils.AlxGetBoneAlwaysLeft(UniquePoseBone, ContextArmature)
-                        ContextOppositeBone = AlxUtils.AlxGetBoneOpposite(AlxUtils.AlxGetBoneAlwaysLeft(UniquePoseBone, ContextArmature), ContextArmature)
-                    
-                    if (self.SourceSide == "RIGHT"):
-                        ContextPoseBone = AlxUtils.AlxGetBoneAlwaysRight(UniquePoseBone, ContextArmature)
-                        ContextOppositeBone = AlxUtils.AlxGetBoneOpposite(AlxUtils.AlxGetBoneAlwaysRight(UniquePoseBone, ContextArmature), ContextArmature)
-
-                    if (ContextPoseBone is not None) and (ContextOppositeBone is not None):
-                        AlxUtils.AlxCloneIKSettings(ContextPoseBone, ContextOppositeBone)
-                        AlxUtils.AlxCloneIKBoneLimitOnChain(ContextPoseBone, ContextArmature)
-        
-        return {"FINISHED"}
-
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self, width=300)
-
 class Alx_OT_Mesh_BoundaryMultiTool(bpy.types.Operator):
     """"""
 

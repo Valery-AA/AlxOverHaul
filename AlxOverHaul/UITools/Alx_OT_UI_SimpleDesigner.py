@@ -32,6 +32,7 @@ class Alx_OT_UI_SimpleDesigner(bpy.types.Operator):
 
     bl_label = ""
     bl_idname = "alx.operator_ui_simple_designer"
+    bl_description = "relative to area under mouse and mouse position \n key [C] close area \n Key [S] swaps area \n Key [T] area swap type selector \n key [V]/[H] vertical/horizontal area split"
 
     context_area : bpy.types.Area = None
 

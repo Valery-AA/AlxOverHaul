@@ -1,3 +1,64 @@
+import bpy
+
+import os
+
+for collection in bpy.data.collections:
+  collection.hide_render = False
+
+for collection in bpy.data.collections:
+    hidden_collections = [hiddencollection for hiddencollection  in bpy.data.collections if (hiddencollection is not collection)]
+    for hidecollection in hidden_collections:
+        hidecollection.hide_render = True
+        
+    for window in bpy.context.window_manager.windows:
+            screen = window.screen
+            for area in screen.areas:
+                if area.type == 'VIEW_3D':
+                    with bpy.context.temp_override(window=window, area=area):
+                        
+                        directory = os.path.dirname(bpy.data.filepath)   
+                        export_directory_name = f"{collection.name}.png"
+                        export_directory = os.path.join(directory, export_directory_name)
+                        
+                        bpy.context.scene.render.filepath = export_directory
+                         
+                        bpy.ops.render.render(use_viewport=True, write_still=True)
+
+
+
+
+import bpy
+
+import os
+
+
+
+def render_call():
+    for window in bpy.context.window_manager.windows:
+            screen = window.screen
+            for area in screen.areas:
+                if area.type == 'VIEW_3D':
+                    with bpy.context.temp_override(window=window, area=area):
+                        
+                        directory = os.path.dirname(bpy.data.filepath)   
+                        export_directory_name = f"{collection.name}.png"
+                        export_directory = os.path.join(directory, export_directory_name)
+                        
+                        bpy.context.scene.render.filepath = export_directory
+                         
+                        bpy.ops.render.render(use_viewport=True, write_still=True)
+    
+
+for collection in bpy.data.collections:
+    for object in bpy.data.objects:
+        object.hide_render = False
+    
+    for object in bpy.data.objects:
+        if (object.users_collection[0] is not collection):
+            object.hide_render = True
+    render_call()
+
+
 #https://blender.stackexchange.com/questions/187655/facing-problem-in-drawing-ui-previews-dynamic-enumproperty
 
 # Python: bpy.ops.object.modifier_add_node_group(asset_library_type='ESSENTIALS', asset_library_identifier="", relative_asset_identifier="geometry_nodes\\smooth_by_angle.blend\\NodeTree\\Smooth by Angle")

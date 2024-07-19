@@ -1,15 +1,15 @@
 import bpy
 from bpy_extras import node_utils
 
+
 from .AlxUtils import AlxRetrieveContextObject, AlxRetrieveContextArmature
 
-from .AlxOperators import Alx_OT_Armature_MatchIKByMirroredName
 from .AlxObjectOperator import Alx_OT_Object_UnlockedQOrigin, Alx_OT_Object_BatchMaterial
 
 from .AlxSculptTools import Alx_OT_Sculpt_ConditionMasking
 
 from .AlxUVRetopology import Alx_OT_VXGroupBySeams, Alx_OT_UVExtractIsland
-from .AlxHairTools import Alx_OT_Armature_BoneChainOnSelection
+
 
 
 from .AlxVisibilityOperators import Alx_Tool_SceneIsolator_Properties, Alx_OT_Scene_VisibilityIsolator, Alx_OT_Object_VisibilitySwitch
@@ -18,8 +18,8 @@ from .AlxModifierOperators import Alx_OT_Modifier_ManageOnSelected, Alx_OT_Modif
 from .UITools.Alx_OT_UI_SimpleDesigner import Alx_OT_UI_SimpleDesigner
 
 # Mesh Tools
-from .MeshTools.AlxMeshCleaners import Alx_OT_Mesh_VertexGroup_Clean
-from .MeshTools.AlxShapeKeyToolSet import Alx_OT_Shapekey_TransferShapekeysToTarget
+from .MeshTools.AlxVertexGroupTools import Alx_OT_Mesh_VertexGroup_Clean
+from .MeshTools.AlxShapekeyTools import Alx_OT_Shapekey_TransferShapekeysToTarget
 
 
 class Alx_PG_PropertyGroup_AlexandriaGeneral(bpy.types.PropertyGroup):
@@ -391,35 +391,17 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
         if (GeneralPanelProperties.panel_tabs == "MODIFIER"):
             ModifierTabBox = tabs_panels.column()
 
-            modifier_tab_box_header = ModifierTabBox.row().split(factor=0.33)
+            ModifierTabBox.popover(Alx_PT_AlexandriaModifierPanel.bl_idname, text="create modifier on selection")
 
-            modifier_tab_box_header.separator()
-            modifier_tab_box_header.popover(Alx_PT_AlexandriaModifierPanel.bl_idname, text="Create Modifier")
-            modifier_tab_box_header.separator()
-
-            ModifierTabBox.operator(Alx_OT_Modifier_ApplyReplace.bl_idname, text="Apply-Replace Modifier")
-            ModifierTabBox.operator(Alx_OT_Modifier_BatchVisibility.bl_idname, text="Batch Visibility")
+            row = ModifierTabBox.row()
+            row.operator(Alx_OT_Modifier_ApplyReplace.bl_idname, text="Apply-Replace Modifier")
+            row.operator(Alx_OT_Modifier_BatchVisibility.bl_idname, text="Batch Visibility")
 
             ModifierTabBox.row().template_list(Alx_UL_UIList_ObjectSelectionModifiers.bl_idname, list_id="", dataptr=context.scene, propname="alx_object_selection_modifier", active_dataptr=context.scene, active_propname="alx_object_selection_modifier_index", maxrows=3)
             
 
         if (GeneralPanelProperties.panel_tabs == "ALXOPERATORS"):
             AlxOperatorsTabBox = tabs_panels.column()
-
-            AlxOperatorsTabBox.operator(Alx_OT_VXGroupBySeams.bl_idname, text="VxGroup - group/mask by seam")
-
-            AlxOperatorsTabBox.operator(Alx_OT_Mesh_VertexGroup_Clean.bl_idname, text="Cleaner - VXGroups")
-            
-
-            AlxOperatorsTabBox.operator(Alx_OT_Object_BatchMaterial.bl_idname, text="Batch Material")
-            AlxOperatorsTabBox.operator(Alx_OT_Sculpt_ConditionMasking.bl_idname, text="mask by condition")
-            
-            AlxOperatorsTabBox.operator(Alx_OT_UVExtractIsland.bl_idname, text="UV - Extract islands")
-            AlxOperatorsTabBox.row().operator(Alx_OT_Shapekey_TransferShapekeysToTarget.bl_idname, text="Transfer Shapekeys")
-
-            AlxOperatorsTabBox.operator(Alx_OT_Armature_BoneChainOnSelection.bl_idname, text="Hair - Bone chain on edge strip")
-            AlxOperatorsTabBox.row().operator(Alx_OT_Armature_MatchIKByMirroredName.bl_idname, text="Symmetrize IK")
-
 
 
         if (GeneralPanelProperties.panel_tabs == "RENDER"):

@@ -3,7 +3,7 @@ import bpy
 class Alx_OT_Mesh_VertexGroup_Clean(bpy.types.Operator):
     """"""
 
-    bl_label = "cleaner - mesh vertex group "
+    bl_label = "Alx Vertex Group - clean mesh vertex group "
     bl_idname = "alx.operator_mesh_vertex_group_clean"
 
     bl_options = {"REGISTER", "UNDO"}
