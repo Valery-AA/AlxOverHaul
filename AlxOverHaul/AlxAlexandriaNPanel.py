@@ -28,9 +28,9 @@ class ALX_PT_UI_Addon_ToolShelf(bpy.types.Panel):
             layout = row.column()
 
             layout.label(text="Vertex Groups:")
-            layout.operator(AlxVertexGroupTools.Alx_OT_Mesh_VertexGroup_Clean.bl_idname, text="clean mesh vertex group")
+            layout.operator(AlxVertexGroupTools.Alx_OT_Mesh_VertexGroup_Clean.bl_idname, text="Clean VGroups")
             layout.label(text="ShapeKeys:")
-            layout.operator(AlxShapekeyTools.Alx_OT_Shapekey_TransferShapekeysToTarget.bl_idname, text="transfer shapekeys by vertex position")
+            layout.operator(AlxShapekeyTools.Alx_OT_Shapekey_TransferShapekeysToTarget.bl_idname, text="Transfer Shapekeys")
 
 
         armature_tools_panel : bpy.types.UILayout
@@ -42,8 +42,8 @@ class ALX_PT_UI_Addon_ToolShelf(bpy.types.Panel):
             layout = row.column()
 
             layout.label(text="Pose:")
-            layout.operator(AlxPoseTools.Alx_OT_Armature_Pose_ToggleConstraints.bl_idname, text="toggle armature pose constraints")
-            layout.operator(AlxPoseTools.Alx_OT_Armature_MatchIKByMirroredName.bl_idname, text="symmetrize IK chains across armature")
+            layout.operator(AlxPoseTools.Alx_OT_Armature_Pose_ToggleConstraints.bl_idname, text="Toggle Pose Constraints")
+            layout.operator(AlxPoseTools.Alx_OT_Armature_MatchIKByMirroredName.bl_idname, text="Symmetrize IK")
 
 
         vtuber_panel : bpy.types.UILayout
@@ -55,7 +55,7 @@ class ALX_PT_UI_Addon_ToolShelf(bpy.types.Panel):
             layout = row.column()
 
             layout.label(text="ShapeKeys:")
-            layout.operator(AlxShapekeyTools.Alx_OT_Shapekey_AddEmptyShapeKeys.bl_idname, text="add empty VRM 0/ARKit shapekeys")
+            layout.operator(AlxShapekeyTools.Alx_OT_Shapekey_AddEmptyShapeKeys.bl_idname, text="Add Empty Shapekeys")
             
-            layout.label(text="rigging:")
-            layout.operator(AlxRiggingTools.Alx_OT_Armature_BoneChainOnSelection.bl_idname)
+            layout.label(text="Rigging:")
+            layout.operator(AlxRiggingTools.Alx_OT_Armature_BoneChainOnSelection.bl_idname, text="Autorig Strip")

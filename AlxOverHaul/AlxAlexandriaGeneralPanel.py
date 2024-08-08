@@ -1,8 +1,12 @@
 import bpy
 from bpy_extras import node_utils
 
+from . AlxProperties import Alx_PG_PropertyGroup_SessionProperties
+from . AlxAlexandriaLayouts import UIPreset_ModifierSettings
 
 from .AlxUtils import AlxRetrieveContextObject, AlxRetrieveContextArmature
+from . import AlxKeymapUtils
+
 
 from .AlxObjectOperator import Alx_OT_Object_UnlockedQOrigin, Alx_OT_Object_BatchMaterial
 
@@ -110,23 +114,25 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
     bl_idname = "ALX_UL_ui_list_object_selection_modifiers"
 
     def draw_item(self, context: bpy.types.Context, layout: bpy.types.UILayout, data: bpy.types.AnyType, item: Alx_PG_PropertyGroup_ObjectSelectionListItem, icon: int, active_data: bpy.types.AnyType, active_property: str, index: int = 0, flt_flag: int = 0):
-        LayoutBox = layout.row().box().grid_flow(columns=1)
-
+        
         self.use_filter_show = True
+        
+        item_slot_layout = layout.column()
+        object_layout = item_slot_layout.box().column()
 
-        object_header = LayoutBox.row()
+        object_header = object_layout.row()
         object_header.prop(item.ObjectPointer, "alx_modifier_expand_settings", text="", icon="TRIA_DOWN" if item.ObjectPointer.alx_modifier_expand_settings == True else "TRIA_RIGHT", emboss=False)
-
         object_header.label(text=item.ObjectPointer.name)
 
         
-        indented_layout = LayoutBox.row()
-        indented_layout.separator()
-        modifier_area = indented_layout.column()
-        if (item.ObjectPointer.alx_modifier_expand_settings == True):
+        modifier_list_layout = object_layout.row()
+        modifier_list_layout.separator()
 
+
+        modifier_items_layout = modifier_list_layout.column()
+        if (item.ObjectPointer.alx_modifier_expand_settings == True):
             for raw_object_modifier in item.ObjectPointer.modifiers:
-                modifier_slots = modifier_area.column()
+                modifier_slots = modifier_items_layout.column()
                 
                 modifier_header = modifier_slots.row(align=True)
 
@@ -140,8 +146,6 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
                 modifier_change_settings : Alx_PT_Operator_ModifierChangeSettings = modifier_operator.operator(Alx_PT_Operator_ModifierChangeSettings.bl_idname, icon="TRIA_DOWN" if (show_options) else "TRIA_RIGHT", emboss=False, depress=show_options)
                 modifier_change_settings.object_name = item.ObjectPointer.name
                 modifier_change_settings.modifier_name = raw_object_modifier.name
-
-                modifier_header.separator()
                 
 
                 modifier_delete_button : Alx_OT_Modifier_ManageOnSelected = modifier_header.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, icon="PANEL_CLOSE", emboss=False)
@@ -166,93 +170,7 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
 
 
                 if (item.ObjectPointer.alx_modifier_collection.get(f"{item.ObjectPointer.name}_{raw_object_modifier.name}").show_options == True):
-                    ModifierOptionBox = modifier_slots.row().column()
-
-                    if (raw_object_modifier.type == "DATA_TRANSFER"):
-                        row = ModifierOptionBox.row().split(factor=0.65, align=True)
-                        row.prop(raw_object_modifier, "object", text="")
-                        split = row.row(align=True)
-                        split.prop(raw_object_modifier, "use_object_transform", text="", toggle=True, icon="OBJECT_ORIGIN")
-                        split.operator("object.datalayout_transfer", text="Transfer Layers")
-
-                        row = ModifierOptionBox.row()
-                        row.prop(raw_object_modifier, "use_vert_data", text="")
-                        row.prop(raw_object_modifier, "data_types_verts")
-
-                        row = ModifierOptionBox.row()
-                        row.prop(raw_object_modifier, "use_edge_data", text="")
-                        row.prop(raw_object_modifier, "data_types_edges")
-
-                        row = ModifierOptionBox.row()
-                        row.prop(raw_object_modifier, "use_loop_data", text="")
-                        row.prop(raw_object_modifier, "data_types_loops")
-                        
-                        row = ModifierOptionBox.row()
-                        row.prop(raw_object_modifier, "use_poly_data", text="")
-                        row.prop(raw_object_modifier, "data_types_polys")
-
-                    if (raw_object_modifier.type == "MIRROR"):
-                        row = ModifierOptionBox.column()
-
-                        row.prop(raw_object_modifier, "mirror_object", text="object")
-                        row.prop(raw_object_modifier, "use_clip", text="clip")
-                        row.prop(raw_object_modifier, "use_mirror_merge", text="merge")
-                        row.prop(raw_object_modifier, "merge_threshold", text="")
-                        
-
-                    if (raw_object_modifier.type == "SUBSURF"):
-                        ModifierOptionBox.row().prop(raw_object_modifier, "show_only_control_edges", text="optimal")
-
-                    if (raw_object_modifier.type == "ARMATURE"):
-                        ModifierOptionBox.row().prop(raw_object_modifier, "object", text="")
-                        ModifierOptionBox.row().prop(raw_object_modifier, "use_deform_preserve_volume", text="preserve volume")
-
-                    if (raw_object_modifier.type == "BEVEL"):
-                        row = ModifierOptionBox.row().split(factor=0.33, align=True)
-
-                        row.prop(raw_object_modifier, "offset_type", text="")
-                        row.prop(raw_object_modifier, "width", text="width")
-                        row.prop(raw_object_modifier, "segments", text="segments")
-                        ModifierOptionBox.row().prop(raw_object_modifier, "limit_method", text="")
-
-                        ModifierOptionBox.row().prop(raw_object_modifier, "miter_outer", text="miter outer")
-                        ModifierOptionBox.row().prop(raw_object_modifier, "harden_normals", text="harden")
-
-                    if (raw_object_modifier.type == "BOOLEAN"):
-                        row = ModifierOptionBox.row()
-                        row.prop(raw_object_modifier, "object", text="")
-                        row.prop(raw_object_modifier, "operation", expand=True)
-
-                    if (raw_object_modifier.type == "TRIANGULATE"):
-                        ModifierOptionBox.row().prop(raw_object_modifier, "keep_custom_normals", text="keep normals")
-
-                    if (raw_object_modifier.type == "SOLIDIFY"):
-                        row = ModifierOptionBox.row().split(factor=0.5, align=True)
-                        row.prop(raw_object_modifier, "thickness")
-                        row.prop(raw_object_modifier, "offset")
-
-
-
-                    if (raw_object_modifier.type == "SHRINKWRAP"):
-                        row = ModifierOptionBox.row().split(factor=0.5, align=True)
-                        row.prop(raw_object_modifier, "target", text="")
-                        row.prop(raw_object_modifier, "vertex_group", text="")
-
-                        row = ModifierOptionBox.row().split(factor=0.5, align=True)
-                        row.prop(raw_object_modifier, "wrap_method", text="")
-                        row.prop(raw_object_modifier, "wrap_mode", text="")
-
-
-
-
-                    if (raw_object_modifier.type == "DISPLACE"):
-                        row = ModifierOptionBox.row().split(factor=0.034)
-                        row.separator()
-
-                        options_layout = row.box()
-                        row = options_layout.row()
-                        row.prop(raw_object_modifier, "strength")
-                        row.prop(raw_object_modifier, "mid_level")
+                    UIPreset_ModifierSettings(modifier_slots, raw_object_modifier, context, item.ObjectPointer)
 
 
 
@@ -282,7 +200,7 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
 
                     
 
-        LayoutBox.row().separator(factor=2.0)
+        item_slot_layout.separator(factor=2.0)
 
 class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
     """"""
@@ -302,6 +220,8 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
         AlxContextObject = AlxRetrieveContextObject(context)
         AlxContextArmature = AlxRetrieveContextArmature(context)
 
+        AddonProperties : Alx_PG_PropertyGroup_SessionProperties = context.window_manager.alx_session_properties
+
         GeneralPanelProperties : Alx_PG_PropertyGroup_AlexandriaGeneral = context.scene.alx_panel_alexandria_general_properties
         SceneIsolatorProperties : Alx_Tool_SceneIsolator_Properties = context.scene.alx_tool_scene_isolator_properties
 
@@ -312,8 +232,6 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
         layout = self.layout.column()
         header_layout = layout.column()
         main_layout = layout.row()
-        
-
 
         tabs = main_layout.column().prop(GeneralPanelProperties, "panel_tabs", icon_only=True, expand=True, emboss=False)
         tabs_panels = main_layout.column()
@@ -530,6 +448,15 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
 
         if (GeneralPanelProperties.panel_tabs == "SETTINGS"):
             AlxSettingsTabBox = tabs_panels.column()
+            
+
+            # AlxSettingsTabBox.prop(AddonProperties, "View3d_Pan_Use_Shift_GRLess", toggle=True)
+            # AlxSettingsTabBox.prop(AddonProperties, "View3d_Rotate_Use_GRLess", toggle=True)
+            # AlxSettingsTabBox.prop(panel, "View3d_Zoom_Use_GRLess", toggle=True)
+
+            # theme : bpy.types.Theme = context.preferences.themes[0]
+            # if (theme is not None):
+            #     AlxSettingsTabBox.split(factor=0.33).prop(theme.user_interface.wcol_box, "inner", text="Set alpha to 1.0")
 
             #AlxSettingsTabBox.operator("script.reload", text="reload scripts")
         #     AlxSpace = LayoutSpace.box().row()
@@ -668,7 +595,7 @@ class Alx_PT_AlexandriaModifierPanel(bpy.types.Panel):
 class Alx_PT_Scene_GeneralPivot(bpy.types.Panel):
     """"""
 
-    bl_label = ""
+    bl_label = "scene general pivot"
     bl_idname = "ALX_PT_panel_scene_general_pivot"
 
     bl_space_type = "VIEW_3D"

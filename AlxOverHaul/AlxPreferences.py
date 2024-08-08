@@ -1,13 +1,10 @@
 import bpy
-if (bpy.app.version[0]<=4 and bpy.app.version[1]<=1):
-    from .addon_updater_ops import make_annotations, update_settings_ui
+import rna_keymap_ui
 
-else:
-    def make_annotations(cls):
-        return cls
-    
 
+from . addon_updater_ops import make_annotations, update_settings_ui
 from . import AlxKeymapUtils
+
 
 @make_annotations
 class AlxOverHaul_AddonPreferences(bpy.types.AddonPreferences):
@@ -23,13 +20,13 @@ class AlxOverHaul_AddonPreferences(bpy.types.AddonPreferences):
             ("SETTINGS", "settings" , "", "PREFERENCES", 1<<2)
         ]) #type:ignore
 
-    if (bpy.app.version[0]<=4 and bpy.app.version[1]<=1):
-        auto_check_update : bpy.props.BoolProperty(name="Auto-check for Update", description="If enabled, auto-check for updates using an interval", default=False) #type:ignore
 
-        updater_interval_months : bpy.props.IntProperty(name='Months', description="Number of months between checking for updates", default=0, min=0) #type:ignore
-        updater_interval_days : bpy.props.IntProperty(name='Days', description="Number of days between checking for updates", default=7, min=0, max=31) #type:ignore
-        updater_interval_hours : bpy.props.IntProperty(name='Hours', description="Number of hours between checking for updates", default=0, min=0, max=23) #type:ignore
-        updater_interval_minutes : bpy.props.IntProperty(name='Minutes', description="Number of minutes between checking for updates", default=0, min=0, max=59) #type:ignore
+    auto_check_update : bpy.props.BoolProperty(name="Auto-check for Update", description="If enabled, auto-check for updates using an interval", default=False) #type:ignore
+
+    updater_interval_months : bpy.props.IntProperty(name='Months', description="Number of months between checking for updates", default=0, min=0) #type:ignore
+    updater_interval_days : bpy.props.IntProperty(name='Days', description="Number of days between checking for updates", default=7, min=0, max=31) #type:ignore
+    updater_interval_hours : bpy.props.IntProperty(name='Hours', description="Number of hours between checking for updates", default=0, min=0, max=23) #type:ignore
+    updater_interval_minutes : bpy.props.IntProperty(name='Minutes', description="Number of minutes between checking for updates", default=0, min=0, max=59) #type:ignore
 
 
     def UPDATE_View3d_Pan_Use_Shift_GRLess(self, context):
@@ -57,19 +54,27 @@ class AlxOverHaul_AddonPreferences(bpy.types.AddonPreferences):
     View3d_Zoom_Use_GRLess : bpy.props.BoolProperty(name="Alx Optional Keybind: Change View3D Zoom", description="Replace [Ctrl + Middle-Mouse] with [Ctrl + GRLess] for 3D View Zoom", update=UPDATE_View3d_Zoom_Use_GRLess) #type:ignore
 
 
-    def draw(self, context):
+    def draw(self, context:bpy.types.Context):
         preference_box = self.layout
+
+        keymap_configs = context.window_manager.keyconfigs.user
+        
         
         preference_box.grid_flow(row_major=True, align=True).prop(self, "addon_preference_tabs", expand=True)
 
         if (self.addon_preference_tabs == "KEYBINDS"):
-            preference_box.prop(self, "View3d_Pan_Use_Shift_GRLess", toggle=True)
-            preference_box.prop(self, "View3d_Rotate_Use_GRLess", toggle=True)
-            preference_box.prop(self, "View3d_Zoom_Use_GRLess", toggle=True)
+            keybinds_column = preference_box.column()
+
+            keybinds_column.prop(self, "View3d_Pan_Use_Shift_GRLess")
+            keybinds_column.prop(self, "View3d_Rotate_Use_GRLess")
+            keybinds_column.prop(self, "View3d_Zoom_Use_GRLess")
+
+            keymap : bpy.types.KeyMap
+            for keymap, keymap_item in AlxKeymapUtils.AlxAddonKeymaps:
+                rna_keymap_ui.draw_kmi([], keymap_configs, keymap, keymap_item, keybinds_column, 0)
 
         if (self.addon_preference_tabs == "SETTINGS"):
-            if (bpy.app.version[0]<=4 and bpy.app.version[1]<=1):
-                update_settings_ui(self,context)
+            update_settings_ui(self,context)
 
 
 def AlxGetPreferences():

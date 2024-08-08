@@ -70,6 +70,11 @@ def AlxKeymapRegister(keymap_call_type="", config_space_name="", space_type="EMP
         case "PIE":
             keymap_call_id = "wm.call_menu_pie"
 
+    # keymap : 
+    # for keymap in wm.keyconfigs.user.keymaps:
+        
+
+
     if (kmc is not None):
         Keymap : bpy.types.KeyMap = kmc.keymaps.new(name=config_space_name , space_type=space_type, region_type=region_type, modal=False, tool=False)
         KeymapItem = Keymap.keymap_items.new(idname=keymap_call_id, type=key, key_modifier=key_modifier, shift=use_shift, ctrl=use_ctrl, alt=use_alt, value=trigger_type, head=True)
@@ -122,6 +127,9 @@ def AlxCreateKeymaps():
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Object Non-modal", ItemidName="view3d.object_mode_pie_or_toggle", Active=False)
     AlxEditKeymaps(KeyconfigSource="Blender addon", ConfigSpaceName="Object Non-modal", ItemidName="wm.call_menu_pie", OperatorID="MACHIN3_MT_modes_pie", Active=False)
 
+    AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Mesh", ItemidName="transform.tosphere", Active=False)
+    AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="3D View Tool: Edit Mesh, To Sphere", ItemidName="transform.tosphere", Active=False)
+        
 
     AlxKeymapRegister(keymap_call_type="PIE", config_space_name="3D View", space_type="VIEW_3D", addon_class=AlxUnlockedObjectModes.Alx_MT_MenuPie_UnlockedObjectModes, key="TAB", trigger_type="PRESS")
     AlxKeymapRegister(keymap_call_type="PANEL", config_space_name="3D View", space_type="VIEW_3D", addon_class=AlxAlexandriaGeneralPanel.Alx_PT_Panel_AlexandriaGeneralPanel, key="A", use_ctrl=True, use_alt=True, trigger_type="CLICK")

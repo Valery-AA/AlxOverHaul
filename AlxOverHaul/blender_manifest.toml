@@ -1,7 +1,7 @@
 schema_version = "1.0.0"
 
 id = "valy_arhal_alx_overhaul"
-version = "0.6.2.0"
+version = "0.6.4"
 name = "AlxOverHaul"
 tagline = "simplify blender"
 maintainer = "Valeria Bosco aka Valy Arhal"
@@ -10,18 +10,13 @@ type = "add-on"
 website = "https://github.com/Valery-AA/AlxOverHaul"
 
 # https://docs.blender.org/manual/en/dev/advanced/extensions/tags.html
-tags = ["Animation", "Sequencer"]
+tags = ["Object", "Mesh", "Modeling", "Rigging", "User Interface"]
 
 blender_version_min = "4.2.0"
 
 # https://docs.blender.org/manual/en/dev/advanced/extensions/licenses.html
 license = [
   "SPDX:GPL-3.0-or-later",
-]
-
-copyright = [
-  "2023-2024 Valeria Bosco",
-  "",
 ]
 
 #supported platforms: "windows-arm64", "macos-x64"

@@ -3,7 +3,7 @@ bl_info = {
     "author" : "Valeria Bosco[Valy Arhal]",
     "description" : "",
     "warning" : "[Heavly Under Development] And Subject To Substantial Changes",
-    "version" : (0, 6, 2, 0),
+    "version" : (0, 6, 4),
     "blender" : (3, 6, 0),
     "category" : "3D View",
     "location" : "[Ctrl Alt A] General Menu, [Shift Alt S] Pivot Menu, [Tab] Auto Mode Pie Menu",
@@ -11,22 +11,18 @@ bl_info = {
     "tracker_url" : "https://github.com/Valery-AA/AlxOverHaul/issues",
 }
 
-from typing import Iterable
 import importlib
 from os import sep as os_separator
 from pathlib import Path
 
-
 import bpy
 
-if (bpy.app.version[0]<=4 and bpy.app.version[1]<=1):
-    from . import addon_updater_ops
+from . import addon_updater_ops
 
 
 folder_name_blacklist: list[str]=["__pycache__"] 
 file_name_blacklist: list[str]=["__init__.py"]
-if (bpy.app.version[0]<=4 and bpy.app.version[1]<=1):
-    file_name_blacklist.extend(["addon_updater", "addon_updater_ops"])
+file_name_blacklist.extend(["addon_updater", "addon_updater_ops"])
 
 
 addon_folders = []
@@ -180,12 +176,9 @@ def UnRegisterHandlers():
 
 
 def register():
-    if (bpy.app.version[0]<=4 and bpy.app.version[1]<=1):
-        try:
-            addon_updater_ops.register(bl_info)
-        except:
-            pass
-
+    addon_updater_ops.update_path_fix = __path__
+    addon_updater_ops.register(bl_info)
+    
     AlxRegisterClassQueue(AlxClassQueue)
     AlxRegisterToolQueue()
 
@@ -198,8 +191,7 @@ def register():
 
 
 def unregister():
-    if (bpy.app.version[0]<=4 and bpy.app.version[1]<=1):
-        addon_updater_ops.unregister()
+    addon_updater_ops.unregister()
 
     AlxUnregisterClassQueue(AlxClassQueue)
     AlxUnregisterToolQueue()

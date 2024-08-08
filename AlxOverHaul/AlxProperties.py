@@ -1,18 +1,22 @@
-# type:ignore
-
 import bpy
+
+from . import AlxKeymapUtils
 
 class Alx_PG_PropertyGroup_SessionProperties(bpy.types.PropertyGroup):
     """"""
 
-    udim_texture_compressor_texture_target : bpy.props.PointerProperty(type=bpy.types.Image)
+    operator_uvtools_uv_map_transfer__source_object : bpy.props.PointerProperty(type=bpy.types.Object, name="source") #type:ignore
+    operator_uvtools_uv_map_transfer__target_object : bpy.props.PointerProperty(type=bpy.types.Object, name="target") #type:ignore
 
-    vertex_reproject_target_object : bpy.props.PointerProperty(type=bpy.types.Object)
-    vertex_reproject_object_use_deform : bpy.props.BoolProperty(default=False)
-    vertex_reproject_object_use_cage : bpy.props.BoolProperty(default=False)
 
-    shapekey_transfer_source_object : bpy.props.PointerProperty(type=bpy.types.Object)
-    shapekey_transfer_target_object : bpy.props.PointerProperty(type=bpy.types.Object)
+    udim_texture_compressor_texture_target : bpy.props.PointerProperty(type=bpy.types.Image) #type:ignore
+
+    vertex_reproject_target_object : bpy.props.PointerProperty(type=bpy.types.Object) #type:ignore
+    vertex_reproject_object_use_deform : bpy.props.BoolProperty(default=False) #type:ignore
+    vertex_reproject_object_use_cage : bpy.props.BoolProperty(default=False) #type:ignore
+
+    shapekey_transfer_source_object : bpy.props.PointerProperty(type=bpy.types.Object) #type:ignore
+    shapekey_transfer_target_object : bpy.props.PointerProperty(type=bpy.types.Object) #type:ignore
 
     ui_simple_designer_user_ui_type : bpy.props.EnumProperty(items=[
         ("VIEW_3D", "View 3d", "", "VIEW3D", 1),
@@ -46,6 +50,6 @@ class Alx_PG_PropertyGroup_SessionProperties(bpy.types.PropertyGroup):
 
 class Alx_Object_Selection_ListItem(bpy.types.PropertyGroup):
     """"""
-    name : bpy.props.StringProperty()
-    ObjectPointer : bpy.props.PointerProperty(type=bpy.types.Object)
+    name : bpy.props.StringProperty() #type:ignore
+    ObjectPointer : bpy.props.PointerProperty(type=bpy.types.Object) #type:ignore
 
