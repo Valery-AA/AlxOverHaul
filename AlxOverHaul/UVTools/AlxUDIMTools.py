@@ -8,8 +8,10 @@ from bpy_extras import image_utils
 class Alx_OT_UV_UDIM_SquareCompressor(bpy.types.Operator):
     """"""
 
-    bl_label = ""
+    bl_label = "UVTools - Square UDIM Compressor"
     bl_idname = "alx.operator_uv_udim_square_compressor"
+
+    bl_description = "currently requires the udim to be formatted in a square without an empty image, compresses it into a single image with the resolution as the total of the udims images"
 
     @classmethod
     def poll(self, context: bpy.types.Context):
@@ -28,7 +30,7 @@ class Alx_OT_UV_UDIM_SquareCompressor(bpy.types.Operator):
 
                 target_image_name = source_image.name.replace(".<UDIM>", "")
                 
-                tiles = {tile.number: tile for tile in source_image.tiles}
+                tiles = { tile.number : tile for tile in source_image.tiles if tile is not None}
                 pixel_base_x = sum([ tiles[tile_number].size[0] for tile_number in tiles.keys() if (tile_number < 1011)])
                 pixel_base_y = sum([ tiles[tile_number].size[1] for tile_number in tiles.keys() if ((tile_number - 1000) % 10 == 1)])
 
@@ -43,28 +45,32 @@ class Alx_OT_UV_UDIM_SquareCompressor(bpy.types.Operator):
                 target_image.generated_height = pixel_base_y
 
                 udim_images_paths = {udim_number : source_image.filepath.replace("<UDIM>", f"{udim_number}") for udim_number in sorted(tiles.keys())}
-                udim_images = { udim_image_index : image_utils.load_image( udim_images_paths[udim_image_index] ) if bpy.data.images.get( Path( udim_images_paths[udim_image_index] ).name ) is None else bpy.data.images.get( Path( udim_images_paths[udim_image_index] ).name ) for udim_image_index in sorted(udim_images_paths.keys()) }
+                udim_images = { udim_image_index : image_utils.load_image( udim_images_paths[udim_image_index] ) if bpy.data.images.get( Path( udim_images_paths[udim_image_index] ).name ) is None else bpy.data.images.get( Path( udim_images_paths[udim_image_index] ).name ) for udim_image_index in sorted(udim_images_paths.keys()) if (image_utils.load_image( udim_images_paths[udim_image_index] ) is not None)}
                 udim_pixel_map = {udim_image_index : copy(udim_images[udim_image_index].pixels[:])  for udim_image_index in sorted(udim_images.keys()) if (udim_images[udim_image_index] is not None) }
 
 
-                target_pixels = []
-                target_size = udim_images[1001].size[0]
-                for udim_tile_index in sorted(tiles.keys()):
-                    if ( (udim_tile_index - 1000) % 10 == 1):
+                if (list(tiles.keys())[0] in udim_images.keys()):
+                    target_pixels = []
+                    target_size = udim_images[1001].size[0]
+                    for udim_tile_index in sorted(tiles.keys()):
+                        if ( (udim_tile_index - 1000) % 10 == 1):
 
-                        for pixel_row in range(0, udim_images[udim_tile_index].size[1]):
-                            current_pixel = pixel_row * udim_images[udim_tile_index].size[0] * 4
+                            for pixel_row in range(0, udim_images[udim_tile_index].size[1]):
+                                current_pixel = pixel_row * udim_images[udim_tile_index].size[0] * 4
 
-                            for i in range(0, 10):
-                                seqence_tile_index = udim_tile_index + i
-                                if ( seqence_tile_index in udim_pixel_map.keys() ):
-                                    target_pixels.extend( udim_pixel_map[seqence_tile_index][current_pixel : current_pixel + udim_images[seqence_tile_index].size[0]*4] )
-                                else:
-                                    pass
-                                    #target_pixels.extend(  )
+                                for i in range(0, 10):
+                                    seqence_tile_index = udim_tile_index + i
+                                    if ( seqence_tile_index in udim_pixel_map.keys() ):
+                                        target_pixels.extend( udim_pixel_map[seqence_tile_index][current_pixel : current_pixel + udim_images[seqence_tile_index].size[0]*4] )
+                                    else:
+                                        pass
+                                        #target_pixels.extend(  )
 
-                target_image.source = "GENERATED"
-                target_image.pixels[:len(target_pixels)] = target_pixels
+                    target_image.source = "GENERATED"
+                    target_image.pixels[:len(target_pixels)] = target_pixels
+                else:
+                    self.report({"ERROR"}, message="image with valid tile id could not be found. \n FIXES: \n one of the image might not be saved to disk \n one of the udims could be missing an image, create a blank one where there's empty spaces and save it to disk")
+                
 
                 for image in udim_images.values():
                     bpy.data.images.remove(image)

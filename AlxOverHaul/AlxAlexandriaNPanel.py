@@ -3,6 +3,8 @@ import bpy
 from . MeshTools import AlxVertexGroupTools, AlxShapekeyTools
 from . ArmatureTools import AlxPoseTools, AlxRiggingTools
 
+from . UVTools import AlxUDIMTools
+
 class ALX_PT_UI_Addon_ToolShelf(bpy.types.Panel):
     """"""
 
@@ -29,8 +31,12 @@ class ALX_PT_UI_Addon_ToolShelf(bpy.types.Panel):
 
             layout.label(text="Vertex Groups:")
             layout.operator(AlxVertexGroupTools.Alx_OT_Mesh_VertexGroup_Clean.bl_idname, text="Clean VGroups")
+
             layout.label(text="ShapeKeys:")
             layout.operator(AlxShapekeyTools.Alx_OT_Shapekey_TransferShapekeysToTarget.bl_idname, text="Transfer Shapekeys")
+
+            layout.label(text="UV/UDIMs:")
+            layout.operator(AlxUDIMTools.Alx_OT_UV_UDIM_SquareCompressor.bl_idname, text="Compress UDIMs")
 
 
         armature_tools_panel : bpy.types.UILayout
