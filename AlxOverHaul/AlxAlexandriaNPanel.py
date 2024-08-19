@@ -36,7 +36,7 @@ class ALX_PT_UI_Addon_ToolShelf(bpy.types.Panel):
             layout.operator(AlxShapekeyTools.Alx_OT_Shapekey_TransferShapekeysToTarget.bl_idname, text="Transfer Shapekeys")
 
             layout.label(text="UV/UDIMs:")
-            layout.operator(AlxUDIMTools.Alx_OT_UV_UDIM_SquareCompressor.bl_idname, text="Compress UDIMs")
+            layout.operator(AlxUDIMTools.Alx_OT_UVTools_udim_square_compressor.bl_idname, text="Compress UDIMs")
 
 
         armature_tools_panel : bpy.types.UILayout

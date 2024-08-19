@@ -70,29 +70,19 @@ def AlxKeymapRegister(keymap_call_type="", config_space_name="", space_type="EMP
         case "PIE":
             keymap_call_id = "wm.call_menu_pie"
 
-    # keymap : 
-    # for keymap in wm.keyconfigs.user.keymaps:
-        
 
+    Keymap : bpy.types.KeyMap = kmc.keymaps.new(name=config_space_name , space_type=space_type, region_type=region_type)
+    KeymapItem = Keymap.keymap_items.new(idname=keymap_call_id, type=key, key_modifier=key_modifier, shift=use_shift, ctrl=use_ctrl, alt=use_alt, value=trigger_type, head=True)
 
-    if (kmc is not None):
-        Keymap : bpy.types.KeyMap = kmc.keymaps.new(name=config_space_name , space_type=space_type, region_type=region_type, modal=False, tool=False)
-        KeymapItem = Keymap.keymap_items.new(idname=keymap_call_id, type=key, key_modifier=key_modifier, shift=use_shift, ctrl=use_ctrl, alt=use_alt, value=trigger_type, head=True)
+    
+    if (keymap_call_type in ["PANEL", "MENU", "PIE"]):
+        KeymapItem.properties.name = addon_class.bl_idname
 
-        if (KeymapItem.properties is not None):
-            if (keymap_call_type in ["PANEL", "MENU", "PIE"]):
-                KeymapItem.properties.name = addon_class.bl_idname
+        # for property, value in kwargs.items():
+        #     if (hasattr(KeymapItem.properties, f"{property}")):
+        #         setattr(KeymapItem.properties, property, value)
 
-            for property, value in kwargs.items():
-                if (hasattr(KeymapItem.properties, f"{property}")):
-                    setattr(KeymapItem.properties, property, value)
-
-        else:
-            print(f"KeymapItem.properties: {KeymapItem.properties}")
-
-        AlxAddonKeymaps.append((Keymap, KeymapItem))
-    else:
-        print("keymap error")
+    AlxAddonKeymaps.append((Keymap, KeymapItem))
 
 
 def AlxCreateKeymaps():
@@ -129,8 +119,8 @@ def AlxCreateKeymaps():
 
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Mesh", ItemidName="transform.tosphere", Active=False)
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="3D View Tool: Edit Mesh, To Sphere", ItemidName="transform.tosphere", Active=False)
-        
+
 
     AlxKeymapRegister(keymap_call_type="PIE", config_space_name="3D View", space_type="VIEW_3D", addon_class=AlxUnlockedObjectModes.Alx_MT_MenuPie_UnlockedObjectModes, key="TAB", trigger_type="PRESS")
-    AlxKeymapRegister(keymap_call_type="PANEL", config_space_name="3D View", space_type="VIEW_3D", addon_class=AlxAlexandriaGeneralPanel.Alx_PT_Panel_AlexandriaGeneralPanel, key="A", use_ctrl=True, use_alt=True, trigger_type="CLICK")
+    AlxKeymapRegister(keymap_call_type="PANEL", config_space_name="Window", region_type="WINDOW", addon_class=AlxAlexandriaGeneralPanel.Alx_PT_Panel_AlexandriaGeneralPanel, key="A", use_ctrl=True, use_alt=True, trigger_type="CLICK")
     AlxKeymapRegister(keymap_call_type="PANEL", config_space_name="3D View", space_type="VIEW_3D", addon_class=AlxAlexandriaGeneralPanel.Alx_PT_Scene_GeneralPivot, key="S", use_shift=True, use_alt=True, trigger_type="CLICK")

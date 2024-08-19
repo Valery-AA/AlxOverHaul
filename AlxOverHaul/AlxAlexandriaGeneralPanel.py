@@ -217,6 +217,16 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
         return True
 
     def draw(self, context: bpy.types.Context):
+        override_window = context.window
+        override_screen = override_window.screen
+        override_area = [area for area in override_screen.areas if area.type == "VIEW_3D"]
+        override_area_length = len(override_area) > 0
+        override_region = None
+        if ( override_area_length > 0 ):
+            override_region = [region for region in override_area[0].regions if region.type == 'WINDOW']
+
+
+
         AlxContextObject = AlxRetrieveContextObject(context)
         AlxContextArmature = AlxRetrieveContextArmature(context)
 
@@ -270,18 +280,25 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
 
         isolator_box.separator()
 
+        override_window = bpy.context.window
+        override_screen = override_window.screen
+        override_area = [area for area in override_screen.areas if area.type == "VIEW_3D"]
+        if (len(override_area) > 0):
+            override_region = [region for region in override_area[0].regions if region.type == 'WINDOW']
 
-        overlay_column = header_layout.column(align=True)
-        overlay_prop = overlay_column.row(align=True)
-        overlay_prop.prop(context.space_data.overlay, "show_overlays", text="", icon="OVERLAY")
-        overlay_prop.prop(context.area.spaces.active.shading, "show_xray", text="Mesh", icon="XRAY")
-        overlay_prop.prop(context.space_data.overlay, "show_xray_bone", text="Bone", icon="XRAY")
-        overlay_prop.prop(context.area.spaces.active.shading, "type", text="", expand=True)
-        poly_prop = header_layout.row(align=True)
-        poly_prop.prop(context.space_data.overlay, "show_face_orientation", text="", icon="NORMALS_FACE")
-        poly_prop.prop(context.space_data.overlay, "show_wireframes", text="Wireframe", icon="MOD_WIREFRAME")
-        poly_prop.prop(context.space_data.overlay, "show_retopology", text="Retopology", icon="MESH_GRID")
-        
+            with bpy.context.temp_override(window=override_window, area=override_area[0], region=override_region[0]):
+
+                overlay_column = header_layout.column(align=True)
+                overlay_prop = overlay_column.row(align=True)
+                overlay_prop.prop(context.space_data.overlay, "show_overlays", text="", icon="OVERLAY")
+                overlay_prop.prop(context.area.spaces.active.shading, "show_xray", text="Mesh", icon="XRAY")
+                overlay_prop.prop(context.space_data.overlay, "show_xray_bone", text="Bone", icon="XRAY")
+                overlay_prop.prop(context.area.spaces.active.shading, "type", text="", expand=True)
+                poly_prop = header_layout.row(align=True)
+                poly_prop.prop(context.space_data.overlay, "show_face_orientation", text="", icon="NORMALS_FACE")
+                poly_prop.prop(context.space_data.overlay, "show_wireframes", text="Wireframe", icon="MOD_WIREFRAME")
+                poly_prop.prop(context.space_data.overlay, "show_retopology", text="Retopology", icon="MESH_GRID")
+
         header_layout.separator()
 
         if (GeneralPanelProperties.panel_tabs == "OBJECT"):
@@ -322,85 +339,94 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
             AlxOperatorsTabBox = tabs_panels.column()
 
 
-        if (GeneralPanelProperties.panel_tabs == "RENDER"):
+
+
+
+
+
+
+        if (GeneralPanelProperties.panel_tabs == "RENDER") and ( override_area_length > 0 ):
             RenderTabBox = tabs_panels.column()
 
-            render_engine_option = RenderTabBox.row()
-            render_engine_option.prop(context.scene.render, "engine", text="")
-            render_engine_option.prop(context.area.spaces.active.shading, "type", text="", expand=True)
+            if ( override_region is not None):
+                with context.temp_override(window=override_window, area=override_area[0], region=override_region[0]):
+
+                    render_engine_option = RenderTabBox.row()
+                    render_engine_option.prop(context.scene.render, "engine", text="")
+                    render_engine_option.prop(context.area.spaces.active.shading, "type", text="", expand=True)
 
 
-            if (context.area.spaces.active.shading.type == "SOLID"):
-                matcap_preview = RenderTabBox.column()
-                matcap_preview.row().prop(context.area.spaces.active.shading, "light", expand=True)
+                    if (context.area.spaces.active.shading.type == "SOLID"):
+                        matcap_preview = RenderTabBox.column()
+                        matcap_preview.row().prop(context.area.spaces.active.shading, "light", expand=True)
 
-                material_display = matcap_preview.row().split(factor=0.5)
+                        material_display = matcap_preview.row().split(factor=0.5)
 
-                material_display.template_icon_view(context.area.spaces.active.shading, "studio_light", scale=3.2)
-                material_display.grid_flow(columns=2, align=True).prop(context.area.spaces.active.shading, "color_type", expand=True)
-
-
-            if (context.area.spaces.active.shading.type == "MATERIAL"):
-                scene_shading_options = RenderTabBox.column()
-                
-                if (context.area.spaces.active.shading.use_scene_world == False):
-                    material_preview = scene_shading_options.row().split(factor=0.5)
-                    material_preview.template_icon_view(context.area.spaces.active.shading, "studio_light", scale=4.3, scale_popup=3.0)
-                    scene_world_shading = material_preview.column()
-                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_rotate_z", text="rotation")
-                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_intensity", text="intensity")
-                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_background_alpha", text="opacity")
-                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_background_blur", text="blur")
-
-                scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_lights", text="scene lights")
-                scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_world", text="scene world")
-
-                if (context.area.spaces.active.shading.use_scene_world == True):
-                    scene_shading_options.row().prop(context.scene.world, "use_nodes", text="Use Scene World Nodes", toggle=True)
-
-                    if (context.scene.world.use_nodes == True):
-                        if (context.scene.world.node_tree is not None):
-                            WorldMaterial = context.scene.world.node_tree
-                            MaterialOutput = context.scene.world.node_tree.get_output_node("ALL")
-                            Surface = node_utils.find_node_input(MaterialOutput, "Surface")
-                            scene_shading_options.column().template_node_view(WorldMaterial, MaterialOutput, Surface)
+                        material_display.template_icon_view(context.area.spaces.active.shading, "studio_light", scale=3.2)
+                        material_display.grid_flow(columns=2, align=True).prop(context.area.spaces.active.shading, "color_type", expand=True)
 
 
-            if (context.area.spaces.active.shading.type == "RENDERED"):
-                scene_shading_options = RenderTabBox.column()
-                
+                if (context.area.spaces.active.shading.type == "MATERIAL"):
+                    scene_shading_options = RenderTabBox.column()
+                    
+                    if (context.area.spaces.active.shading.use_scene_world == False):
+                        material_preview = scene_shading_options.row().split(factor=0.5)
+                        material_preview.template_icon_view(context.area.spaces.active.shading, "studio_light", scale=4.3, scale_popup=3.0)
+                        scene_world_shading = material_preview.column()
+                        scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_rotate_z", text="rotation")
+                        scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_intensity", text="intensity")
+                        scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_background_alpha", text="opacity")
+                        scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_background_blur", text="blur")
 
-                if (context.area.spaces.active.shading.use_scene_world_render == False):
-                    material_preview = scene_shading_options.row().split(factor=0.5)
-                    material_preview.template_icon_view(context.area.spaces.active.shading, "studio_light", scale=4.3, scale_popup=3.0)
-                    scene_world_shading = material_preview.column()
-                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_rotate_z", text="rotation")
-                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_intensity", text="intensity")
-                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_background_alpha", text="opacity")
-                    scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_background_blur", text="blur")
+                    scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_lights", text="scene lights")
+                    scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_world", text="scene world")
 
-                scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_lights_render", text="scene lights")
-                scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_world_render", text="scene world")
+                    if (context.area.spaces.active.shading.use_scene_world == True):
+                        scene_shading_options.row().prop(context.scene.world, "use_nodes", text="Use Scene World Nodes", toggle=True)
 
-                if (context.area.spaces.active.shading.use_scene_world_render == True):
-                    scene_shading_options.row().prop(context.scene.world, "use_nodes", text="Use Scene world Nodes", toggle=True)
+                        if (context.scene.world.use_nodes == True):
+                            if (context.scene.world.node_tree is not None):
+                                WorldMaterial = context.scene.world.node_tree
+                                MaterialOutput = context.scene.world.node_tree.get_output_node("ALL")
+                                Surface = node_utils.find_node_input(MaterialOutput, "Surface")
+                                scene_shading_options.column().template_node_view(WorldMaterial, MaterialOutput, Surface)
 
-                    if (context.scene.world.use_nodes == True):
-                        if (context.scene.world.node_tree is not None):
-                            WorldMaterial = context.scene.world.node_tree
-                            MaterialOutput = context.scene.world.node_tree.get_output_node("ALL")
-                            Surface = node_utils.find_node_input(MaterialOutput, "Surface")
-                            scene_shading_options.column().template_node_view(WorldMaterial, MaterialOutput, Surface)
 
-            if (context.area.spaces.active.shading.type == "SOLID"):
-                solid_shading_options = RenderTabBox.column()
-                solid_shading_options.row().prop(context.area.spaces.active.shading, "show_backface_culling")
-                solid_shading_options.row().prop(context.area.spaces.active.shading, "show_cavity")
-                if (context.area.spaces.active.shading.show_cavity == True):
-                    solid_shading_options.row().prop(context.area.spaces.active.shading, "cavity_type", text="")
-                    cavity_options = solid_shading_options.row()
-                    cavity_options.prop(context.area.spaces.active.shading, "curvature_ridge_factor", text="ridge")
-                    cavity_options.prop(context.area.spaces.active.shading, "curvature_valley_factor", text="valley")
+                if (context.area.spaces.active.shading.type == "RENDERED"):
+                    scene_shading_options = RenderTabBox.column()
+                    
+
+                    if (context.area.spaces.active.shading.use_scene_world_render == False):
+                        material_preview = scene_shading_options.row().split(factor=0.5)
+                        material_preview.template_icon_view(context.area.spaces.active.shading, "studio_light", scale=4.3, scale_popup=3.0)
+                        scene_world_shading = material_preview.column()
+                        scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_rotate_z", text="rotation")
+                        scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_intensity", text="intensity")
+                        scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_background_alpha", text="opacity")
+                        scene_world_shading.prop(context.area.spaces.active.shading, "studiolight_background_blur", text="blur")
+
+                    scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_lights_render", text="scene lights")
+                    scene_shading_options.prop(context.area.spaces.active.shading, "use_scene_world_render", text="scene world")
+
+                    if (context.area.spaces.active.shading.use_scene_world_render == True):
+                        scene_shading_options.row().prop(context.scene.world, "use_nodes", text="Use Scene world Nodes", toggle=True)
+
+                        if (context.scene.world.use_nodes == True):
+                            if (context.scene.world.node_tree is not None):
+                                WorldMaterial = context.scene.world.node_tree
+                                MaterialOutput = context.scene.world.node_tree.get_output_node("ALL")
+                                Surface = node_utils.find_node_input(MaterialOutput, "Surface")
+                                scene_shading_options.column().template_node_view(WorldMaterial, MaterialOutput, Surface)
+
+                if (context.area.spaces.active.shading.type == "SOLID"):
+                    solid_shading_options = RenderTabBox.column()
+                    solid_shading_options.row().prop(context.area.spaces.active.shading, "show_backface_culling")
+                    solid_shading_options.row().prop(context.area.spaces.active.shading, "show_cavity")
+                    if (context.area.spaces.active.shading.show_cavity == True):
+                        solid_shading_options.row().prop(context.area.spaces.active.shading, "cavity_type", text="")
+                        cavity_options = solid_shading_options.row()
+                        cavity_options.prop(context.area.spaces.active.shading, "curvature_ridge_factor", text="ridge")
+                        cavity_options.prop(context.area.spaces.active.shading, "curvature_valley_factor", text="valley")
 
 
             if (context.scene.render.engine in ["BLENDER_EEVEE", "BLENDER_EEVEE_NEXT"]):
@@ -415,6 +441,20 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
                 cycles_samples = RenderTabBox.row(align=True)
                 cycles_samples.prop(context.scene.cycles, "preview_samples", text="Viewport")
                 cycles_samples.prop(context.scene.cycles, "samples", text="Render")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         if (GeneralPanelProperties.panel_tabs == "UI_DESIGNER"):
