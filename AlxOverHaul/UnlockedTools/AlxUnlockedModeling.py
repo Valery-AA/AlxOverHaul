@@ -3,7 +3,7 @@ import random
 import bpy
 import bmesh
 
-from .AlxGpuUI import draw_unlocked_modeling_ui
+from ..AlxGpuUI import draw_unlocked_modeling_ui
 
 class Alx_PG_PropertyGroup_UnlockedModelingProperties(bpy.types.PropertyGroup):
     """"""
@@ -250,6 +250,8 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
                 poly_paint_color = operator_properties.poly_paint_color
                 poly_paint_layers = operator_properties.poly_paint_layers
 
+
+
                 if (event.type == "LEFTMOUSE") and (event.ctrl == False) and (event.value == "CLICK"):
                     if (context.mode == "EDIT_MESH"):
                         override_window = context.window
@@ -258,11 +260,18 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
                         override_region = [region for region in override_area[0].regions if region.type == 'WINDOW']
 
                         with context.temp_override(window=override_window, area=override_area[0], region=override_region[0]):
+
                             if (leftclick_selection_mode == "NONE"):
-                                bpy.ops.view3d.select("INVOKE_DEFAULT", extend=leftclick_extend_selection and not event.shift == True, deselect=False, deselect_all=event.shift == True)
-                                bpy.ops.ed.undo_push(message=f"AlxUM Select extend:{leftclick_extend_selection}")
-                                return {"RUNNING_MODAL"}
-                            
+                                if ( event.shift == False ):
+                                    bpy.ops.view3d.select( "INVOKE_DEFAULT", extend = ( event.shift == True ) or ( leftclick_extend_selection == True ), toggle = True )
+                                    bpy.ops.ed.undo_push(message=f"AlxUM Standard Select [extend:{leftclick_extend_selection}]")
+                                    return {"RUNNING_MODAL"}
+                                
+                                elif ( event.shift == True ):
+                                    bpy.ops.mesh.select_all("INVOKE_DEFAULT", action= "DESELECT" )
+                                    bpy.ops.ed.undo_push(message=f"AlxUM Standard Select [deselect all]")
+                                    return {"RUNNING_MODAL"}
+
                             elif (leftclick_selection_mode == "LOOP_SELECTION"):
                                 bpy.ops.mesh.loop_select("INVOKE_DEFAULT", extend=leftclick_extend_selection, deselect=False, toggle=False, ring=False)
                                 bpy.ops.ed.undo_push(message=f"AlxUM Loop Select extend:{leftclick_extend_selection}")

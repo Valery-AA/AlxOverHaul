@@ -65,13 +65,9 @@ class Alx_OT_UVTools_uv_map_transfer(bpy.types.Operator):
             target_uv_layer = target_bmesh.loops.layers.uv.new(self.target_uv_layer) if target_bmesh.loops.layers.uv.get(self.target_uv_layer) is None else target_bmesh.loops.layers.uv.get(self.target_uv_layer)
 
             if (source_uv_layer is not None) and (target_uv_layer is not None):
-                source_face_verts_pairing = [[set(), int]]
+                pass
 
-                for face in source_bmesh.faces:
-                    source_face_verts_pairing.append( [ { vert.index for vert in face.verts }, face.index ] )
 
-                for vert_index_set, face_index in source_face_verts_pairing:
-                    print(vert_index_set, face_index)
 
             target_bmesh.to_mesh(target_object.data)
 

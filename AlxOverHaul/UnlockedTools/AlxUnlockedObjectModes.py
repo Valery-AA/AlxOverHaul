@@ -1,5 +1,7 @@
 import bpy
 
+from ..Definitions.AlxTypeDefinitions import TD_object_types
+from ..Utilities.AlxUtilities import operator_log_info, operator_log_warning, operator_log_error
 
 class Alx_MT_MenuPie_UnlockedObjectModes(bpy.types.Menu):
     """"""
@@ -136,33 +138,34 @@ class Alx_OT_operator_UnlockedObjectModes(bpy.types.Operator):
         selection_size = len(context.selected_objects)
 
         match self.target_object_mode:
-
             case "OBJECT":
                 if (context.mode != "OBJECT"):
                     bpy.ops.object.mode_set(mode="OBJECT")
-
                 return {"FINISHED"}
 
 
             case "EDIT":
+                if (context.mode != "OBJECT"):
+                    bpy.ops.object.mode_set(mode="OBJECT")
+
                 if (selection_size > 0):
-
-                    if (context.mode != "OBJECT"):
-                        bpy.ops.object.mode_set(mode="OBJECT")
-
                     match self.target_object_type:
                         case "MESH":
                             if (self.target_object_sub_mode in ["VERT", "EDGE", "FACE"]):
-                                for selected_object in context.selected_objects:
-                                    if (selected_object is not None) and (selected_object.type == "MESH"):
-                                        context.view_layer.objects.active = selected_object
-                                        
-                                bpy.ops.object.mode_set_with_submode(mode="EDIT", mesh_select_mode=set([self.target_object_sub_mode]))
+                                if (self.target_object_type in TD_object_types):
+                                    can_run = False
+                                    for selected_object in context.selected_objects:
+                                        if ( selected_object.type == self.target_object_type ):
+                                            selected_object.select_set( True )
+                                            can_run = True
+
+                                if (can_run == True):
+                                    bpy.ops.object.mode_set_with_submode(mode="EDIT", mesh_select_mode=set([self.target_object_sub_mode]))
                                 return {"FINISHED"}
-                    
+
+
                         case "ARMATURE":
                             if (self.target_object_sub_mode == ""):
-
                                 armature_selection_override = list(filter(
                                     lambda object: object is not None,
 
@@ -171,12 +174,26 @@ class Alx_OT_operator_UnlockedObjectModes(bpy.types.Operator):
                                     if (selected_object is not None) and (selected_object.type in ["ARMATURE", "MESH"])]
                                     ))
 
-                                if ( len(armature_selection_override) == 0 ):
+                                if ( not ( len(armature_selection_override) > 0 ) ):
                                     return {"CANCELLED"}
 
-                                context.view_layer.objects.active = armature_selection_override[0]
-                                for object in armature_selection_override:
-                                    object.select_set(True)
+                                if ( context.active_object.type == "MESH" ):
+                                    reference_object = context.active_object
+
+                                    reference_object.select_set(False)
+                                    context.view_layer.objects.active = reference_object.find_armature()
+                                    
+                                    for armature_object in armature_selection_override:
+                                        armature_object.select_set(True)
+
+                                if ( context.active_object.type == "ARMATURE" ):
+                                    reference_object = context.active_object
+
+                                    reference_object.select_set(True)
+                                    context.view_layer.objects.active = reference_object
+
+                                    for armature_object in armature_selection_override:
+                                        armature_object.select_set(True)
 
                                 bpy.ops.object.mode_set(mode="EDIT")
                                 return {"FINISHED"}

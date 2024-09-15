@@ -8,11 +8,21 @@ def UIPreset_ModifierSettings(layout:bpy.types.UILayout = None, modifier:bpy.typ
         mod_layout = indented_layout.column()
         match modifier.type:
             case "DATA_TRANSFER":
-                modifier : bpy.types.DataTransferModifier = modifier
+                modifier : bpy.types.DataTransferModifier
 
-                row = mod_layout.row()
+                split = mod_layout.row().split()
+                row = split.row(align=True)
                 row.prop(modifier, "object", text="")
+                row.prop(modifier, "use_object_transform", text="", icon="ORIENTATION_GLOBAL")
+
+                row = split.row(align=True)
+                row.prop(modifier, "mix_mode", text="")
+                row.prop(modifier, "mix_factor", text="")
+
+
+
                 row = mod_layout.row(align=True).split(factor=0.75)
+
                 data_row = row.row()
                 data_row.label(text="Type:")
                 data_row.prop(modifier, "use_vert_data", text="vertex")
