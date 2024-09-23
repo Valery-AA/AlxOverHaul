@@ -58,21 +58,6 @@ def AlxRetrieveContextObject(context: bpy.types.Context):
     return None
 
 
-
-def AlxRetrieveContextArmature(context: bpy.types.Context):
-    try:
-        if (context is not None) and (context.active_object is not None):
-            if (context.active_object.type == "MESH"):
-                if (context.active_object.find_armature() is not None):
-                    return context.active_object.find_armature()
-                
-            if (context.active_object.type == "ARMATURE"):
-                return bpy.data.objects.get(context.active_object.name)
-    except:
-        print("Can't Retrieve Context Armature")
-    return None
-
-
 def AlxRetiriveObjectModifier(TargetObejct, TargetType):
     if (TargetType in AlxModifier_Modifier_ListItemsPreset):
         for Modifier in TargetObejct.modifiers:

@@ -3,7 +3,7 @@ bl_info = {
     "author" : "Valeria Bosco[Valy Arhal]",
     "description" : "",
     "warning" : "[Heavly Under Development] And Subject To Substantial Changes",
-    "version" : (0, 6, 7),
+    "version" : (0, 6, 8),
     "blender" : (3, 6, 0),
     "category" : "3D View",
     "location" : "[Ctrl Alt A] General Menu, [Shift Alt S] Pivot Menu, [Tab] Auto Mode Pie Menu",
@@ -122,9 +122,6 @@ def RegisterProperties():
 
     bpy.types.Scene.alx_scene_isolator_visibility_object_list = []
     bpy.types.Scene.alx_scene_isolator_visibility_collection_list = []
-    bpy.types.Scene.alx_tool_scene_isolator_properties = bpy.props.PointerProperty(type=AlxVisibilityOperators.Alx_Tool_SceneIsolator_Properties)
-
-    bpy.types.Scene.alx_panel_alexandria_general_properties = bpy.props.PointerProperty(type=AlxAlexandriaGeneralPanel.Alx_PG_PropertyGroup_AlexandriaGeneral)
 
     bpy.types.Object.alx_self_bmesh_datablock = []
     bpy.types.Scene.alx_draw_handler_unlocked_modeling = None

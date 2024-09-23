@@ -1,21 +1,5 @@
 import bpy
-
-class Alx_Tool_SceneIsolator_Properties(bpy.types.PropertyGroup):
-    """"""
-
-    scene_isolator_visibility_target : bpy.props.EnumProperty(default={"VIEWPORT"},options={'ENUM_FLAG'}, 
-        items=[
-            ("VIEWPORT", "Viewport", "", "RESTRICT_VIEW_OFF", 1), 
-            ("RENDER", "Render", "", "RESTRICT_RENDER_OFF", 1<<1)
-        ]) #type:ignore
-    
-    scene_isolator_type_target : bpy.props.EnumProperty(default={"OBJECT"}, options={'ENUM_FLAG'},
-        items=[
-                ("OBJECT", "Object", "", "OBJECT_DATAMODE", 1), 
-                ("COLLECTION", "Collection", "", "OUTLINER_COLLECTION", 1<<1)
-            ]) #type:ignore
-
-
+from .AlxProperties import Alx_PG_PropertyGroup_SessionProperties
 
 class Alx_OT_Scene_VisibilityIsolator(bpy.types.Operator):
     """"""
@@ -32,8 +16,9 @@ class Alx_OT_Scene_VisibilityIsolator(bpy.types.Operator):
         return context.area.type == "VIEW_3D"
 
     def execute(self, context: bpy.types.Context):
-        SelectedVisibility = context.scene.alx_tool_scene_isolator_properties.scene_isolator_visibility_target
-        SelectedType = context.scene.alx_tool_scene_isolator_properties.scene_isolator_type_target
+        AddonProperties : Alx_PG_PropertyGroup_SessionProperties = context.window_manager.alx_session_properties
+        SelectedVisibility = AddonProperties.operator_object_and_collection_isolator_visibility_target
+        SelectedType = AddonProperties.operator_object_and_collection_isolator_type_target
 
         if (len(SelectedVisibility) != 0) and (len(SelectedType) != 0):
             VisibilityType = []

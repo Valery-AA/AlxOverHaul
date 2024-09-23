@@ -1,46 +1,21 @@
 import bpy
 from bpy_extras import node_utils
 
+from .Utilities.AlxUtilities import GetActiveObjectContextArmature
+
+
 from . AlxProperties import Alx_PG_PropertyGroup_SessionProperties
-from . AlxAlexandriaLayouts import UIPreset_ModifierSettings
 
-from .AlxUtils import AlxRetrieveContextObject, AlxRetrieveContextArmature
-from . import AlxKeymapUtils
+from . AlxAlexandriaLayouts import UIPreset_EnumButtons, UIPreset_ModifierList, UIPreset_ModifierSettings
 
+from .AlxVisibilityOperators import Alx_OT_Scene_VisibilityIsolator
 
-from .AlxObjectOperator import Alx_OT_Object_UnlockedQOrigin, Alx_OT_Object_BatchMaterial
+from .AlxObjectOperator import Alx_OT_Object_UnlockedQOrigin
 
-from .AlxSculptTools import Alx_OT_Sculpt_ConditionMasking
-
-from .AlxUVRetopology import Alx_OT_VXGroupBySeams, Alx_OT_UVExtractIsland
-
-
-
-from .AlxVisibilityOperators import Alx_Tool_SceneIsolator_Properties, Alx_OT_Scene_VisibilityIsolator, Alx_OT_Object_VisibilitySwitch
 from .AlxModifierOperators import Alx_OT_Modifier_ManageOnSelected, Alx_OT_Modifier_ApplyReplace, Alx_OT_Modifier_BatchVisibility
 
 from .UITools.Alx_OT_UI_SimpleDesigner import Alx_OT_UI_SimpleDesigner
 
-# Mesh Tools
-from .MeshTools.AlxVertexGroupTools import Alx_OT_Mesh_VertexGroup_Clean
-from .MeshTools.AlxShapekeyTools import Alx_OT_Shapekey_TransferShapekeysToTarget
-
-
-class Alx_PG_PropertyGroup_AlexandriaGeneral(bpy.types.PropertyGroup):
-    """"""
-
-    panel_tabs : bpy.props.EnumProperty(default="OBJECT", 
-        items=[
-            ("OBJECT", "Object", "", "OBJECT_DATAMODE", 1),
-            ("ARMATURE", "Armature", "", "ARMATURE_DATA", 1<<1),
-            ("MODIFIER", "Modifier", "", "MODIFIER", 1<<2),
-            ("ALXOPERATORS", "AlxOPS", "", "PLUGIN", 1<<3),
-            ("RENDER", "Render", "", "SCENE", 1<<4),
-            ("UI_DESIGNER", "UI Designer", "", "WINDOW", 1<<5),
-            ("SETTINGS", "Settings", "", "PREFERENCES", 1<<6)
-        ]) #type:ignore
-
-    show_object_properties : bpy.props.BoolProperty(name="", default=False) #type:ignore
 
 class Alx_PG_PropertyGroup_ObjectSelectionListItem(bpy.types.PropertyGroup):
     """"""
@@ -61,7 +36,7 @@ class Alx_UL_UIList_ObjectSelectionProperties(bpy.types.UIList):
         item_box = layout.column()
 
 
-        box_column = item_box.box().column(align=True)
+        box_column = item_box.column(align=True)
 
         header = box_column.row(align=True)
         header.prop(item.ObjectPointer, "name", text="", icon="OBJECT_DATA", emboss=True)
@@ -78,7 +53,6 @@ class Alx_UL_UIList_ObjectSelectionProperties(bpy.types.UIList):
         body.prop(item.ObjectPointer, "display_type", text="")
         if (item.ObjectPointer.type in ["MESH", "META"]):
             body.prop(item.ObjectPointer, "color", text="")
-
 
         item_box.separator(factor=2.0)
 
@@ -202,6 +176,15 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
 
         item_slot_layout.separator(factor=2.0)
 
+
+
+
+
+
+
+
+
+
 class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
     """"""
 
@@ -217,33 +200,28 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
         return True
 
     def draw(self, context: bpy.types.Context):
-        override_window = context.window
-        override_screen = override_window.screen
-        override_area = [area for area in override_screen.areas if area.type == "VIEW_3D"]
-        override_area_length = len(override_area) > 0
-        override_region = None
-        if ( override_area_length > 0 ):
-            override_region = [region for region in override_area[0].regions if region.type == 'WINDOW']
+        override_area = [area for area in context.window.screen.areas if area.type == "VIEW_3D"]
+        b_override_v3d_area_exists = len(override_area) > 0
 
+        override_region = [region for region in override_area[0].regions if region.type == 'WINDOW'] if ( b_override_v3d_area_exists ) else None
+        b_override_v3d_region_exists = len(override_area) > 0
 
-
-        AlxContextObject = AlxRetrieveContextObject(context)
-        AlxContextArmature = AlxRetrieveContextArmature(context)
 
         AddonProperties : Alx_PG_PropertyGroup_SessionProperties = context.window_manager.alx_session_properties
 
-        GeneralPanelProperties : Alx_PG_PropertyGroup_AlexandriaGeneral = context.scene.alx_panel_alexandria_general_properties
-        SceneIsolatorProperties : Alx_Tool_SceneIsolator_Properties = context.scene.alx_tool_scene_isolator_properties
+        AlxContextArmature = GetActiveObjectContextArmature(context)
 
-        self.layout.ui_units_x = 25.0
+        self.layout.ui_units_x = 25.0 if (AddonProperties.alexandria_general_panel_tabs != "MODIFIER") or (AddonProperties.alexandria_general_panel_modifier_sidetabs == "CLOSED") else 60.0
+
+        layout = self.layout.row() if (AddonProperties.alexandria_general_panel_tabs != "MODIFIER") or (AddonProperties.alexandria_general_panel_modifier_sidetabs == "CLOSED") else self.layout.row().split(factor=0.4135)
+        main_page_layout = layout.column()
+        side_page_layout = layout.row()
+
+        header_layout = main_page_layout.column()
+        main_layout = main_page_layout.row()
 
 
-
-        layout = self.layout.column()
-        header_layout = layout.column()
-        main_layout = layout.row()
-
-        tabs = main_layout.column().prop(GeneralPanelProperties, "panel_tabs", icon_only=True, expand=True, emboss=False)
+        tabs = main_layout.column().prop(AddonProperties, "alexandria_general_panel_tabs", icon_only=True, expand=True, emboss=False)
         tabs_panels = main_layout.column()
 
 
@@ -261,8 +239,8 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
         isolator_r_column= isolator_row.column()
 
         isolatior_options = isolator_l_column.row()
-        isolatior_options.column().prop(SceneIsolatorProperties, "scene_isolator_type_target", expand=True)
-        isolatior_options.column().prop(SceneIsolatorProperties, "scene_isolator_visibility_target", expand=True)
+        isolatior_options.column().prop(AddonProperties, "operator_object_and_collection_isolator_visibility_target", expand=True)
+        isolatior_options.column().prop(AddonProperties, "operator_object_and_collection_isolator_type_target", expand=True)
         
 
         isolator_show_hide = isolator_l_column.row()
@@ -301,14 +279,14 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
 
         header_layout.separator()
 
-        if (GeneralPanelProperties.panel_tabs == "OBJECT"):
+        if (AddonProperties.alexandria_general_panel_tabs == "OBJECT"):
             ObjectTabBox = tabs_panels.column()
 
             ObjectTabBox.template_list(Alx_UL_UIList_ObjectSelectionProperties.bl_idname, list_id="", dataptr=context.scene, propname="alx_object_selection_properties", active_dataptr=context.scene, active_propname="alx_object_selection_properties_index", type="GRID", columns=2)
 
 
 
-        if (GeneralPanelProperties.panel_tabs == "ARMATURE"):
+        if (AddonProperties.alexandria_general_panel_tabs == "ARMATURE"):
             ArmatureTabBox = tabs_panels.column()
 
             if (AlxContextArmature is not None):
@@ -323,19 +301,25 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
                 
 
 
-        if (GeneralPanelProperties.panel_tabs == "MODIFIER"):
-            ModifierTabBox = tabs_panels.column()
 
-            ModifierTabBox.popover(Alx_PT_AlexandriaModifierPanel.bl_idname, text="create modifier on selection")
+        if (AddonProperties.alexandria_general_panel_tabs == "MODIFIER"):
+            ModifierTabBox = tabs_panels.row().split(factor=0.925)
 
-            row = ModifierTabBox.row()
-            row.operator(Alx_OT_Modifier_ApplyReplace.bl_idname, text="Apply-Replace Modifier")
-            row.operator(Alx_OT_Modifier_BatchVisibility.bl_idname, text="Batch Visibility")
-
-            ModifierTabBox.row().template_list(Alx_UL_UIList_ObjectSelectionModifiers.bl_idname, list_id="", dataptr=context.scene, propname="alx_object_selection_modifier", active_dataptr=context.scene, active_propname="alx_object_selection_modifier_index", maxrows=3)
+            ModifierTabBox.template_list(Alx_UL_UIList_ObjectSelectionModifiers.bl_idname, list_id="", dataptr=context.scene, propname="alx_object_selection_modifier", active_dataptr=context.scene, active_propname="alx_object_selection_modifier_index", maxrows=3)
             
+            modifier_sidetabs = ModifierTabBox.column()
+            UIPreset_EnumButtons(layout= modifier_sidetabs, primary_icon="MODIFIER", data= AddonProperties, data_name= "alexandria_general_panel_modifier_sidetabs")
 
-        if (GeneralPanelProperties.panel_tabs == "ALXOPERATORS"):
+            if (AddonProperties.alexandria_general_panel_modifier_sidetabs == "CREATE"):
+                UIPreset_ModifierList(side_page_layout.column().row(), Alx_OT_Modifier_ManageOnSelected)
+
+            if (AddonProperties.alexandria_general_panel_modifier_sidetabs == "FAVORITE"):
+                pass
+
+            # row.operator(Alx_OT_Modifier_ApplyReplace.bl_idname, text="Apply-Replace Modifier")
+            # row.operator(Alx_OT_Modifier_BatchVisibility.bl_idname, text="Batch Visibility")   
+
+        if (AddonProperties.alexandria_general_panel_tabs == "ALXOPERATORS"):
             AlxOperatorsTabBox = tabs_panels.column()
 
 
@@ -345,7 +329,7 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
 
 
 
-        if (GeneralPanelProperties.panel_tabs == "RENDER") and ( override_area_length > 0 ):
+        if (AddonProperties.alexandria_general_panel_tabs == "RENDER") and ( b_override_v3d_area_exists ):
             RenderTabBox = tabs_panels.column()
 
             if ( override_region is not None):
@@ -457,7 +441,7 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
 
 
 
-        if (GeneralPanelProperties.panel_tabs == "UI_DESIGNER"):
+        if (AddonProperties.alexandria_general_panel_tabs == "UI_DESIGNER"):
             AlxUIDesignerTabBox = tabs_panels.column()
 
             AlxUIDesignerTabBox.row().operator(Alx_OT_UI_SimpleDesigner.bl_idname, text="UI Designer")
@@ -486,7 +470,7 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
             
         #     AlxSpace.label(text=context.area.type)
 
-        if (GeneralPanelProperties.panel_tabs == "SETTINGS"):
+        if (AddonProperties.alexandria_general_panel_tabs == "SETTINGS"):
             AlxSettingsTabBox = tabs_panels.column()
             
 
@@ -521,115 +505,6 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
         # MMenuSectionR.row().operator(AlxOperators.Alx_OT_Mesh_EditAttributes.bl_idname, text="Edit Attributes")
         # 
 
-LABEL = "LABEL_"
-SEPARATOR = "SEPARATOR"
-
-class Alx_PT_AlexandriaModifierPanel(bpy.types.Panel):
-    """"""
-
-    bl_label = "Alexandria Modifier Panel"
-    bl_idname = "ALX_PT_panel_alexandria_modifier_popover"
-
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "WINDOW"
-
-    bl_options = {"INSTANCED"}
-
-    @classmethod
-    def poll(self, context: bpy.types.Context):
-        return context.area.type == "VIEW_3D"
-    
-    def draw(self, context: bpy.types.Context):
-        AlxLayout = self.layout
-        AlxLayout.ui_units_x = 40.0
-        
-        ModifierLayout = AlxLayout.row()
-        
-        modifier_columns = [
-            [
-            LABEL + "data:",
-            "DATA_TRANSFER",
-            "MESH_CACHE",
-            "MESH_SEQUENCE_CACHE",
-            SEPARATOR + "3.4",
-            SEPARATOR + "3.4",
-        
-            LABEL + "normals:",
-            "NORMAL_EDIT",
-            "WEIGHTED_NORMAL",
-
-            LABEL + "UVs:",
-            "UV_PROJECT",
-            "UV_WARP",
-            SEPARATOR + "1",
-            ],
-            
-            [
-            LABEL + "instances:",
-            "MIRROR",
-            "ARRAY",
-            "BUILD",
-            "SKIN",
-            SEPARATOR + "3.4",
-
-            LABEL + "edit:",
-            "BEVEL",
-            "BOOLEAN",
-            "EDGE_SPLIT",
-            "WELD",
-            "MASK",
-            "SOLIDIFY",
-            "WIREFRAME",
-            "SCREW",
-            ],
-
-            [
-            LABEL + "resolution:",
-            "SUBSURF",
-            "MULTIRES",
-            "TRIANGULATE",
-            "DECIMATE",
-            "REMESH",
-            
-            LABEL + "deform:",
-            "ARMATURE",
-            "SURFACE_DEFORM",
-            "MESH_DEFORM",
-            "LAPLACIANDEFORM",
-            "LATTICE",
-            "CURVE",
-            
-
-            LABEL + "displace:",
-            "SHRINKWRAP",
-            "DISPLACE",
-            "SMOOTH",
-            "CORRECTIVE_SMOOTH",
-            "LAPLACIANSMOOTH"
-            ]
-        ]
-
-
-        for modifier_column in modifier_columns:
-            modifier_space = ModifierLayout.column()
-
-            for Modifier in modifier_column:
-
-                if (Modifier[0:6] == "LABEL_"):
-                    modifier_space.label(text=Modifier[6:])
-
-                if (Modifier[0:9] == "SEPARATOR"):
-                    modifier_space.separator(factor= float(Modifier[9:]) )
-
-                if (Modifier[0:6] != "LABEL_") and (Modifier[0:9] != "SEPARATOR"):
-                    mod_name = bpy.types.Modifier.bl_rna.properties['type'].enum_items[Modifier].name
-                    mod_icon = bpy.types.Modifier.bl_rna.properties['type'].enum_items[Modifier].icon
-                    mod_identifier = bpy.types.Modifier.bl_rna.properties['type'].enum_items[Modifier].identifier
-
-                    modifier_button = modifier_space.operator(Alx_OT_Modifier_ManageOnSelected.bl_idname, text=mod_name, icon=mod_icon)
-                    modifier_button.modifier_type = mod_identifier
-                    modifier_button.create_modifier = True
-                    modifier_button.remove_modifier = False
 
 
 class Alx_PT_Scene_GeneralPivot(bpy.types.Panel):

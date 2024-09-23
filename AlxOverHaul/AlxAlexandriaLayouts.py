@@ -1,4 +1,8 @@
 import bpy
+from .Utilities.AlxUtilities import GetEnumPropertyItems
+
+LABEL = "LABEL_"
+SEPARATOR = "SEPARATOR"
 
 def UIPreset_ModifierSettings(layout:bpy.types.UILayout = None, modifier:bpy.types.Modifier = None, context:bpy.types.Context = None, object:bpy.types.Object = None):
     if (layout is not None) and (modifier is not None):
@@ -145,3 +149,115 @@ def UIPreset_ModifierSettings(layout:bpy.types.UILayout = None, modifier:bpy.typ
             row = options_layout.row()
             row.prop(modifier, "strength")
             row.prop(modifier, "mid_level")
+
+
+def UIPreset_ModifierList(layout:bpy.types.UILayout = None, modifier_creation_operator:bpy.types.Operator = None):
+        modifier_columns = [
+            [
+            LABEL + "Modify",
+            "DATA_TRANSFER",
+            "MESH_CACHE",
+            "MESH_SEQUENCE_CACHE",
+            "NORMAL_EDIT",
+            "WEIGHTED_NORMAL",
+            "UV_PROJECT",
+            "UV_WARP",
+            "VERTEX_WEIGHT_EDIT",
+            "VERTEX_WEIGHT_MIX",
+            "VERTEX_WEIGHT_PROXIMITY"
+            ],
+
+            [
+            LABEL + "Generate",
+            "ARRAY",
+            "BEVEL",
+            "BOOLEAN",
+            "BUILD",
+            "DECIMATE",
+            "EDGE_SPLIT",
+            "NODES",
+            "MASK",
+            "MIRROR",
+            "MULTIRES",
+            "REMESH",
+            "SCREW",
+            "SKIN",
+            "SOLIDIFY",
+            "SUBSURF",
+            "TRIANGULATE",
+            "VOLUME_TO_MESH",
+            "WELD",
+            "WIREFRAME"
+            ],
+
+            [
+            LABEL + "Deform",
+            "ARMATURE",
+            "CAST",
+            "CURVE",
+            "DISPLACE",
+            "HOOK",
+            "LAPLACIANDEFORM",
+            "LATTICE",
+            "MESH_DEFORM",
+            "SHRINKWRAP",
+            "SIMPLE_DEFORM",
+            "SMOOTH",
+            "CORRECTIVE_SMOOTH",
+            "LAPLACIANSMOOTH",
+            "SURFACE_DEFORM",
+            "WARP",
+            "WAVE"
+            ],
+
+            [
+            LABEL + "Physics",
+            "CLOTH",
+            "COLLISION",
+            "DYNAMIC_PAINT",
+            "EXPLODE",
+            "FLUID",
+            "OCEAN",
+            "PARTICLE_INSTANCE",
+            "PARTICLE_SYSTEM",
+            "SOFT_BODY"
+            ]
+        ]
+
+        for modifier_column in modifier_columns:
+            modifier_space = layout.column()
+
+            for Modifier in modifier_column:
+
+                if (Modifier[0:6] == "LABEL_"):
+                    modifier_space.label(text=Modifier[6:])
+
+                if (Modifier[0:9] == "SEPARATOR"):
+                    modifier_space.separator(factor= float(Modifier[9:]) )
+
+                if (Modifier[0:6] != "LABEL_") and (Modifier[0:9] != "SEPARATOR"):
+                    mod_name = bpy.types.Modifier.bl_rna.properties['type'].enum_items[Modifier].name
+                    mod_icon = bpy.types.Modifier.bl_rna.properties['type'].enum_items[Modifier].icon
+                    mod_identifier = bpy.types.Modifier.bl_rna.properties['type'].enum_items[Modifier].identifier
+
+                    modifier_button = modifier_space.operator(modifier_creation_operator.bl_idname, text=mod_name, icon=mod_icon)
+                    modifier_button.modifier_type = mod_identifier
+                    modifier_button.create_modifier = True
+                    modifier_button.remove_modifier = False
+
+def UIPreset_EnumButtons(layout:bpy.types.UILayout = None, primary_icon:str = "NONE", data = None, data_name:str = ""):
+    enum_items = GetEnumPropertyItems(data, data_name)
+
+    enum_layout = layout.row()
+    icons_column = enum_layout.column()
+    buttons_column = enum_layout.column()
+    buttons_column.scale_y = 1.125
+
+    for enum_item in enum_items:
+        if (enum_item.identifier != "CLOSED"):
+            icons_column.label(icon= primary_icon)
+        else:
+            icons_column.label(text="")
+
+
+    buttons_column.prop( data, data_name, expand=True, emboss=False)

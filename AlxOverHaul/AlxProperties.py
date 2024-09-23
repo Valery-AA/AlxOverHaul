@@ -1,13 +1,56 @@
 import bpy
 
-from . import AlxKeymapUtils
-
 class Alx_PG_PropertyGroup_SessionProperties(bpy.types.PropertyGroup):
-    """"""
+    alexandria_general_panel_b_show_modifier_creation_panel : bpy.props.BoolProperty( default=False) #type:ignore
+    alexandria_general_panel_b_show_modifier_favorite_panel : bpy.props.BoolProperty( default=False) #type:ignore
+
+    alexandria_general_panel_tabs : bpy.props.EnumProperty(
+        default="OBJECT",
+        items=[
+            ("OBJECT", "Object", "", "OBJECT_DATAMODE", 1),
+            ("ARMATURE", "Armature", "", "ARMATURE_DATA", 1<<1),
+            ("MODIFIER", "Modifier", "", "MODIFIER", 1<<2),
+            ("ALXOPERATORS", "AlxOPS", "", "PLUGIN", 1<<3),
+            ("RENDER", "Render", "", "SCENE", 1<<4),
+            ("UI_DESIGNER", "UI Designer", "", "WINDOW", 1<<5),
+            ("SETTINGS", "Settings", "", "PREFERENCES", 1<<6)
+        ]
+    ) #type:ignore
+
+    alexandria_general_panel_modifier_sidetabs : bpy.props.EnumProperty(
+        default="CLOSED",
+        items=[
+            ("CLOSED", "", "", "X", 1),
+            ("CREATE", "", "", "ADD", 1<<1),
+            ("FAVORITE", "", "", "SOLO_ON", 1<<2)
+        ]
+    ) #type:ignore
+
+
+
+
+    operator_object_and_collection_isolator_visibility_target : bpy.props.EnumProperty(
+        default={"VIEWPORT"},
+        options={'ENUM_FLAG'},
+        items=[
+            ("VIEWPORT", "Viewport", "", "RESTRICT_VIEW_OFF", 1), 
+            ("RENDER", "Render", "", "RESTRICT_RENDER_OFF", 1<<1)
+        ]
+    ) #type:ignore
+
+    operator_object_and_collection_isolator_type_target : bpy.props.EnumProperty(
+        default={"OBJECT"},
+        options={'ENUM_FLAG'},
+        items=[
+            ("OBJECT", "Object", "", "OBJECT_DATAMODE", 1), 
+            ("COLLECTION", "Collection", "", "OUTLINER_COLLECTION", 1<<1)
+        ]
+    ) #type:ignore
+
+    
 
     operator_uvtools_uv_map_transfer__source_object : bpy.props.PointerProperty(type=bpy.types.Object, name="source") #type:ignore
     operator_uvtools_uv_map_transfer__target_object : bpy.props.PointerProperty(type=bpy.types.Object, name="target") #type:ignore
-
 
     udim_texture_compressor_texture_target : bpy.props.PointerProperty(type=bpy.types.Image) #type:ignore
 
