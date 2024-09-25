@@ -1,10 +1,12 @@
 import bpy
+
 from .Utilities.AlxUtilities import GetEnumPropertyItems
 
 LABEL = "LABEL_"
 SEPARATOR = "SEPARATOR"
 
-def UIPreset_ModifierSettings(layout:bpy.types.UILayout = None, modifier:bpy.types.Modifier = None, context:bpy.types.Context = None, object:bpy.types.Object = None):
+
+def UIPreset_ModifierSettings(layout: bpy.types.UILayout = None, modifier: bpy.types.Modifier = None, context: bpy.types.Context = None, object: bpy.types.Object = None):
     if (layout is not None) and (modifier is not None):
         indented_layout = layout.row()
         indented_layout.separator(factor=2.0)
@@ -12,18 +14,17 @@ def UIPreset_ModifierSettings(layout:bpy.types.UILayout = None, modifier:bpy.typ
         mod_layout = indented_layout.column()
         match modifier.type:
             case "DATA_TRANSFER":
-                modifier : bpy.types.DataTransferModifier
+                modifier: bpy.types.DataTransferModifier
 
                 split = mod_layout.row().split()
                 row = split.row(align=True)
                 row.prop(modifier, "object", text="")
-                row.prop(modifier, "use_object_transform", text="", icon="ORIENTATION_GLOBAL")
+                row.prop(modifier, "use_object_transform",
+                         text="", icon="ORIENTATION_GLOBAL")
 
                 row = split.row(align=True)
                 row.prop(modifier, "mix_mode", text="")
                 row.prop(modifier, "mix_factor", text="")
-
-
 
                 row = mod_layout.row(align=True).split(factor=0.75)
 
@@ -38,28 +39,31 @@ def UIPreset_ModifierSettings(layout:bpy.types.UILayout = None, modifier:bpy.typ
                     column = mod_layout.column()
                     column.row().prop(modifier, "data_types_verts")
                     column.prop(modifier, "vert_mapping", text="Mapping")
-                    
+
                     row = column.row().split(factor=0.5)
 
                     if ("VGROUP_WEIGHTS" in modifier.data_types_verts):
                         column = row.column()
                         column.label(text="VGroup Source:")
-                        column.prop(modifier, "layers_vgroup_select_src", text="")
+                        column.prop(
+                            modifier, "layers_vgroup_select_src", text="")
                         column.label(text="VGroup Mapping:")
-                        column.prop(modifier, "layers_vgroup_select_dst", text="")
+                        column.prop(
+                            modifier, "layers_vgroup_select_dst", text="")
                     if ("COLOR_VERTEX" in modifier.data_types_verts):
                         column = row.column()
                         column.label(text="Color Source:")
-                        column.prop(modifier, "layers_vcol_vert_select_src", text="")
+                        column.prop(
+                            modifier, "layers_vcol_vert_select_src", text="")
                         column.label(text="Color Mapping:")
-                        column.prop(modifier, "layers_vcol_vert_select_dst", text="")
+                        column.prop(
+                            modifier, "layers_vcol_vert_select_dst", text="")
 
             case "SMOOTH":
                 pass
 
-
             case "SHRINKWRAP":
-                modifier : bpy.types.ShrinkwrapModifier = modifier
+                modifier: bpy.types.ShrinkwrapModifier = modifier
                 row = layout.row().split(factor=0.5, align=True)
                 row.prop(modifier, "target", text="")
 
@@ -72,26 +76,25 @@ def UIPreset_ModifierSettings(layout:bpy.types.UILayout = None, modifier:bpy.typ
                 row.prop(modifier, "use_positive_direction")
 
         # if (modifier.type == "DATA_TRANSFER"):
-        #     row = layout.row()  
+        #     row = layout.row()
         #     row.prop(modifier, "object", text="")
         #     split = row.row(align=True)
         #     split.prop(modifier, "use_object_transform", text="", toggle=True, icon="OBJECT_ORIGIN")
-        #     
+        #
 
         #     row = layout.row()
         #     row.prop(modifier, "use_vert_data", text="")
-            
 
         #     row = layout.row()
         #     row.prop(modifier, "use_edge_data", text="")
         #     row.prop(modifier, "data_types_edges")
 
         #     row = layout.row()
-            
+
         #     row.prop(modifier, "data_types_loops")
-            
+
         #     row = layout.row()
-            
+
         #     row.prop(modifier, "data_types_polys")
 
         if (modifier.type == "MIRROR"):
@@ -101,7 +104,6 @@ def UIPreset_ModifierSettings(layout:bpy.types.UILayout = None, modifier:bpy.typ
             row.prop(modifier, "use_clip", text="clip")
             row.prop(modifier, "use_mirror_merge", text="merge")
             row.prop(modifier, "merge_threshold", text="")
-            
 
         if (modifier.type == "SUBSURF"):
             layout.row().prop(modifier, "show_only_control_edges", text="optimal")
@@ -134,13 +136,6 @@ def UIPreset_ModifierSettings(layout:bpy.types.UILayout = None, modifier:bpy.typ
             row.prop(modifier, "thickness")
             row.prop(modifier, "offset")
 
-
-
-
-
-
-
-
         if (modifier.type == "DISPLACE"):
             row = layout.row().split(factor=0.034)
             row.separator()
@@ -151,101 +146,29 @@ def UIPreset_ModifierSettings(layout:bpy.types.UILayout = None, modifier:bpy.typ
             row.prop(modifier, "mid_level")
 
 
-def UIPreset_ModifierList(layout:bpy.types.UILayout = None, modifier_creation_operator:bpy.types.Operator = None):
-        modifier_columns = [
-            [
-            LABEL + "Modify",
-            "DATA_TRANSFER",
-            "MESH_CACHE",
-            "MESH_SEQUENCE_CACHE",
-            "NORMAL_EDIT",
-            "WEIGHTED_NORMAL",
-            "UV_PROJECT",
-            "UV_WARP",
-            "VERTEX_WEIGHT_EDIT",
-            "VERTEX_WEIGHT_MIX",
-            "VERTEX_WEIGHT_PROXIMITY"
-            ],
+def UIPreset_ModifierList(layout: bpy.types.UILayout = None, modifiers_types: list[list[str, list[str]]] = [], modifier_creation_operator: bpy.types.Operator = None):
+    """
+    modifiers_types : [ [label_name_1, [modifier_types_list_1]], [label_name_2, [modifier_types_list_2]] ]
+    """
 
-            [
-            LABEL + "Generate",
-            "ARRAY",
-            "BEVEL",
-            "BOOLEAN",
-            "BUILD",
-            "DECIMATE",
-            "EDGE_SPLIT",
-            "NODES",
-            "MASK",
-            "MIRROR",
-            "MULTIRES",
-            "REMESH",
-            "SCREW",
-            "SKIN",
-            "SOLIDIFY",
-            "SUBSURF",
-            "TRIANGULATE",
-            "VOLUME_TO_MESH",
-            "WELD",
-            "WIREFRAME"
-            ],
+    for label, modifier_types in modifiers_types:
+        modifier_space = layout.column()
 
-            [
-            LABEL + "Deform",
-            "ARMATURE",
-            "CAST",
-            "CURVE",
-            "DISPLACE",
-            "HOOK",
-            "LAPLACIANDEFORM",
-            "LATTICE",
-            "MESH_DEFORM",
-            "SHRINKWRAP",
-            "SIMPLE_DEFORM",
-            "SMOOTH",
-            "CORRECTIVE_SMOOTH",
-            "LAPLACIANSMOOTH",
-            "SURFACE_DEFORM",
-            "WARP",
-            "WAVE"
-            ],
+        modifier_space.label(text=label)
 
-            [
-            LABEL + "Physics",
-            "CLOTH",
-            "COLLISION",
-            "DYNAMIC_PAINT",
-            "EXPLODE",
-            "FLUID",
-            "OCEAN",
-            "PARTICLE_INSTANCE",
-            "PARTICLE_SYSTEM",
-            "SOFT_BODY"
-            ]
-        ]
+        for mod_type in modifier_types:
+            mod_name = bpy.types.Modifier.bl_rna.properties['type'].enum_items[mod_type].name
+            mod_icon = bpy.types.Modifier.bl_rna.properties['type'].enum_items[mod_type].icon
+            mod_id = bpy.types.Modifier.bl_rna.properties['type'].enum_items[mod_type].identifier
 
-        for modifier_column in modifier_columns:
-            modifier_space = layout.column()
+            modifier_button = modifier_space.operator(
+                modifier_creation_operator.bl_idname, text=mod_name, icon=mod_icon)
+            modifier_button.modifier_type = mod_id
+            modifier_button.create_modifier = True
+            modifier_button.remove_modifier = False
 
-            for Modifier in modifier_column:
 
-                if (Modifier[0:6] == "LABEL_"):
-                    modifier_space.label(text=Modifier[6:])
-
-                if (Modifier[0:9] == "SEPARATOR"):
-                    modifier_space.separator(factor= float(Modifier[9:]) )
-
-                if (Modifier[0:6] != "LABEL_") and (Modifier[0:9] != "SEPARATOR"):
-                    mod_name = bpy.types.Modifier.bl_rna.properties['type'].enum_items[Modifier].name
-                    mod_icon = bpy.types.Modifier.bl_rna.properties['type'].enum_items[Modifier].icon
-                    mod_identifier = bpy.types.Modifier.bl_rna.properties['type'].enum_items[Modifier].identifier
-
-                    modifier_button = modifier_space.operator(modifier_creation_operator.bl_idname, text=mod_name, icon=mod_icon)
-                    modifier_button.modifier_type = mod_identifier
-                    modifier_button.create_modifier = True
-                    modifier_button.remove_modifier = False
-
-def UIPreset_EnumButtons(layout:bpy.types.UILayout = None, primary_icon:str = "NONE", data = None, data_name:str = ""):
+def UIPreset_EnumButtons(layout: bpy.types.UILayout = None, primary_icon: str = "NONE", data=None, data_name: str = ""):
     enum_items = GetEnumPropertyItems(data, data_name)
 
     enum_layout = layout.row()
@@ -255,9 +178,8 @@ def UIPreset_EnumButtons(layout:bpy.types.UILayout = None, primary_icon:str = "N
 
     for enum_item in enum_items:
         if (enum_item.identifier != "CLOSED"):
-            icons_column.label(icon= primary_icon)
+            icons_column.label(icon=primary_icon)
         else:
             icons_column.label(text="")
 
-
-    buttons_column.prop( data, data_name, expand=True, emboss=False)
+    buttons_column.prop(data, data_name, expand=True, emboss=False)
