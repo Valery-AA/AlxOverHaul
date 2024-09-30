@@ -2,68 +2,13 @@
 
 import bpy
 
-def AlxCheckBlenderVersion(Version: [int] = [bpy.app.version[0]], SubVersion: [int] = [bpy.app.version[1]], TrailingVersion: [int] = [bpy.app.version[2]]):
-    if (bpy.app.version[0] in Version) and (bpy.app.version[1] in SubVersion) and (bpy.app.version[2] in TrailingVersion):
-        return True
-    return False
 
 
 
-AlxModifier_DataEditing_ListItemsPreset = ["DATA_TRANSFER", "WEIGHTED_NORMAL"]
-AlxModifier_Generation_ListItemsPreset = ["MIRROR", "BEVEL", "SUBSURF", "BOOLEAN", "WELD", "DECIMATE", "TRIANGULATE", "SOLIDIFY", "WIREFRAME", 
-                                          "SKIN", "SCREW", "ARRAY", "MULTIRES", "REMESH",
-                                          ]
-AlxModifier_Smoothing_ListItemsPreset = ["SMOOTH", "CORRECTIVE_SMOOTH", "LAPLACIANSMOOTH"]
-AlxModifier_Displacement_ListItemsPreset = ["CAST", "CURVE", "DISPLACE"]
-AlxModifier_Deformation_ListItemsPreset = ["ARMATURE", "SHRINKWRAP", "LATTICE", "SIMPLE_DEFORM", "MESH_DEFORM", "SURFACE_DEFORM", "OCEAN"]
-AlxModifier_Particles_ListItemsPreset = ["PARTICLE_SYSTEM", "PARTICLE_INSTANCE"]
-AlxModifier_Simulation_ListItemsPreset = ["COLLISION", "CLOTH", "SOFT_BODY", "FLUID"]
-
-AlxModifier_Modifier_ListItemsPreset = []
-AlxModifier_Modifier_ListItemsPreset.extend(AlxModifier_DataEditing_ListItemsPreset)
-AlxModifier_Modifier_ListItemsPreset.extend(AlxModifier_Generation_ListItemsPreset)
-AlxModifier_Modifier_ListItemsPreset.extend(AlxModifier_Smoothing_ListItemsPreset)
-AlxModifier_Modifier_ListItemsPreset.extend(AlxModifier_Displacement_ListItemsPreset)
-AlxModifier_Modifier_ListItemsPreset.extend(AlxModifier_Deformation_ListItemsPreset)
-AlxModifier_Modifier_ListItemsPreset.extend(AlxModifier_Particles_ListItemsPreset)
-AlxModifier_Modifier_ListItemsPreset.extend(AlxModifier_DataEditing_ListItemsPreset)
-AlxModifier_Modifier_ListItemsPreset.extend(AlxModifier_DataEditing_ListItemsPreset)
-
-AlxModifier_DataEditing_EnumItemsPreset = [("DATA_TRANSFER", "Data Transfer", "", 1), ("WEIGHTED_NORMAL", "Weighted Normal", "", 1 << 1)]
-AlxModifier_Generation_EnumItemsPreset = [("MIRROR", "Mirror", "", 1), ("BEVEL", "Bevel", "", 1 << 1), ("SUBSURF", "Subdivision Surface", "", 1 << 2), ("BOOLEAN", "Boolean", "", 1 << 3), 
-                                          ("WELD", "Weld", "", 1 << 4), ("DECIMATE", "Decimate", "", 1 << 5), ("TRIANGULATE", "Triangulate","", 1 << 6), ("SOLIDIFY", "Solidify", "", 1 << 7),
-                                          ("WIREFRAME", "Wireframe", "", 1 << 8), ("SKIN", "Skin", "", 1 << 9), ("SCREW", "Screw", "", 1 << 10), ("ARRAY", "Array", "", 1 << 11), 
-                                          ("MULTIRES", "Multiresolution", "", 1 << 12), ("REMESH", "Remesh", "", 1 << 13)
-                                          ]
-AlxModifier_Smoothing_EnumItemsPreset = [("SMOOTH", "Smooth", "", 1), ("CORRECTIVE_SMOOTH", "Corrective Smooth", "", 1 << 1), ("LAPLACIANSMOOTH", "Lapacian Smooth", "", 1 << 2)]
-AlxModifier_Displacement_EnumItemsPreset = [("CAST", "Cast", "", 1), ("CURVE", "Curve" ,"", 1 << 1), ("DISPLACE", "Displace", "", 1 << 2)]
-AlxModifier_Deformation_EnumItemsPreset = [("ARMATURE", "Armature", "", 1), ("SHRINKWRAP", "Shrinkwrap", "", 1 << 1), ("LATTICE", "Lattice", "", 1 << 2), ("SIMPLE_DEFORM", "Simple Deform", "", 1 << 3), 
-                                           ("MESH_DEFORM", "Mesh Deform", "", 1 << 4), ("SURFACE_DEFORM", "Surface Deform", "", 1 << 5), ("OCEAN", "Ocean", "", 1 << 6)]
-AlxModifier_Particles_EnumItemsPreset = [("PARTICLE_SYSTEM", "Particle System", "", 1), ("PARTICLE_INSTANCE", "Particle Instance", "", 1 << 1)]
-AlxModifier_Simulation_EnumItemsPreset = [("COLLISION", "Collision", "", 1), ("CLOTH", "Cloth", "", 1 << 1), ("SOFT_BODY", "Soft Body", "", 1 << 2), ("FLUID", "Fluid", "", 1 << 3)]
 
 
-def AlxRetrieveContextObject(context: bpy.types.Context):
-    try:
-        if (context is not None) and (context.active_object is not None):
-            if (context.active_object.type == "MESH"): 
-                return context.active_object 
-
-            else:
-                for Object in bpy.context.selected_objects:
-                    if (Object.type == "MESH") and (Object.find_armature() is not None) and (Object.find_armature() is AlxRetrieveContextArmature(context=context)):
-                        return Object
-    except:
-        print("Can't Retrieve Context Object")
-    return None
 
 
-def AlxRetiriveObjectModifier(TargetObejct, TargetType):
-    if (TargetType in AlxModifier_Modifier_ListItemsPreset):
-        for Modifier in TargetObejct.modifiers:
-            if (Modifier.type == TargetType):
-                return Modifier
-    return None
 
 def AlxGetBoneAlwaysLeft(Bone, Armature):
     LeftBone = ""
@@ -133,10 +78,11 @@ def AlxGetBoneNameOpposite(BoneName):
                     OppositeBoneName = BoneName[0:-1] + "r"
     return OppositeBoneName
 
-def AlxGetIKConstraint(Bone):
-    for Constraint in Bone.constraints:
-        if (Constraint.type == "IK"):
-            return Constraint
+def AlxGetIKConstraint(bone: bpy.types.Bone = None):
+    if (bone is not None):
+        for Constraint in Bone.constraints:
+            if (Constraint.type == "IK"):
+                return Constraint
 
 def AlxInvertPoleAngle(Angle):
     CorrectedAngle = Angle * (180 / 3.14)
