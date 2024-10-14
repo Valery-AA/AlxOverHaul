@@ -343,21 +343,21 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
             match AddonProperties.alexandria_general_panel_modifier_sidetabs:
                 case "STANDARD":
                     UIPreset_ModifierList(
-                        side_page_layout.row(),
-                        [
+                        layout=side_page_layout.row(),
+                        modifiers_types=[
                             ["Modify", TD_modifier_modifiy_types],
                             ["Generate", TD_modifier_generate_types],
                             ["Deform", TD_modifier_deform_types]
                         ],
-                        Alx_OT_Modifier_ManageOnSelected)
+                        modifier_creation_operator=Alx_OT_Modifier_ManageOnSelected)
 
                 case "PHYSICS":
                     UIPreset_ModifierList(
-                        side_page_layout.row(),
-                        [
+                        layout=side_page_layout.row(),
+                        modifiers_types=[
                             ["Physics", TD_modifier_physics_types]
                         ],
-                        Alx_OT_Modifier_ManageOnSelected)
+                        modifier_creation_operator=Alx_OT_Modifier_ManageOnSelected)
 
                 case "FAVORITE":
                     pass

@@ -1,3 +1,4 @@
+import socket
 import bpy
 
 from .Utilities.AlxUtilities import GetEnumPropertyItems

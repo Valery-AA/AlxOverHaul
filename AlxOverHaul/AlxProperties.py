@@ -2,6 +2,7 @@ import bpy
 
 
 class Alx_PG_PropertyGroup_SessionProperties(bpy.types.PropertyGroup):
+
     alexandria_general_panel_b_show_modifier_creation_panel: bpy.props.BoolProperty(
         default=False)  # type:ignore
     alexandria_general_panel_b_show_modifier_favorite_panel: bpy.props.BoolProperty(
@@ -95,8 +96,28 @@ class Alx_PG_PropertyGroup_SessionProperties(bpy.types.PropertyGroup):
     ])  # type:ignore
 
 
+class Alx_PG_VMC_SessionProperties(bpy.types.PropertyGroup):
+    vmc_server_target_ip: bpy.props.StringProperty(
+        name="",
+        default="127.0.0.1"
+    )  # type:ignore
+    vmc_server_target_port: bpy.props.IntProperty(
+        name="",
+        default=39539,
+        min=1025,
+        max=65535
+    )  # type:ignore
+
+    vmc_mesh_blendshapes_target: bpy.props.PointerProperty(
+        type=bpy.types.Mesh
+    )  # type:ignore
+    vmc_skeleton_pose_target: bpy.props.PointerProperty(
+        type=bpy.types.Armature)  # type:ignore
+
+
 class Alx_Object_Selection_ListItem(bpy.types.PropertyGroup):
     """"""
     name: bpy.props.StringProperty()  # type:ignore
     ObjectPointer: bpy.props.PointerProperty(
-        type=bpy.types.Object)  # type:ignore
+        type=bpy.types.Object
+    )  # type:ignore
