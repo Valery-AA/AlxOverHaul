@@ -2,8 +2,8 @@
 
 import unittest
 
-from pythonosc.parsing import ntp
-from pythonosc.parsing import osc_types
+from ..parsing import ntp
+from ..parsing import osc_types
 
 from datetime import datetime
 
@@ -32,13 +32,16 @@ class TestString(unittest.TestCase):
         ]
 
         for case in cases:
-            self.assertRaises(osc_types.ParseError, osc_types.get_string, case, 0)
+            self.assertRaises(osc_types.ParseError,
+                              osc_types.get_string, case, 0)
 
     def test_get_string_raises_when_datagram_too_short(self):
-        self.assertRaises(osc_types.ParseError, osc_types.get_string, b"abc\x00", 1)
+        self.assertRaises(osc_types.ParseError,
+                          osc_types.get_string, b"abc\x00", 1)
 
     def test_get_string_raises_on_wrong_start_index_negative(self):
-        self.assertRaises(osc_types.ParseError, osc_types.get_string, b"abc\x00", -1)
+        self.assertRaises(osc_types.ParseError,
+                          osc_types.get_string, b"abc\x00", -1)
 
 
 class TestInteger(unittest.TestCase):
@@ -99,7 +102,8 @@ class TestRGBA(unittest.TestCase):
         cases = [b"", True]
 
         for case in cases:
-            self.assertRaises(osc_types.ParseError, osc_types.get_rgba, case, 0)
+            self.assertRaises(osc_types.ParseError,
+                              osc_types.get_rgba, case, 0)
 
     def test_get_rgba_raises_on_wrong_start_index(self):
         self.assertRaises(
@@ -136,7 +140,8 @@ class TestMidi(unittest.TestCase):
         cases = [b"", True]
 
         for case in cases:
-            self.assertRaises(osc_types.ParseError, osc_types.get_midi, case, 0)
+            self.assertRaises(osc_types.ParseError,
+                              osc_types.get_midi, case, 0)
 
     def test_get_midi_raises_on_wrong_start_index(self):
         self.assertRaises(
@@ -185,7 +190,8 @@ class TestDate(unittest.TestCase):
         cases = [b"", True]
 
         for case in cases:
-            self.assertRaises(osc_types.ParseError, osc_types.get_timetag, case, 0)
+            self.assertRaises(osc_types.ParseError,
+                              osc_types.get_timetag, case, 0)
 
     def test_get_timetag_raises_on_wrong_start_index(self):
         self.assertRaises(
@@ -197,16 +203,20 @@ class TestDate(unittest.TestCase):
 
     def test_ttag_datagram_too_short(self):
         dgram = b"\x00" * 7
-        self.assertRaises(osc_types.ParseError, osc_types.get_timetag, dgram, 6)
+        self.assertRaises(osc_types.ParseError,
+                          osc_types.get_timetag, dgram, 6)
 
         dgram = b"\x00" * 2
-        self.assertRaises(osc_types.ParseError, osc_types.get_timetag, dgram, 1)
+        self.assertRaises(osc_types.ParseError,
+                          osc_types.get_timetag, dgram, 1)
 
         dgram = b"\x00" * 5
-        self.assertRaises(osc_types.ParseError, osc_types.get_timetag, dgram, 4)
+        self.assertRaises(osc_types.ParseError,
+                          osc_types.get_timetag, dgram, 4)
 
         dgram = b"\x00" * 1
-        self.assertRaises(osc_types.ParseError, osc_types.get_timetag, dgram, 0)
+        self.assertRaises(osc_types.ParseError,
+                          osc_types.get_timetag, dgram, 0)
 
 
 class TestFloat(unittest.TestCase):
@@ -225,13 +235,15 @@ class TestFloat(unittest.TestCase):
         cases = [True]
 
         for case in cases:
-            self.assertRaises(osc_types.ParseError, osc_types.get_float, case, 0)
+            self.assertRaises(osc_types.ParseError,
+                              osc_types.get_float, case, 0)
 
     def test_get_float_raises_on_type_error(self):
         cases = [None]
 
         for case in cases:
-            self.assertRaises(osc_types.ParseError, osc_types.get_float, case, 0)
+            self.assertRaises(osc_types.ParseError,
+                              osc_types.get_float, case, 0)
 
     def test_datagram_too_short_pads(self):
         dgram = b"\x00" * 2
@@ -256,13 +268,15 @@ class TestDouble(unittest.TestCase):
         cases = [True]
 
         for case in cases:
-            self.assertRaises(osc_types.ParseError, osc_types.get_double, case, 0)
+            self.assertRaises(osc_types.ParseError,
+                              osc_types.get_double, case, 0)
 
     def test_get_double_raises_on_type_error(self):
         cases = [None]
 
         for case in cases:
-            self.assertRaises(osc_types.ParseError, osc_types.get_double, case, 0)
+            self.assertRaises(osc_types.ParseError,
+                              osc_types.get_double, case, 0)
 
     def test_datagram_too_short_pads(self):
         dgram = b"\x00" * 2
@@ -289,7 +303,8 @@ class TestBlob(unittest.TestCase):
         cases = [b"", True, b"\x00\x00\x00\x08"]
 
         for case in cases:
-            self.assertRaises(osc_types.ParseError, osc_types.get_blob, case, 0)
+            self.assertRaises(osc_types.ParseError,
+                              osc_types.get_blob, case, 0)
 
     def test_get_blob_raises_on_wrong_start_index(self):
         self.assertRaises(
@@ -310,7 +325,8 @@ class TestBlob(unittest.TestCase):
 class TestNTPTimestamp(unittest.TestCase):
     def test_immediately_dgram(self):
         dgram = ntp.IMMEDIATELY
-        self.assertEqual(osc_types.IMMEDIATELY, osc_types.get_date(dgram, 0)[0])
+        self.assertEqual(osc_types.IMMEDIATELY,
+                         osc_types.get_date(dgram, 0)[0])
 
     def test_origin_of_time(self):
         dgram = b"\x00" * 8
@@ -332,7 +348,8 @@ class TestBuildMethods(unittest.TestCase):
         self.assertEqual(b"A\x00\x00\x00", osc_types.write_string("A"))
         self.assertEqual(b"AB\x00\x00", osc_types.write_string("AB"))
         self.assertEqual(b"ABC\x00", osc_types.write_string("ABC"))
-        self.assertEqual(b"ABCD\x00\x00\x00\x00", osc_types.write_string("ABCD"))
+        self.assertEqual(b"ABCD\x00\x00\x00\x00",
+                         osc_types.write_string("ABCD"))
 
     def test_string_raises(self):
         self.assertRaises(osc_types.BuildError, osc_types.write_string, 123)
@@ -351,11 +368,13 @@ class TestBuildMethods(unittest.TestCase):
         self.assertEqual(b"?\x80\x00\x00", osc_types.write_float(1))
 
     def test_float_raises(self):
-        self.assertRaises(osc_types.BuildError, osc_types.write_float, "no float")
+        self.assertRaises(osc_types.BuildError,
+                          osc_types.write_float, "no float")
 
     def test_blob(self):
         self.assertEqual(
-            b"\x00\x00\x00\x02\x00\x01\x00\x00", osc_types.write_blob(b"\x00\x01")
+            b"\x00\x00\x00\x02\x00\x01\x00\x00", osc_types.write_blob(
+                b"\x00\x01")
         )
         self.assertEqual(
             b"\x00\x00\x00\x04\x00\x01\x02\x03",

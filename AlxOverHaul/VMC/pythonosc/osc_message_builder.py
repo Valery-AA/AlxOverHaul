@@ -2,8 +2,8 @@
 
 from typing import Any, Iterable, List, Optional, Tuple, Union
 
-from pythonosc import osc_message
-from pythonosc.parsing import osc_types
+from . import osc_message
+from .parsing import osc_types
 
 ArgValue = Union[str, bytes, bool, int, float, osc_types.MidiPacket, list]
 
@@ -98,7 +98,8 @@ class OscMessageBuilder(object):
             arg_type = self._get_arg_type(arg_value)
         if isinstance(arg_type, list):
             self._args.append((self.ARG_TYPE_ARRAY_START, None))
-            for v, t in zip(arg_value, arg_type):  # type: ignore[var-annotated, arg-type]
+            # type: ignore[var-annotated, arg-type]
+            for v, t in zip(arg_value, arg_type):
                 self.add_arg(v, t)
             self._args.append((self.ARG_TYPE_ARRAY_STOP, None))
         else:
@@ -164,21 +165,29 @@ class OscMessageBuilder(object):
             dgram += osc_types.write_string("," + arg_types)
             for arg_type, value in self._args:
                 if arg_type == self.ARG_TYPE_STRING:
-                    dgram += osc_types.write_string(value)  # type: ignore[arg-type]
+                    # type: ignore[arg-type]
+                    dgram += osc_types.write_string(value)
                 elif arg_type == self.ARG_TYPE_INT:
-                    dgram += osc_types.write_int(value)  # type: ignore[arg-type]
+                    # type: ignore[arg-type]
+                    dgram += osc_types.write_int(value)
                 elif arg_type == self.ARG_TYPE_INT64:
-                    dgram += osc_types.write_int64(value)  # type: ignore[arg-type]
+                    # type: ignore[arg-type]
+                    dgram += osc_types.write_int64(value)
                 elif arg_type == self.ARG_TYPE_FLOAT:
-                    dgram += osc_types.write_float(value)  # type: ignore[arg-type]
+                    # type: ignore[arg-type]
+                    dgram += osc_types.write_float(value)
                 elif arg_type == self.ARG_TYPE_DOUBLE:
-                    dgram += osc_types.write_double(value)  # type: ignore[arg-type]
+                    # type: ignore[arg-type]
+                    dgram += osc_types.write_double(value)
                 elif arg_type == self.ARG_TYPE_BLOB:
-                    dgram += osc_types.write_blob(value)  # type: ignore[arg-type]
+                    # type: ignore[arg-type]
+                    dgram += osc_types.write_blob(value)
                 elif arg_type == self.ARG_TYPE_RGBA:
-                    dgram += osc_types.write_rgba(value)  # type: ignore[arg-type]
+                    # type: ignore[arg-type]
+                    dgram += osc_types.write_rgba(value)
                 elif arg_type == self.ARG_TYPE_MIDI:
-                    dgram += osc_types.write_midi(value)  # type: ignore[arg-type]
+                    # type: ignore[arg-type]
+                    dgram += osc_types.write_midi(value)
                 elif arg_type in (
                     self.ARG_TYPE_TRUE,
                     self.ARG_TYPE_FALSE,

@@ -1,6 +1,6 @@
 import unittest
 
-from pythonosc import osc_message
+from . import osc_message
 
 from datetime import datetime
 
@@ -130,7 +130,8 @@ class TestOscMessage(unittest.TestCase):
         )
 
     def test_raises_on_incorrect_datargram(self):
-        self.assertRaises(osc_message.ParseError, osc_message.OscMessage, b"foobar")
+        self.assertRaises(osc_message.ParseError,
+                          osc_message.OscMessage, b"foobar")
 
     def test_parse_long_params_list(self):
         msg = osc_message.OscMessage(_DGRAM_LONG_LIST)

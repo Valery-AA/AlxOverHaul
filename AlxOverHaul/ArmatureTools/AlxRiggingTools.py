@@ -1,7 +1,7 @@
 import bpy
 import bmesh
 
-from ..Utilities.AlxUtilities import operator_log_warning, GetObjectModifiersOfType
+from ..Utilities.AlxUtilities import operator_log_warning, get_modifiers_of_type
 
 
 class Alx_OT_Armature_BoneChainOnSelection(bpy.types.Operator):
@@ -35,7 +35,7 @@ class Alx_OT_Armature_BoneChainOnSelection(bpy.types.Operator):
             self.hair_strip_bmesh.edges.ensure_lookup_table()
             self.hair_strip_bmesh.faces.ensure_lookup_table()
 
-            if (len(GetObjectModifiersOfType(self.hair_strip_object, "SUBSURF")) > 0):
+            if (len(get_modifiers_of_type(self.hair_strip_object, "SUBSURF")) > 0):
                 operator_log_warning(
                     self,
                     message="[subdivision][modifier] | [present], [topology][source] | [base mesh]"

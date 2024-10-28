@@ -2,7 +2,7 @@
 
 import logging
 
-from pythonosc.parsing import osc_types
+from .parsing import osc_types
 from typing import List, Iterator, Any
 
 
@@ -80,7 +80,8 @@ class OscMessage(object):
                     param_stack.pop()
                 # TODO: Support more exotic types as described in the specification.
                 else:
-                    logging.warning("Unhandled parameter type: {0}".format(param))
+                    logging.warning(
+                        "Unhandled parameter type: {0}".format(param))
                     continue
                 if param not in "[]":
                     param_stack[-1].append(val)

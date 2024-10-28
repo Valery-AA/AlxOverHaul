@@ -39,8 +39,8 @@ import socketserver
 import struct
 from typing import List, Tuple
 
-from pythonosc import osc_message_builder, slip
-from pythonosc.dispatcher import Dispatcher
+from . import osc_message_builder, slip
+from .dispatcher import Dispatcher
 
 LOG = logging.getLogger()
 MODE_1_0 = "1.0"
@@ -206,7 +206,7 @@ class AsyncOSCTCPServer:
     ):
         """
         :param server_address: tuple of (IP address to bind to, port)
-        :param dispatcher: a pythonosc.dispatcher.Dispatcher
+        :param dispatcher: a ..dispatcher.Dispatcher
         """
         self._port = port
         self._server_address = server_address
@@ -225,7 +225,8 @@ class AsyncOSCTCPServer:
             self.handle, self._server_address, self._port
         )
 
-        addrs = ", ".join(str(sock.getsockname()) for sock in self._server.sockets)
+        addrs = ", ".join(str(sock.getsockname())
+                          for sock in self._server.sockets)
         LOG.debug(f"Serving on {addrs}")
 
         async with self._server:

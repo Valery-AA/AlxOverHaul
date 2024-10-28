@@ -1,6 +1,6 @@
 import unittest
 
-from pythonosc import osc_packet
+from . import osc_packet
 
 _DGRAM_TWO_MESSAGES_IN_BUNDLE = (
     b"#bundle\x00"

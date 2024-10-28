@@ -7,9 +7,9 @@ import socketserver
 from socket import socket as _socket
 from typing import Any, Coroutine, Tuple, Union, cast
 
-from pythonosc import osc_bundle, osc_message
-from pythonosc.dispatcher import Dispatcher
-from pythonosc.osc_message_builder import build_msg
+from . import osc_bundle, osc_message
+from .dispatcher import Dispatcher
+from .osc_message_builder import build_msg
 
 _RequestType = Union[_socket, Tuple[bytes, _socket]]
 _AddressType = Union[Tuple[str, int], str]
@@ -159,7 +159,8 @@ class AsyncIOOSCUDPServer:
         def datagram_received(
             self, data: bytes, client_address: Tuple[str, int]
         ) -> None:
-            resp = self.dispatcher.call_handlers_for_packet(data, client_address)
+            resp = self.dispatcher.call_handlers_for_packet(
+                data, client_address)
             for r in resp:
                 if not isinstance(r, tuple):
                     r = [r]
@@ -177,7 +178,8 @@ class AsyncIOOSCUDPServer:
     def create_serve_endpoint(
         self,
     ) -> Coroutine[
-        Any, Any, Tuple[asyncio.transports.BaseTransport, asyncio.DatagramProtocol]
+        Any, Any, Tuple[asyncio.transports.BaseTransport,
+                        asyncio.DatagramProtocol]
     ]:
         """Creates a datagram endpoint and registers it with event loop as coroutine.
 

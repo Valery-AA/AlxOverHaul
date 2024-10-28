@@ -1,6 +1,6 @@
 import unittest
 
-from pythonosc.dispatcher import Dispatcher, Handler
+from ..dispatcher import Dispatcher, Handler
 
 
 class TestDispatcher(unittest.TestCase):
@@ -32,7 +32,8 @@ class TestDispatcher(unittest.TestCase):
         self.dispatcher.map("/test", handler, 1, 2, 3)
         self.dispatcher.map("/test2", handler)
         self.sortAndAssertSequenceEqual(
-            [Handler(handler, [1, 2, 3])], self.dispatcher.handlers_for_address("/test")
+            [Handler(handler, [1, 2, 3])
+             ], self.dispatcher.handlers_for_address("/test")
         )
         self.sortAndAssertSequenceEqual(
             [Handler(handler, [])], self.dispatcher.handlers_for_address("/test2")
@@ -52,7 +53,8 @@ class TestDispatcher(unittest.TestCase):
 
         for index, address in enumerate(addresses):
             self.sortAndAssertSequenceEqual(
-                [Handler(index, [])], self.dispatcher.handlers_for_address(address)
+                [Handler(index, [])], self.dispatcher.handlers_for_address(
+                    address)
             )
 
         self.sortAndAssertSequenceEqual(
@@ -69,7 +71,8 @@ class TestDispatcher(unittest.TestCase):
         self.dispatcher.map("/foo/bar/1", 1)
         self.dispatcher.map("/foo/bar/2", 2)
 
-        self.sortAndAssertSequenceEqual([], self.dispatcher.handlers_for_address("/*"))
+        self.sortAndAssertSequenceEqual(
+            [], self.dispatcher.handlers_for_address("/*"))
 
     def test_match_middle_star(self):
         self.dispatcher.map("/foo/bar/1", 1)
@@ -92,10 +95,12 @@ class TestDispatcher(unittest.TestCase):
         self.dispatcher.map("/footest/bar+tender/1", 1)
 
         self.sortAndAssertSequenceEqual(
-            [Handler(1, [])], self.dispatcher.handlers_for_address("/foo*/bar+*/*")
+            [Handler(1, [])], self.dispatcher.handlers_for_address(
+                "/foo*/bar+*/*")
         )
         self.sortAndAssertSequenceEqual(
-            [Handler(1, [])], self.dispatcher.handlers_for_address("/foo*/bar*/*")
+            [Handler(1, [])], self.dispatcher.handlers_for_address(
+                "/foo*/bar*/*")
         )
 
     def test_call_correct_dispatcher_on_star(self):
@@ -111,19 +116,22 @@ class TestDispatcher(unittest.TestCase):
     def test_map_star(self):
         self.dispatcher.map("/starbase/*", 1)
         self.sortAndAssertSequenceEqual(
-            [Handler(1, [])], self.dispatcher.handlers_for_address("/starbase/bar")
+            [Handler(1, [])], self.dispatcher.handlers_for_address(
+                "/starbase/bar")
         )
 
     def test_map_root_star(self):
         self.dispatcher.map("/*", 1)
         self.sortAndAssertSequenceEqual(
-            [Handler(1, [])], self.dispatcher.handlers_for_address("/anything/matches")
+            [Handler(1, [])], self.dispatcher.handlers_for_address(
+                "/anything/matches")
         )
 
     def test_map_double_stars(self):
         self.dispatcher.map("/foo/*/bar/*", 1)
         self.sortAndAssertSequenceEqual(
-            [Handler(1, [])], self.dispatcher.handlers_for_address("/foo/wild/bar/wild")
+            [Handler(1, [])], self.dispatcher.handlers_for_address(
+                "/foo/wild/bar/wild")
         )
         self.sortAndAssertSequenceEqual(
             [], self.dispatcher.handlers_for_address("/foo/wild/nomatch/wild")
@@ -152,7 +160,8 @@ class TestDispatcher(unittest.TestCase):
         # Test with handler returned by map
         returnedhandler = self.dispatcher.map("/map/me", dummyhandler)
         self.sortAndAssertSequenceEqual(
-            [Handler(dummyhandler, [])], self.dispatcher.handlers_for_address("/map/me")
+            [Handler(dummyhandler, [])], self.dispatcher.handlers_for_address(
+                "/map/me")
         )
         self.dispatcher.unmap("/map/me", returnedhandler)
         self.sortAndAssertSequenceEqual(
@@ -177,7 +186,8 @@ class TestDispatcher(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.dispatcher.unmap("/unmap/exception", dummyhandler)
 
-        handlerobj = self.dispatcher.map("/unmap/somethingelse", dummyhandler())
+        handlerobj = self.dispatcher.map(
+            "/unmap/somethingelse", dummyhandler())
         with self.assertRaises(ValueError):
             self.dispatcher.unmap("/unmap/exception", handlerobj)
 

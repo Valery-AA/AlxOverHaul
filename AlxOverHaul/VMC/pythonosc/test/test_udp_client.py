@@ -1,8 +1,8 @@
 import unittest
 from unittest import mock
 
-from pythonosc import osc_message_builder
-from pythonosc import udp_client
+from . import osc_message_builder
+from . import udp_client
 
 
 class TestUdpClient(unittest.TestCase):
@@ -20,7 +20,7 @@ class TestUdpClient(unittest.TestCase):
 
 class TestSimpleUdpClient(unittest.TestCase):
     def setUp(self):
-        self.patcher = mock.patch("pythonosc.udp_client.OscMessageBuilder")
+        self.patcher = mock.patch("..udp_client.OscMessageBuilder")
         self.patcher.start()
         self.builder = udp_client.OscMessageBuilder.return_value
         self.msg = self.builder.build.return_value
@@ -38,7 +38,8 @@ class TestSimpleUdpClient(unittest.TestCase):
         self.builder.add_arg.assert_called_once_with(1)
 
     def test_send_message_calls_add_arg_once_with_string(self):
-        udp_client.SimpleUDPClient.send_message(self.client, "/address", "hello")
+        udp_client.SimpleUDPClient.send_message(
+            self.client, "/address", "hello")
         self.builder.add_arg.assert_called_once_with("hello")
 
     def test_send_message_calls_add_arg_multiple_times_with_list(self):

@@ -5,9 +5,9 @@ It lets you access easily to OscMessage and OscBundle instances in the packet.
 
 import time
 
-from pythonosc.parsing import osc_types
-from pythonosc import osc_bundle
-from pythonosc import osc_message
+from .parsing import osc_types
+from . import osc_bundle
+from . import osc_message
 
 from typing import List, NamedTuple
 
@@ -68,7 +68,8 @@ class OscPacket(object):
                     key=lambda x: x.time,
                 )
             elif osc_message.OscMessage.dgram_is_message(dgram):
-                self._messages = [TimedMessage(now, osc_message.OscMessage(dgram))]
+                self._messages = [TimedMessage(
+                    now, osc_message.OscMessage(dgram))]
             else:
                 # Empty packet, should not happen as per the spec but heh, UDP...
                 raise ParseError(

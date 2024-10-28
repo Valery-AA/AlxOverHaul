@@ -1,7 +1,7 @@
 import unittest
 import time
 
-from pythonosc.parsing import ntp
+from ..parsing import ntp
 
 
 class TestNTP(unittest.TestCase):

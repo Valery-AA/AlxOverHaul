@@ -1,6 +1,6 @@
 import unittest
 
-from pythonosc import osc_message_builder
+from . import osc_message_builder
 
 
 class TestOscMessageBuilder(unittest.TestCase):
@@ -42,7 +42,8 @@ class TestOscMessageBuilder(unittest.TestCase):
         builder.add_arg(True)
         builder.add_arg(False)
         builder.add_arg(b"\x01\x02\x03", builder.ARG_TYPE_BLOB)
-        builder.add_arg([1, ["abc"]], [builder.ARG_TYPE_INT, [builder.ARG_TYPE_STRING]])
+        builder.add_arg([1, ["abc"]], [builder.ARG_TYPE_INT,
+                        [builder.ARG_TYPE_STRING]])
         builder.add_arg(None, builder.ARG_TYPE_NIL)
         builder.add_arg(4278255360, builder.ARG_TYPE_RGBA)
         builder.add_arg((1, 145, 36, 125), builder.ARG_TYPE_MIDI)
@@ -95,7 +96,8 @@ class TestOscMessageBuilder(unittest.TestCase):
         builder.add_arg(1)
         builder.add_arg(False)
         builder.add_arg(True)
-        self.assertEqual(builder.args, [("i", 0), ("i", 1), ("F", False), ("T", True)])
+        self.assertEqual(
+            builder.args, [("i", 0), ("i", 1), ("F", False), ("T", True)])
 
 
 if __name__ == "__main__":

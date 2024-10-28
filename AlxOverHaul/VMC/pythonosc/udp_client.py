@@ -10,10 +10,10 @@ else:
 import socket
 from typing import Generator, Union
 
-from pythonosc.dispatcher import Dispatcher
-from pythonosc.osc_bundle import OscBundle
-from pythonosc.osc_message import OscMessage
-from pythonosc.osc_message_builder import ArgValue, OscMessageBuilder
+from .dispatcher import Dispatcher
+from .osc_bundle import OscBundle
+from .osc_message import OscMessage
+from .osc_message_builder import ArgValue, OscMessageBuilder
 
 
 class UDPClient(object):
@@ -124,5 +124,6 @@ class DispatchClient(SimpleUDPClient):
         """
         msg = self.receive(timeout)
         while msg:
-            self.dispatcher.call_handlers_for_packet(msg, (self._address, self._port))
+            self.dispatcher.call_handlers_for_packet(
+                msg, (self._address, self._port))
             msg = self.receive(timeout)

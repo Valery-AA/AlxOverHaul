@@ -231,7 +231,7 @@ class Alx_OT_Armature_AssignToSelection(bpy.types.Operator):
             for SelectedObject in context.selected_objects:
                 if (Armature is not None):
                     if (SelectedObject.type == "MESH"):
-                        ArmatureModifier = AlxUtilities.GetObjectModifiersOfType(
+                        ArmatureModifier = AlxUtilities.get_modifiers_of_type(
                             SelectedObject, "ARMATURE")
 
                         if (ArmatureModifier is None):

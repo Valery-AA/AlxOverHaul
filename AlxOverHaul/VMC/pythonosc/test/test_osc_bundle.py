@@ -1,8 +1,8 @@
 import unittest
 
-from pythonosc import osc_message
-from pythonosc import osc_bundle
-from pythonosc.parsing import osc_types
+from . import osc_message
+from . import osc_bundle
+from ..parsing import osc_types
 
 _DGRAM_KNOB_ROTATES_BUNDLE = (
     b"#bundle\x00"
@@ -115,11 +115,13 @@ class TestOscBundle(unittest.TestCase):
         self.assertEqual(osc_bundle.OscBundle, type(bundle.content(0)))
 
     def test_dgram_is_bundle(self):
-        self.assertTrue(osc_bundle.OscBundle.dgram_is_bundle(_DGRAM_SWITCH_GOES_ON))
+        self.assertTrue(osc_bundle.OscBundle.dgram_is_bundle(
+            _DGRAM_SWITCH_GOES_ON))
         self.assertFalse(osc_bundle.OscBundle.dgram_is_bundle(b"junk"))
 
     def test_raises_on_invalid_datagram(self):
-        self.assertRaises(osc_bundle.ParseError, osc_bundle.OscBundle, _DGRAM_INVALID)
+        self.assertRaises(osc_bundle.ParseError,
+                          osc_bundle.OscBundle, _DGRAM_INVALID)
         self.assertRaises(
             osc_bundle.ParseError, osc_bundle.OscBundle, _DGRAM_INVALID_INDEX
         )

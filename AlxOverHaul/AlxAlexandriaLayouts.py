@@ -1,10 +1,74 @@
-import socket
 import bpy
 
-from .Utilities.AlxUtilities import GetEnumPropertyItems
+from .Utilities.AlxUtilities import get_enum_property_items
 
 LABEL = "LABEL_"
 SEPARATOR = "SEPARATOR"
+
+
+def UIPreset_PosePosition(parent_layout: bpy.types.UILayout = None, skeleton_object: bpy.types.Object = None, operator_bl_idname: str = ""):
+    layout = parent_layout.row().split(factor=0.5)
+    if (skeleton_object is not None):
+        op_pose = layout.operator(
+            operator_bl_idname,
+            text="Pose",
+            icon="ARMATURE_DATA",
+            depress=(skeleton_object.data.pose_position == "POSE"))
+        op_pose.b_pose = True
+        op_pose.optional_skeleton_target_name = skeleton_object.data.name
+
+        op_rest = layout.operator(
+            operator_bl_idname,
+            text="Rest",
+            icon="OUTLINER_OB_ARMATURE",
+            depress=(skeleton_object.data.pose_position == "REST"))
+        op_rest.b_pose = False
+        op_rest.optional_skeleton_target_name = skeleton_object.data.name
+    else:
+        layout.label(text="[Armature] [Missing]")
+
+
+def UIPreset_VisibilityIsolator(parent_layout: bpy.types.UILayout = None, addon_properties: bpy.types.PropertyGroup = None, operator_bl_idname: str = ""):
+    layout = parent_layout.row().split(factor=0.5)
+
+    column_l = layout.column()
+    column_r = layout.row()
+
+    column_l.prop(
+        addon_properties,
+        "operator_object_and_collection_isolator_visibility_target",
+        expand=True
+    )
+    op_isolator_hide = column_l.operator(
+        operator_bl_idname,
+        text="Isolate",
+        icon="HIDE_ON",
+        emboss=True)
+    op_isolator_hide.PanicReset = False
+    op_isolator_hide.TargetVisibility = False
+
+    column = column_r.column()
+    column.prop(
+        addon_properties,
+        "operator_object_and_collection_isolator_type_target",
+        expand=True
+    )
+    op_isolator_show = column.operator(
+        operator_bl_idname,
+        text="Show",
+        icon="HIDE_OFF",
+        emboss=True)
+    op_isolator_show.PanicReset = False
+    op_isolator_show.TargetVisibility = True
+
+    op_isolator_revert_ui = column_r.row()
+    op_isolator_revert_ui.scale_y = 3.1
+    op_isolator_revert = op_isolator_revert_ui.operator(
+        operator_bl_idname,
+        text="",
+        icon="LOOP_BACK",
+        emboss=True)
+    op_isolator_revert.PanicReset = True
 
 
 def UIPreset_ModifierSettings(layout: bpy.types.UILayout = None, modifier: bpy.types.Modifier = None, context: bpy.types.Context = None, object: bpy.types.Object = None):
@@ -170,7 +234,7 @@ def UIPreset_ModifierList(layout: bpy.types.UILayout = None, modifiers_types: li
 
 
 def UIPreset_EnumButtons(layout: bpy.types.UILayout = None, primary_icon: str = "NONE", data=None, data_name: str = ""):
-    enum_items = GetEnumPropertyItems(data, data_name)
+    enum_items = get_enum_property_items(data, data_name)
 
     enum_layout = layout.row()
     icons_column = enum_layout.column()

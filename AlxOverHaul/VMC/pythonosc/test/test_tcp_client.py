@@ -2,7 +2,7 @@ import asyncio
 import unittest
 from unittest import mock
 
-from pythonosc import osc_message_builder, slip, tcp_client
+from . import osc_message_builder, slip, tcp_client
 
 
 class TestTcpClient(unittest.TestCase):

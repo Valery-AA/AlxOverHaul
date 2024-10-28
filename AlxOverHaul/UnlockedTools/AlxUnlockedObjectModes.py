@@ -1,6 +1,6 @@
 import bpy
 
-from ..Definitions.AlxTypeDefinitions import TD_object_types
+from ..Definitions.AlxTypesDefinition import TD_object_types
 from ..Utilities.AlxUtilities import operator_log_info, operator_log_warning, operator_log_error
 
 

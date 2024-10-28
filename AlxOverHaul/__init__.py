@@ -14,7 +14,7 @@ bl_info = {
     "author": "Valeria Bosco[Valy Arhal]",
     "description": "",
     "warning": "[Heavly Under Development] And Subject To Substantial Changes",
-    "version": (0, 6, 9),
+    "version": (0, 7, 0),
     "blender": (3, 6, 0),
     "category": "3D View",
     "location": "[Ctrl Alt A] General Menu, [Shift Alt S] Pivot Menu, [Tab] Auto Mode Pie Menu",
@@ -23,7 +23,7 @@ bl_info = {
 }
 
 
-folder_name_blacklist: list[str] = ["__pycache__"]
+folder_name_blacklist: list[str] = ["__pycache__", "pythonosc"]
 file_name_blacklist: list[str] = ["__init__.py"]
 file_name_blacklist.extend(["addon_updater", "addon_updater_ops"])
 
@@ -171,6 +171,10 @@ def UnRegisterProperties():
 
 
 def RegisterHandlers():
+    bpy.app.handlers.load_post.append(AlxHandlers.AlxMain_load_post)
+    bpy.app.handlers.depsgraph_update_post.append(
+        AlxHandlers.AlxMain_depsgraph_update_post)
+
     bpy.app.handlers.load_post.append(AlxHandlers.AlxMsgBusSubscriptions)
     bpy.app.handlers.load_post.append(AlxHandlers.AlxAddonKeymapHandler)
     bpy.app.handlers.load_post.append(

@@ -1,6 +1,29 @@
 import bpy
 
-from .. import AlxUtils
+from ..Utilities.AlxUtilities import get_active_object_skeleton, get_bone_always_left, AlxGetBoneAlwaysRight, AlxGetBoneOpposite, AlxCloneIKSettings, AlxCloneIKBoneLimitOnChain
+
+
+class Alx_OT_Armature_Pose_SetPosePosition(bpy.types.Operator):
+    """"""
+
+    bl_label = ""
+    bl_idname = "alx.operator_armature_pose_set_pose_position"
+
+    optional_skeleton_target_name: bpy.props.StringProperty()  # type:ignore
+    b_pose: bpy.props.BoolProperty()  # type:ignore
+
+    @classmethod
+    def poll(self, context: bpy.types.Context):
+        return True
+
+    def execute(self, context: bpy.types.Context):
+        armature: bpy.types.Armature = get_active_object_skeleton(context) if self.optional_skeleton_target_name == "" else bpy.data.armatures.get(self.optional_skeleton_target_name)
+        if (armature is not None):
+            if (self.b_pose):
+                armature.pose_position = "POSE"
+            else:
+                armature.pose_position = "REST"
+        return {"FINISHED"}
 
 
 class Alx_OT_Armature_Pose_ToggleConstraints(bpy.types.Operator):
@@ -11,28 +34,27 @@ class Alx_OT_Armature_Pose_ToggleConstraints(bpy.types.Operator):
 
     bl_options = {"REGISTER", "UNDO"}
 
-    enabled : bpy.props.BoolProperty() #type:ignore
+    enabled: bpy.props.BoolProperty()  # type:ignore
 
     @classmethod
     def poll(self, context: bpy.types.Context):
         return (context.area is not None) and (context.area.type == "VIEW_3D") and (context.object is not None)
-    
+
     def execute(self, context: bpy.types.Context):
         if (context.object is not None) and (context.object.type == "ARMATURE"):
-            armature : bpy.types.Object = context.object
-        
-            bone : bpy.types.PoseBone
-            constraint : bpy.types.Constraint
+            armature: bpy.types.Object = context.object
+
+            bone: bpy.types.PoseBone
+            constraint: bpy.types.Constraint
             for bone in armature.pose.bones:
                 for constraint in bone.constraints:
                     constraint.enabled = self.enabled
         else:
             self.report({"WARNING"}, message="Type: is not ARMATURE")
 
-
         return {"FINISHED"}
-    
-    def draw(self, context: bpy.types.Context): 
+
+    def draw(self, context: bpy.types.Context):
         self.layout.row().prop(self, "enabled", text="global enabled")
 
     def invoke(self, context: bpy.types.Context, event):
@@ -49,7 +71,8 @@ class Alx_OT_Armature_MatchIKByMirroredName(bpy.types.Operator):
 
     bl_options = {"INTERNAL", "REGISTER", "UNDO"}
 
-    SourceSide : bpy.props.EnumProperty(name="Mirror From", default=1, items=[("LEFT", "Left", "", 1), ("RIGHT", "Right", "", 2)]) #type:ignore
+    SourceSide: bpy.props.EnumProperty(name="Mirror From", default=1, items=[(
+        "LEFT", "Left", "", 1), ("RIGHT", "Right", "", 2)])  # type:ignore
 
     @classmethod
     def poll(self, context):
@@ -68,10 +91,12 @@ class Alx_OT_Armature_MatchIKByMirroredName(bpy.types.Operator):
                 SymmetricUniqueBones = []
 
                 if (self.SourceSide == "LEFT"):
-                    SymmetricPairBones = [PoseBone for PoseBone in PoseBoneData if ((PoseBone.name[-1].lower() == "l"))]
+                    SymmetricPairBones = [PoseBone for PoseBone in PoseBoneData if (
+                        (PoseBone.name[-1].lower() == "l"))]
 
                 if (self.SourceSide == "RIGHT"):
-                    SymmetricPairBones = [PoseBone for PoseBone in PoseBoneData if ((PoseBone.name[-1].lower() == "r"))]
+                    SymmetricPairBones = [PoseBone for PoseBone in PoseBoneData if (
+                        (PoseBone.name[-1].lower() == "r"))]
 
                 for PoseBone in SymmetricPairBones:
                     if (PoseBone not in SymmetricUniqueBones):
@@ -82,16 +107,22 @@ class Alx_OT_Armature_MatchIKByMirroredName(bpy.types.Operator):
                     ContextOppositeBone = None
 
                     if (self.SourceSide == "LEFT"):
-                        ContextPoseBone = AlxUtils.AlxGetBoneAlwaysLeft(UniquePoseBone, ContextArmature)
-                        ContextOppositeBone = AlxUtils.AlxGetBoneOpposite(AlxUtils.AlxGetBoneAlwaysLeft(UniquePoseBone, ContextArmature), ContextArmature)
+                        ContextPoseBone = get_bone_always_left(
+                            UniquePoseBone, ContextArmature)
+                        ContextOppositeBone = AlxGetBoneOpposite(
+                            get_bone_always_left(UniquePoseBone, ContextArmature), ContextArmature)
 
                     if (self.SourceSide == "RIGHT"):
-                        ContextPoseBone = AlxUtils.AlxGetBoneAlwaysRight(UniquePoseBone, ContextArmature)
-                        ContextOppositeBone = AlxUtils.AlxGetBoneOpposite(AlxUtils.AlxGetBoneAlwaysRight(UniquePoseBone, ContextArmature), ContextArmature)
+                        ContextPoseBone = AlxGetBoneAlwaysRight(
+                            UniquePoseBone, ContextArmature)
+                        ContextOppositeBone = AlxGetBoneOpposite(
+                            AlxGetBoneAlwaysRight(UniquePoseBone, ContextArmature), ContextArmature)
 
                     if (ContextPoseBone is not None) and (ContextOppositeBone is not None):
-                        AlxUtils.AlxCloneIKSettings(ContextPoseBone, ContextOppositeBone)
-                        AlxUtils.AlxCloneIKBoneLimitOnChain(ContextPoseBone, ContextArmature)
+                        AlxCloneIKSettings(
+                            ContextPoseBone, ContextOppositeBone)
+                        AlxCloneIKBoneLimitOnChain(
+                            ContextPoseBone, ContextArmature)
 
         return {"FINISHED"}
 

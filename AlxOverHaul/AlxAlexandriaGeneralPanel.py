@@ -1,14 +1,16 @@
 import bpy
 from bpy_extras import node_utils
 
-from .Definitions.AlxTypeDefinitions import TD_modifier_modifiy_types, TD_modifier_generate_types, TD_modifier_deform_types, TD_modifier_physics_types
+from .Definitions.AlxTypesDefinition import TD_modifier_modifiy_types, TD_modifier_generate_types, TD_modifier_deform_types, TD_modifier_physics_types
 
-from .Utilities.AlxUtilities import GetActiveObjectContextArmature
+from .Utilities.AlxUtilities import get_enum_property_items, get_active_object_skeleton
+
+from .ArmatureTools.AlxPoseTools import Alx_OT_Armature_Pose_SetPosePosition
 
 
 from . AlxProperties import Alx_PG_PropertyGroup_SessionProperties
 
-from . AlxAlexandriaLayouts import UIPreset_EnumButtons, UIPreset_ModifierList, UIPreset_ModifierSettings
+from . AlxAlexandriaLayouts import UIPreset_PosePosition, UIPreset_VisibilityIsolator, UIPreset_EnumButtons, UIPreset_ModifierList, UIPreset_ModifierSettings
 
 from .AlxVisibilityOperators import Alx_OT_Scene_VisibilityIsolator
 
@@ -190,6 +192,11 @@ class Alx_UL_UIList_ObjectSelectionModifiers(bpy.types.UIList):
                 modifier_move_down_button.move_modifier_up = False
                 modifier_move_down_button.move_modifier_down = True
 
+                modifier_header.prop(raw_object_modifier, "use_pin_to_last",
+                                     text="",
+                                     icon="PINNED" if raw_object_modifier.use_pin_to_last == True else "UNPINNED",
+                                     emboss=True)
+
         item_slot_layout.separator(factor=2.0)
 
 
@@ -207,6 +214,12 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
         return True
 
     def draw(self, context: bpy.types.Context):
+        # region Variable Shortcuts
+        addon_properties: Alx_PG_PropertyGroup_SessionProperties = context.window_manager.alx_session_properties
+        context_skeleton: bpy.types.Object = get_active_object_skeleton(context)
+        # endregion
+
+        # region Overrides
         override_area = [
             area for area in context.window.screen.areas if area.type == "VIEW_3D"]
         b_override_v3d_area_exists = len(override_area) > 0
@@ -214,62 +227,41 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
         override_region = [region for region in override_area[0].regions if region.type == 'WINDOW'] if (
             b_override_v3d_area_exists) else None
         b_override_v3d_region_exists = len(override_area) > 0
+        # endregion
 
-        AddonProperties: Alx_PG_PropertyGroup_SessionProperties = context.window_manager.alx_session_properties
-
-        AlxContextArmature = GetActiveObjectContextArmature(context)
-
-        self.layout.ui_units_x = 25.0
+        # region Layouts
         layout = self.layout.row()
-        if (AddonProperties.alexandria_general_panel_tabs == "MODIFIER") or (AddonProperties.alexandria_general_panel_modifier_sidetabs != "CLOSED"):
-            layout = self.layout.row().split(factor=25/self.layout.ui_units_x)
+        self.layout.ui_units_x = 25.0
+
+        if (addon_properties.alexandria_general_panel_tabs == "MODIFIER") or (addon_properties.alexandria_general_panel_modifier_sidetabs != "CLOSED"):
+            layout = self.layout.row().split(factor=25 / self.layout.ui_units_x)
 
         main_page_layout = layout.column()
         side_page_layout = layout.row()
 
         header_layout = main_page_layout.column()
+        header_layout.label(icon="GRIP")
+        header_grid = header_layout.grid_flow(columns=2, even_columns=True, even_rows=True)
+
+        body_layout = main_page_layout.column()
+# endregion
+
+# region Header
+        header_slot_one = header_grid.column()
+
+        UIPreset_PosePosition(header_slot_one, context_skeleton, Alx_OT_Armature_Pose_SetPosePosition.bl_idname)
+        header_slot_one.separator()
+
+        UIPreset_VisibilityIsolator(header_slot_one, addon_properties, Alx_OT_Scene_VisibilityIsolator.bl_idname)
+        header_slot_one.separator()
+
+# endregion
+
         main_layout = main_page_layout.row()
 
-        tabs = main_layout.column().prop(AddonProperties, "alexandria_general_panel_tabs",
+        tabs = main_layout.column().prop(addon_properties, "alexandria_general_panel_tabs",
                                          icon_only=True, expand=True, emboss=False)
         tabs_panels = main_layout.column()
-
-        pose_prop = header_layout.column()
-        if (AlxContextArmature is not None):
-            pose_prop.row().prop(bpy.data.armatures.get(
-                AlxContextArmature.data.name), "pose_position", expand=True)
-        else:
-            pose_prop.label(text="[Armature] [Missing]")
-        pose_prop.separator()
-
-        isolator_box = header_layout.column()
-        isolator_row = isolator_box.row()
-        isolator_l_column = isolator_row.column()
-        isolator_r_column = isolator_row.column()
-
-        isolatior_options = isolator_l_column.row()
-        isolatior_options.column().prop(AddonProperties,
-                                        "operator_object_and_collection_isolator_visibility_target", expand=True)
-        isolatior_options.column().prop(AddonProperties,
-                                        "operator_object_and_collection_isolator_type_target", expand=True)
-
-        isolator_show_hide = isolator_l_column.row()
-        isolator_hide: Alx_OT_Scene_VisibilityIsolator = isolator_show_hide.operator(
-            Alx_OT_Scene_VisibilityIsolator.bl_idname, text="Isolate", icon="HIDE_ON", emboss=True)
-        isolator_hide.PanicReset = False
-        isolator_hide.TargetVisibility = False
-
-        isolator_show: Alx_OT_Scene_VisibilityIsolator = isolator_show_hide.operator(
-            Alx_OT_Scene_VisibilityIsolator.bl_idname, text="Show", icon="HIDE_OFF", emboss=True)
-        isolator_show.PanicReset = False
-        isolator_show.TargetVisibility = True
-
-        isolator_r_column.scale_y = 3.1
-        isolator_panik: Alx_OT_Scene_VisibilityIsolator = isolator_r_column.operator(
-            Alx_OT_Scene_VisibilityIsolator.bl_idname, text="", icon="LOOP_BACK", emboss=True)
-        isolator_panik.PanicReset = True
-
-        isolator_box.separator()
 
         override_window = bpy.context.window
         override_screen = override_window.screen
@@ -301,30 +293,30 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
 
         header_layout.separator()
 
-        if (AddonProperties.alexandria_general_panel_tabs == "OBJECT"):
+        if (addon_properties.alexandria_general_panel_tabs == "OBJECT"):
             ObjectTabBox = tabs_panels.column()
 
             ObjectTabBox.template_list(Alx_UL_UIList_ObjectSelectionProperties.bl_idname, list_id="", dataptr=context.scene, propname="alx_object_selection_properties",
                                        active_dataptr=context.scene, active_propname="alx_object_selection_properties_index", type="GRID", columns=2)
 
-        if (AddonProperties.alexandria_general_panel_tabs == "ARMATURE"):
+        if (addon_properties.alexandria_general_panel_tabs == "ARMATURE"):
             ArmatureTabBox = tabs_panels.column()
 
-            if (AlxContextArmature is not None):
+            if (context_skeleton is not None):
                 armature_display_options = ArmatureTabBox.column()
                 armature_display_options.row().prop(bpy.data.armatures.get(
-                    AlxContextArmature.data.name), "display_type", expand=True)
+                    context_skeleton.data.name), "display_type", expand=True)
                 armature_display_options.prop(bpy.data.armatures.get(
-                    AlxContextArmature.data.name), "show_names", text="names")
+                    context_skeleton.data.name), "show_names", text="names")
                 armature_display_options.prop(bpy.data.armatures.get(
-                    AlxContextArmature.data.name), "show_bone_custom_shapes", text="custom shapes")
+                    context_skeleton.data.name), "show_bone_custom_shapes", text="custom shapes")
                 armature_display_options.prop(bpy.data.armatures.get(
-                    AlxContextArmature.data.name), "show_bone_colors", text="colors")
+                    context_skeleton.data.name), "show_bone_colors", text="colors")
 
                 armature_display_options.prop(bpy.data.armatures.get(
-                    AlxContextArmature.data.name), "show_axes", text="axis")
+                    context_skeleton.data.name), "show_axes", text="axis")
 
-        if (AddonProperties.alexandria_general_panel_tabs == "MODIFIER"):
+        if (addon_properties.alexandria_general_panel_tabs == "MODIFIER"):
             ModifierTabBox = tabs_panels.row().split(factor=0.925)
 
             column = ModifierTabBox.column()
@@ -338,9 +330,9 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
 
             modifier_sidetabs = ModifierTabBox.column()
             UIPreset_EnumButtons(layout=modifier_sidetabs, primary_icon="MODIFIER",
-                                 data=AddonProperties, data_name="alexandria_general_panel_modifier_sidetabs")
+                                 data=addon_properties, data_name="alexandria_general_panel_modifier_sidetabs")
 
-            match AddonProperties.alexandria_general_panel_modifier_sidetabs:
+            match addon_properties.alexandria_general_panel_modifier_sidetabs:
                 case "STANDARD":
                     UIPreset_ModifierList(
                         layout=side_page_layout.row(),
@@ -362,10 +354,10 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
                 case "FAVORITE":
                     pass
 
-        if (AddonProperties.alexandria_general_panel_tabs == "ALXOPERATORS"):
+        if (addon_properties.alexandria_general_panel_tabs == "ALXOPERATORS"):
             AlxOperatorsTabBox = tabs_panels.column()
 
-        if (AddonProperties.alexandria_general_panel_tabs == "RENDER") and (b_override_v3d_area_exists):
+        if (addon_properties.alexandria_general_panel_tabs == "RENDER") and (b_override_v3d_area_exists):
             RenderTabBox = tabs_panels.column()
 
             if (override_region is not None):
@@ -494,7 +486,7 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
                 cycles_samples.prop(context.scene.cycles,
                                     "samples", text="Render")
 
-        if (AddonProperties.alexandria_general_panel_tabs == "UI_DESIGNER"):
+        if (addon_properties.alexandria_general_panel_tabs == "UI_DESIGNER"):
             AlxUIDesignerTabBox = tabs_panels.column()
 
             AlxUIDesignerTabBox.row().operator(
@@ -521,7 +513,7 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
 
         #     AlxSpace.label(text=context.area.type)
 
-        if (AddonProperties.alexandria_general_panel_tabs == "SETTINGS"):
+        if (addon_properties.alexandria_general_panel_tabs == "SETTINGS"):
             AlxSettingsTabBox = tabs_panels.column()
 
             # AlxSettingsTabBox.prop(AddonProperties, "View3d_Pan_Use_Shift_GRLess", toggle=True)

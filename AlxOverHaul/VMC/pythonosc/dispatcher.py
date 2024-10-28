@@ -6,7 +6,7 @@ import inspect
 import logging
 import re
 import time
-from pythonosc import osc_packet
+from . import osc_packet
 from typing import (
     overload,
     List,
@@ -19,8 +19,8 @@ from typing import (
     Optional,
     DefaultDict,
 )
-from pythonosc.osc_message import OscMessage
-from pythonosc.osc_message_builder import ArgValue
+from .osc_message import OscMessage
+from .osc_message_builder import ArgValue
 
 
 class Handler(object):
@@ -89,7 +89,8 @@ class Dispatcher(object):
     """
 
     def __init__(self) -> None:
-        self._map: DefaultDict[str, List[Handler]] = collections.defaultdict(list)
+        self._map: DefaultDict[str, List[Handler]
+                               ] = collections.defaultdict(list)
         self._default_handler: Optional[Handler] = None
 
     def map(
@@ -215,7 +216,8 @@ class Dispatcher(object):
                 matched = True
 
         if not matched and self._default_handler:
-            logging.debug("No handler matched but default handler present, added it.")
+            logging.debug(
+                "No handler matched but default handler present, added it.")
             yield self._default_handler
 
     def call_handlers_for_packet(
@@ -334,5 +336,6 @@ class Dispatcher(object):
             needs_reply_address: Whether the callback shall be passed the client address
         """
         self._default_handler = (
-            None if (handler is None) else Handler(handler, [], needs_reply_address)
+            None if (handler is None) else Handler(
+                handler, [], needs_reply_address)
         )
