@@ -43,7 +43,8 @@ def UIPreset_VisibilityIsolator(parent_layout: bpy.types.UILayout = None, addon_
         operator_bl_idname,
         text="Isolate",
         icon="HIDE_ON",
-        emboss=True)
+        emboss=True
+    )
     op_isolator_hide.PanicReset = False
     op_isolator_hide.TargetVisibility = False
 
@@ -57,7 +58,8 @@ def UIPreset_VisibilityIsolator(parent_layout: bpy.types.UILayout = None, addon_
         operator_bl_idname,
         text="Show",
         icon="HIDE_OFF",
-        emboss=True)
+        emboss=True
+    )
     op_isolator_show.PanicReset = False
     op_isolator_show.TargetVisibility = True
 
@@ -67,8 +69,35 @@ def UIPreset_VisibilityIsolator(parent_layout: bpy.types.UILayout = None, addon_
         operator_bl_idname,
         text="",
         icon="LOOP_BACK",
-        emboss=True)
+        emboss=True
+    )
     op_isolator_revert.PanicReset = True
+
+
+def UIPreset_OverlayToggles(parent_layout: bpy.types.UILayout = None, context: bpy.types.Context = None):
+    layout = parent_layout.row()
+
+    row = layout.row()
+    row.prop(
+        context.area.spaces.active.shading,
+        "show_xray",
+        text="Mesh",
+        icon="XRAY"
+    )
+    row.prop(
+        context.space_data.overlay,
+        "show_xray_bone",
+        text="Bone",
+        icon="XRAY"
+    )
+
+    grid = layout.grid_flow(row_major=True, columns=2, even_columns=True, even_rows=True)
+    grid.prop(
+        context.area.spaces.active.shading,
+        "type",
+        text="",
+        expand=True
+    )
 
 
 def UIPreset_ModifierSettings(layout: bpy.types.UILayout = None, modifier: bpy.types.Modifier = None, context: bpy.types.Context = None, object: bpy.types.Object = None):

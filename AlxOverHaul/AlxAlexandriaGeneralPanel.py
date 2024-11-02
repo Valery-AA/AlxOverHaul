@@ -247,6 +247,7 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
 # endregion
 
 # region Header
+        # header slot one
         header_slot_one = header_grid.column()
 
         UIPreset_PosePosition(header_slot_one, context_skeleton, Alx_OT_Armature_Pose_SetPosePosition.bl_idname)
@@ -257,6 +258,7 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
 
 # endregion
 
+# region Body
         main_layout = main_page_layout.row()
 
         tabs = main_layout.column().prop(addon_properties, "alexandria_general_panel_tabs",
@@ -277,12 +279,8 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
                 overlay_prop = overlay_column.row(align=True)
                 overlay_prop.prop(context.space_data.overlay,
                                   "show_overlays", text="", icon="OVERLAY")
-                overlay_prop.prop(context.area.spaces.active.shading,
-                                  "show_xray", text="Mesh", icon="XRAY")
-                overlay_prop.prop(context.space_data.overlay,
-                                  "show_xray_bone", text="Bone", icon="XRAY")
-                overlay_prop.prop(
-                    context.area.spaces.active.shading, "type", text="", expand=True)
+
+                
                 poly_prop = header_layout.row(align=True)
                 poly_prop.prop(context.space_data.overlay,
                                "show_face_orientation", text="", icon="NORMALS_FACE")

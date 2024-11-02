@@ -54,6 +54,7 @@ class SingletonUpdater:
     needed throughout the addon. It implements all the interfaces for running
     updates.
     """
+
     def __init__(self):
 
         self._engine = GithubEngine()
