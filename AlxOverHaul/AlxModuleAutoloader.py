@@ -2,7 +2,6 @@
 from inspect import getmembers, isclass
 from typing import Any
 
-
 from pathlib import Path
 from os import sep as os_separator
 
@@ -80,12 +79,7 @@ def developer_gather_classes_from_files(globals: dict[str, Any], addon_files: di
 def developer_register_addon_classes(addon_classes):
     for addon_class in addon_classes:
         try:
-            if (hasattr(addon_class, "is_registered")):
-                if (addon_class.is_registered == False):
-                    bpy.utils.register_class(addon_class)
-                else:
-                    bpy.utils.unregister_class(addon_class)
-                    bpy.utils.register_class(addon_class)
+            bpy.utils.register_class(addon_class)
         except:
             pass
 
@@ -93,11 +87,14 @@ def developer_register_addon_classes(addon_classes):
 def developer_unregister_addon_classes(addon_classes):
     for addon_class in addon_classes:
         try:
-            if (hasattr(addon_class, "is_registered") == True):
-                bpy.utils.unregister_class(addon_class)
+            bpy.utils.unregister_class(addon_class)
         except:
             pass
 
+# AlxToolQueue = [
+#                [AlxUnlockedModeling.Alx_WT_WorkSpaceTool_UnlockedModeling,
+#                    None, True, False]  # tool_class, after, separator, group
+# ]
 
 # def AlxRegisterToolQueue():
 #     for AlxTool in AlxToolQueue:

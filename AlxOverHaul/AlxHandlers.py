@@ -1,3 +1,5 @@
+from pathlib import Path
+from .AlxJson import json_serialize_keymaps
 from .Utilities.AlxUtilities import get_enum_property_items
 
 
@@ -11,12 +13,12 @@ def armature_handler_lambda():
 
 
 @bpy.app.handlers.persistent
-def AlxMain_depsgraph_update_post(self, context):
-    pass
+def AlxMain_depsgraph_update_post(context):
+    json_serialize_keymaps([Path("E:\ProjectSovereign\Blender\Addon\AlxOverHaul\AlxOverHaul\keymap_json_test.json")], bpy.context.window_manager.keyconfigs.user.keymaps)
 
 
 @bpy.app.handlers.persistent
-def AlxMain_load_post(self, context):
+def AlxMain_load_post(scene):
     armature_handler_lambda()
 
 

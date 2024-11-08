@@ -7,6 +7,7 @@ from . import AlxAlexandriaGeneralPanel
 
 AlxAddonKeymaps = []
 
+
 def AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="", ItemidName="", OperatorID="", MapType="", Key="", UseShift=False, UseCtrl=False, UseAlt=False, TriggerType="PRESS", Active=False):
     """KeyconfigSource : [Blender, Blender addon, Blender user]"""
     if (KeyconfigSource != "") and (ConfigSpaceName != ""):
@@ -49,6 +50,7 @@ def AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="", ItemidName="",
         except Exception as error:
             pass
 
+
 def AlxKeymapRegister(keymap_call_type="", config_space_name="", space_type="EMPTY", region_type="WINDOW", addon_class=None, key="NONE", key_modifier="NONE", use_shift=False, use_ctrl=False, use_alt=False, trigger_type="PRESS", **kwargs):
     """
     Available keymap_call_type: ["DEFAULT", "OPERATOR", "MENU", "PANEL", "PIE"]
@@ -70,11 +72,9 @@ def AlxKeymapRegister(keymap_call_type="", config_space_name="", space_type="EMP
         case "PIE":
             keymap_call_id = "wm.call_menu_pie"
 
-
-    Keymap : bpy.types.KeyMap = kmc.keymaps.new(name=config_space_name , space_type=space_type, region_type=region_type)
+    Keymap: bpy.types.KeyMap = kmc.keymaps.new(name=config_space_name, space_type=space_type, region_type=region_type)
     KeymapItem = Keymap.keymap_items.new(idname=keymap_call_id, type=key, key_modifier=key_modifier, shift=use_shift, ctrl=use_ctrl, alt=use_alt, value=trigger_type, head=True)
 
-    
     if (keymap_call_type in ["PANEL", "MENU", "PIE"]):
         KeymapItem.properties.name = addon_class.bl_idname
 
@@ -101,7 +101,6 @@ def AlxCreateKeymaps():
     if (AlxPreferences.AlxGetPreferences() .View3d_Zoom_Use_GRLess == False):
         AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="3D View", ItemidName="view3d.zoom", MapType="MOUSE", Key="MIDDLEMOUSE", UseCtrl=True, Active=True)
 
-
     AlxKeymapRegister(keymap_call_type="DEFAULT", config_space_name="Window", region_type="WINDOW", addon_class="wm.window_fullscreen_toggle", key="F11", use_alt=True, trigger_type="CLICK")
     AlxKeymapRegister(keymap_call_type="DEFAULT", config_space_name="Window", region_type="WINDOW", addon_class="scripts.reload", key="F8", trigger_type="CLICK")
 
@@ -109,9 +108,9 @@ def AlxCreateKeymaps():
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Mesh", ItemidName="mesh.select_less", MapType="MOUSE", Key="WHEELDOWNMOUSE", UseCtrl=True, Active=True)
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Mesh", ItemidName="wm.call_menu", OperatorID="VIEW3D_MT_edit_mesh_merge", Active=False)
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Mesh", ItemidName="mesh.dupli_extrude_cursor", Active=False)
-    
+
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Armature", ItemidName="armature.align", Active=False)
-    
+
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Object Non-modal", ItemidName="object.mode_set", Active=False)
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Image", ItemidName="object.mode_set", Active=False)
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Object Non-modal", ItemidName="view3d.object_mode_pie_or_toggle", Active=False)
@@ -119,7 +118,6 @@ def AlxCreateKeymaps():
 
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="Mesh", ItemidName="transform.tosphere", Active=False)
     AlxEditKeymaps(KeyconfigSource="Blender", ConfigSpaceName="3D View Tool: Edit Mesh, To Sphere", ItemidName="transform.tosphere", Active=False)
-
 
     AlxKeymapRegister(keymap_call_type="PIE", config_space_name="3D View", space_type="VIEW_3D", addon_class=AlxUnlockedObjectModes.Alx_MT_MenuPie_UnlockedObjectModes, key="TAB", trigger_type="PRESS")
     AlxKeymapRegister(keymap_call_type="PANEL", config_space_name="Window", region_type="WINDOW", addon_class=AlxAlexandriaGeneralPanel.Alx_PT_Panel_AlexandriaGeneralPanel, key="A", use_ctrl=True, use_alt=True, trigger_type="CLICK")
