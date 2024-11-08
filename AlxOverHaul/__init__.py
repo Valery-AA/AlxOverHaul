@@ -36,6 +36,12 @@ file_blacklist: set[str] = {"__init__.py"}
 
 
 def register():
+    try:
+        addon_updater_ops.update_path_fix = __path__
+        addon_updater_ops.register(bl_info)
+    except:
+         pass
+
     addon_folders = developer_gather_addon_folders(addon_path, folder_blacklist)
     addon_files = developer_gather_addon_files(addon_folders, file_blacklist)
     developer_execute_locals_update(addon_path, globals(), addon_files)
@@ -46,41 +52,13 @@ def register():
 
     bpy.app.handlers.depsgraph_update_post.append(AlxMain_depsgraph_update_post)
 
-    # try:
-    #     addon_updater_ops.update_path_fix = __path__
-    #     addon_updater_ops.register(bl_info)
-    # except:
-    #     pass
-    #
-    # developer_gather_addon_files(addon_folders, file_blacklist, addon_files)
-    # developer_execute_imports(addon_files)
-
-    # developer_gather_classes_from_files(addon_files, addon_classes)
-
-    # developer_register_addon_classes(addon_classes)
-    # AlxRegisterToolQueue()
-
-    # # AlxKeymapUtils.AlxCreateKeymaps()
-
-    # RegisterProperties()
-    # RegisterHandlers()
 
     bpy.context.preferences.use_preferences_save = True
 
 
 def unregister():
     developer_unregister_addon_classes(addon_classes)
-    # addon_updater_ops.unregister()
-
-    # developer_unregister_addon_classes(addon_classes)
-    # AlxUnregisterToolQueue()
-
-    # for km, kmi in AlxKeymapUtils.AlxAddonKeymaps:
-    #     km.keymap_items.remove(kmi)
-    # AlxKeymapUtils.AlxAddonKeymaps.clear()
-
-    # UnRegisterProperties()
-    # UnRegisterHandlers()
+    addon_updater_ops.unregister()
 
 
 if __name__ == "__main__":
