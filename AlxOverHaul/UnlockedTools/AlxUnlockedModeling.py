@@ -5,62 +5,64 @@ import bmesh
 
 from ..AlxGpuUI import draw_unlocked_modeling_ui
 
+
 class Alx_PG_PropertyGroup_UnlockedModelingProperties(bpy.types.PropertyGroup):
     """"""
 
-    leftclick_selection_mode : bpy.props.EnumProperty(name="Left Click", default="NONE", 
-        items=[
-            ("NONE", "Standard", "", 1),
-            ("LOOP_SELECTION", "Loop", "", 1<<1),
-            ("LINKED_SELECTION", "Linked", "", 1<<2)
-        ]) #type:ignore
+    leftclick_selection_mode: bpy.props.EnumProperty(name="Left Click", default="NONE",
+                                                     items=[
+                                                          ("NONE", "Standard", "", 1),
+                                                          ("LOOP_SELECTION", "Loop", "", 1 << 1),
+                                                          ("LINKED_SELECTION", "Linked", "", 1 << 2)
+                                                     ])  # type:ignore
 
-    leftclick_selection_state_mode : bpy.props.EnumProperty(name="Extend", default="NONE", 
-        items=[
-            ("NONE", "Single", "", 1),
-            ("EXTEND", "Extend", "", 1<<1)
-        ]) #type:ignore
+    leftclick_selection_state_mode: bpy.props.EnumProperty(name="Extend", default="NONE",
+                                                           items=[
+                                                                ("NONE", "Single", "", 1),
+                                                                ("EXTEND", "Extend", "", 1 << 1)
+                                                           ])  # type:ignore
 
-    rightclick_mode : bpy.props.EnumProperty(name="Right Click", default="NONE",
-        items=[
-            ("NONE", "Standard", "", 1),
-            ("POLY_MARK", "Mark Mode", "", 1<<1),
-            ("POLY_DELETE", "Delete Mode", "", 1<<2),
-            ("POLY_PAINT", "Paint Mode", "", 1<<3)
-        ]) #type:ignore
+    rightclick_mode: bpy.props.EnumProperty(name="Right Click", default="NONE",
+                                            items=[
+                                                 ("NONE", "Standard", "", 1),
+                                                ("POLY_MARK", "Mark Mode", "", 1 << 1),
+                                                ("POLY_DELETE", "Delete Mode", "", 1 << 2),
+                                                ("POLY_PAINT", "Paint Mode", "", 1 << 3)
+                                            ])  # type:ignore
 
-    edge_mark_type : bpy.props.EnumProperty(name="Mark Type", default={"NONE"}, options={"ENUM_FLAG"},
-        items=[
-            ("NONE", "None", "", 1),
-            ("seam_edge", "Seam", "", 1<<1),
-            ("sharp_edge", "Sharp", "", 1<<2),
-            ("bevel_weight_edge", "Bevel", "", 1<<3),
-            ("crease_edge", "Crease", "", 1<<4)
-        ]) #type:ignore
+    edge_mark_type: bpy.props.EnumProperty(name="Mark Type", default={"NONE"}, options={"ENUM_FLAG"},
+                                           items=[
+        ("NONE", "None", "", 1),
+        ("seam_edge", "Seam", "", 1 << 1),
+        ("sharp_edge", "Sharp", "", 1 << 2),
+        ("bevel_weight_edge", "Bevel", "", 1 << 3),
+        ("crease_edge", "Crease", "", 1 << 4)
+    ])  # type:ignore
 
-    poly_dissolve : bpy.props.BoolProperty(name="Dissolve", default=False) #type:ignore
+    poly_dissolve: bpy.props.BoolProperty(name="Dissolve", default=False)  # type:ignore
 
-    poly_delete_type : bpy.props.EnumProperty(name="Delete Type", default="NONE",
-        items=[
-            ("NONE", "None", "", 1),
-            ("VERTS", "Vertex", "", 1<<1),
-            ("EDGES", "Edge", "", 1<<2),
-            ("FACES", "Face", "", 1<<3),
-        ]) #type:ignore
+    poly_delete_type: bpy.props.EnumProperty(name="Delete Type", default="NONE",
+                                             items=[
+                                                  ("NONE", "None", "", 1),
+                                                 ("VERTS", "Vertex", "", 1 << 1),
+                                                 ("EDGES", "Edge", "", 1 << 2),
+                                                 ("FACES", "Face", "", 1 << 3),
+                                             ])  # type:ignore
 
-    poly_paint_mode : bpy.props.EnumProperty(name="Delete Type", default="NONE",
-        items=[
-            ("NONE", "Normal", "", 1),
-            ("COLOR_RANDOM", "Random", "", 1<<1)
-        ]) #type:ignore
+    poly_paint_mode: bpy.props.EnumProperty(name="Delete Type", default="NONE",
+                                            items=[
+                                                 ("NONE", "Normal", "", 1),
+                                                ("COLOR_RANDOM", "Random", "", 1 << 1)
+                                            ])  # type:ignore
 
     def auto_paint_layers(scene, context: bpy.types.Context):
         color_layers = [(color.name, color.name, "") for color in context.edit_object.data.color_attributes]
         return color_layers
 
-    poly_paint_layers : bpy.props.EnumProperty(name="Delete Type", items=auto_paint_layers) #type:ignore
+    poly_paint_layers: bpy.props.EnumProperty(name="Delete Type", items=auto_paint_layers)  # type:ignore
 
-    poly_paint_color : bpy.props.FloatVectorProperty(name="Paint Color", subtype="COLOR", size=4, default=(1.0, 1.0, 1.0, 1.0), min=0.0, max=1.0) #type:ignore
+    poly_paint_color: bpy.props.FloatVectorProperty(name="Paint Color", subtype="COLOR", size=4, default=(1.0, 1.0, 1.0, 1.0), min=0.0, max=1.0)  # type:ignore
+
 
 class Alx_PT_Panel_UnlockedModeling(bpy.types.Panel):
     """"""
@@ -81,7 +83,7 @@ class Alx_PT_Panel_UnlockedModeling(bpy.types.Panel):
             return False
 
     def draw(self, context: bpy.types.Context):
-        Properties : Alx_PG_PropertyGroup_UnlockedModelingProperties = context.scene.alx_tool_unlocked_modeling_properties
+        Properties: Alx_PG_PropertyGroup_UnlockedModelingProperties = context.scene.alx_tool_unlocked_modeling_properties
 
         AlxLayout = self.layout
         AlxLayout.ui_units_x = 12.0
@@ -89,7 +91,7 @@ class Alx_PT_Panel_UnlockedModeling(bpy.types.Panel):
         row = AlxLayout.split(factor=0.5)
         row.label(text="Left Click")
         row.prop(Properties, "leftclick_selection_mode", text="")
-        
+
         row = AlxLayout.split(factor=0.5)
         row.label(text="Extend")
         row.prop(Properties, "leftclick_selection_state_mode", text="")
@@ -124,7 +126,6 @@ class Alx_PT_Panel_UnlockedModeling(bpy.types.Panel):
                 row = AlxLayout.split(factor=0.5)
                 row.label(text="Paint")
                 row.prop(Properties, "poly_paint_color", text="")
-                
 
 
 class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
@@ -134,17 +135,15 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
     bl_idname = "alx.operator_unlocked_modeling_tool"
     bl_options = {"REGISTER", "UNDO", "INTERNAL"}
 
-    bIsRunning : bpy.props.BoolProperty(name="", default=False) #type:ignore
-    ContextBmesh : bmesh.types.BMesh = None
-    bmesh_selection : list = []
-    average_bevel_weight : float = 0.00
-    average_crease_weight : float = 0.00
+    bIsRunning: bpy.props.BoolProperty(name="", default=False)  # type:ignore
+    ContextBmesh: bmesh.types.BMesh = None
+    bmesh_selection: list = []
+    average_bevel_weight: float = 0.00
+    average_crease_weight: float = 0.00
 
     @classmethod
     def poll(self, context: bpy.types.Context):
         return (context.area is not None) and (context.area.type == "VIEW_3D") and (context.mode == "EDIT_MESH")
-
-
 
     def CancelModal(self, context: bpy.types.Context):
         self.bIsRunning = False
@@ -154,18 +153,16 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
         self.bmesh_selection = []
         self.average_bevel_weight = 0.00
         self.average_crease_weight = 0.00
-            
+
         try:
             bpy.types.SpaceView3D.draw_handler_remove(context.scene.alx_draw_handler_unlocked_modeling, "WINDOW")
             bpy.types.Scene.alx_draw_handler_unlocked_modeling = None
 
         except Exception as error:
             print(f"info-cancel: unlocked modeling ui {error}")
-        
+
         if (context.area is not None):
             context.area.tag_redraw()
-        
-
 
     def modal(self, context: bpy.types.Context, event: bpy.types.Event):
         override_window = context.window
@@ -208,12 +205,10 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
 
                     self.ContextBmesh.edges.ensure_lookup_table()
 
-
-
                 if (event.type == "MIDDLEMOUSE") and (event.shift == False) and (event.ctrl == False) and (event.alt == False):
                     bpy.ops.wm.call_panel(name=Alx_PT_Panel_UnlockedModeling.bl_idname, keep_open=True)
                     return {"RUNNING_MODAL"}
-                
+
                 if (event.type == "Z") and (event.shift == False) and (event.ctrl == True) and (event.value == "CLICK"):
                     print("key undo")
                     try:
@@ -221,7 +216,7 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
                         print("undo")
                     except Exception as error:
                         print(error)
-                    
+
                     return {"RUNNING_MODAL"}
 
                 if (event.type == "Z") and (event.shift == True) and (event.ctrl == True) and (event.value == "CLICK"):
@@ -231,13 +226,11 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
                         print("redo")
                     except Exception as error:
                         print(error)
-                    
+
                     return {"RUNNING_MODAL"}
 
+                operator_properties: Alx_PG_PropertyGroup_UnlockedModelingProperties = context.scene.alx_tool_unlocked_modeling_properties
 
-
-                operator_properties : Alx_PG_PropertyGroup_UnlockedModelingProperties = context.scene.alx_tool_unlocked_modeling_properties
-                
                 leftclick_selection_mode = operator_properties.leftclick_selection_mode
                 leftclick_extend_selection = (operator_properties.leftclick_selection_state_mode == "EXTEND")
 
@@ -250,8 +243,6 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
                 poly_paint_color = operator_properties.poly_paint_color
                 poly_paint_layers = operator_properties.poly_paint_layers
 
-
-
                 if (event.type == "LEFTMOUSE") and (event.ctrl == False) and (event.value == "CLICK"):
                     if (context.mode == "EDIT_MESH"):
                         override_window = context.window
@@ -262,13 +253,13 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
                         with context.temp_override(window=override_window, area=override_area[0], region=override_region[0]):
 
                             if (leftclick_selection_mode == "NONE"):
-                                if ( event.shift == False ):
-                                    bpy.ops.view3d.select( "INVOKE_DEFAULT", extend = ( event.shift == True ) or ( leftclick_extend_selection == True ), toggle = True )
+                                if (event.shift == False):
+                                    bpy.ops.view3d.select("INVOKE_DEFAULT", extend=(event.shift == True) or (leftclick_extend_selection == True), toggle=True)
                                     bpy.ops.ed.undo_push(message=f"AlxUM Standard Select [extend:{leftclick_extend_selection}]")
                                     return {"RUNNING_MODAL"}
-                                
-                                elif ( event.shift == True ):
-                                    bpy.ops.mesh.select_all("INVOKE_DEFAULT", action= "DESELECT" )
+
+                                elif (event.shift == True):
+                                    bpy.ops.mesh.select_all("INVOKE_DEFAULT", action="DESELECT")
                                     bpy.ops.ed.undo_push(message=f"AlxUM Standard Select [deselect all]")
                                     return {"RUNNING_MODAL"}
 
@@ -276,13 +267,13 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
                                 bpy.ops.mesh.loop_select("INVOKE_DEFAULT", extend=leftclick_extend_selection, deselect=False, toggle=False, ring=False)
                                 bpy.ops.ed.undo_push(message=f"AlxUM Loop Select extend:{leftclick_extend_selection}")
                                 return {"RUNNING_MODAL"}
-                            
+
                             elif (leftclick_selection_mode == "LINKED_SELECTION"):
                                 bpy.ops.view3d.select("INVOKE_DEFAULT", deselect=False, extend=leftclick_extend_selection)
                                 bpy.ops.mesh.select_linked("INVOKE_DEFAULT", delimit={"SEAM"})
                                 bpy.ops.ed.undo_push(message=f"AlxUM Linked Select extend:{leftclick_extend_selection}")
                                 return {"RUNNING_MODAL"}
-                            
+
                     return {"RUNNING_MODAL"}
 
                 if (event.type == "LEFTMOUSE") and (event.ctrl == True) and (event.value == "CLICK"):
@@ -294,18 +285,16 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
 
                         with context.temp_override(window=override_window, area=override_area[0], region=override_region[0]):
                             if (leftclick_selection_mode == "NONE"):
-                                bpy.ops.view3d.select("INVOKE_DEFAULT", extend=False, deselect=True,  toggle=True)
+                                bpy.ops.view3d.select("INVOKE_DEFAULT", extend=False, deselect=True, toggle=True)
                                 bpy.ops.ed.undo_push(message=f"AlxUM De-Select extend:{leftclick_extend_selection}")
                                 return {"RUNNING_MODAL"}
-                            
+
                             elif (leftclick_selection_mode == "LOOP_SELECTION"):
                                 bpy.ops.mesh.loop_select("INVOKE_DEFAULT", extend=False, deselect=True, toggle=True, ring=False)
                                 bpy.ops.ed.undo_push(message=f"AlxUM Loop De-Select extend:{leftclick_extend_selection}")
                                 return {"RUNNING_MODAL"}
 
                     return {"RUNNING_MODAL"}
-
-
 
                 if (event.type == "RIGHTMOUSE") and (event.ctrl == False) and (event.value == "PRESS"):
 
@@ -363,7 +352,7 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
                         if (poly_paint_layers is not None):
                             if (context.edit_object is not None) and (context.edit_object.type == "MESH") and (context.edit_object.data is not None):
                                 object_layer = context.edit_object.data.color_attributes.get(poly_paint_layers)
-                                
+
                                 if (object_layer is not None):
                                     layer_domain = "verts" if (object_layer.domain == "POINT") else "loops" if (object_layer.domain == "CORNER") else ""
                                     layer_data = "float_color" if (object_layer.data_type == "FLOAT_COLOR") else "color" if (object_layer.data_type == "BYTE_COLOR") else ""
@@ -383,7 +372,7 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
                                                         unique_loop_selection.append(loop)
 
                                                 for selected_loop in unique_loop_selection:
-                                                    self.ContextBmesh.faces[selected_loop[0]].loops[(selected_loop[1] % len(self.ContextBmesh.faces[selected_loop[0]].verts) )-1][self.color_layer] = paint_color
+                                                    self.ContextBmesh.faces[selected_loop[0]].loops[(selected_loop[1] % len(self.ContextBmesh.faces[selected_loop[0]].verts)) - 1][self.color_layer] = paint_color
                                                 bmesh.update_edit_mesh(self.ContextMesh, loop_triangles=True, destructive=False)
                                             elif (layer_domain == "verts"):
                                                 verts_selection = [vert.index for vert in self.ContextBmesh.verts if (vert.select == True)]
@@ -397,12 +386,10 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
                                         else:
                                             self.report(type={"WARNING"}, message="Failed To Retieve Color Attribute")
                             else:
-                                    self.report(type={"WARNING"}, message=f"Layer Incompatible {layer_domain}, {layer_data}")
+                                self.report(type={"WARNING"}, message=f"Layer Incompatible {layer_domain}, {layer_data}")
                         else:
                             self.report(type={"WARNING"}, message="Failed To Retieve Color Layers")
                         return {"RUNNING_MODAL"}
-                    
-
 
                 if (event.type == "RIGHTMOUSE") and (event.ctrl == True) and (event.value == "PRESS"):
 
@@ -421,20 +408,17 @@ class Alx_OT_Tool_UnlockedModeling(bpy.types.Operator):
                         bpy.ops.ed.undo_push(message=f"AlxUM Mark Selection: {edge_mark_type}")
                         return {"RUNNING_MODAL"}
 
-
-
                 self.bmesh_selection = [bmesh_edge.index for bmesh_edge in self.ContextBmesh.edges if (bmesh_edge.select == True)]
 
                 weight_values = [self.ContextBmesh.edges[selected_edge][self.bevel_mark_layer] for selected_edge in self.bmesh_selection]
-                self.average_bevel_weight = round(sum(weight_values)/float(len(weight_values)), 2) if (len(weight_values) > 0) else 0.00
+                self.average_bevel_weight = round(sum(weight_values) / float(len(weight_values)), 2) if (len(weight_values) > 0) else 0.00
 
                 crease_values = [self.ContextBmesh.edges[selected_edge][self.crease_mark_layer] for selected_edge in self.bmesh_selection]
-                self.average_crease_weight = round(sum(crease_values)/float(len(crease_values)), 2) if (len(crease_values) > 0) else 0.00
+                self.average_crease_weight = round(sum(crease_values) / float(len(crease_values)), 2) if (len(crease_values) > 0) else 0.00
 
                 return {"PASS_THROUGH"}
             else:
                 return {"PASS_THROUGH"}
-
 
     def invoke(self, context, event):
         print("invoke called")
@@ -462,7 +446,11 @@ class Alx_WT_WorkSpaceTool_UnlockedModeling(bpy.types.WorkSpaceTool):
     bl_idname = "alx.workspace_unlocked_modeling_tool"
     bl_label = "Alx Unlocked Modeling"
 
+    after: "None"
+    separator: True
+    group: False
+
     bl_keymap = (
         ("alx.operator_unlocked_modeling_tool", {"type": "MIDDLEMOUSE", "value": "PRESS"},
-    {"properties": []}),
-        )
+         {"properties": []}),
+    )

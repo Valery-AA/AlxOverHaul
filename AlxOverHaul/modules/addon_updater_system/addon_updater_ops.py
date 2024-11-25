@@ -21,12 +21,11 @@
 Implements draw calls, popups, and operators that use the addon_updater.
 """
 
-from bpy.app.handlers import persistent
-import bpy
-import traceback
 import os
-update_path_fix = None
+import traceback
 
+import bpy
+from bpy.app.handlers import persistent
 
 # Safely import the updater.
 # Prevents popups for users with invalid python installs e.g. missing libraries
@@ -73,13 +72,12 @@ except Exception as e:
 # not match and have errors. Must be all lowercase and no spaces! Should also
 # be unique among any other addons that could exist (using this updater code),
 # to avoid clashes in operator registration.
-updater.addon = "alxoverhaul"
+updater.addon = ""
+
 
 # -----------------------------------------------------------------------------
 # Blender version utils
 # -----------------------------------------------------------------------------
-
-
 def make_annotations(cls):
     """Add annotation attribute to fields to avoid Blender 2.8+ warnings"""
     if not hasattr(bpy.app, "version") or bpy.app.version < (2, 80):
@@ -107,20 +105,14 @@ def layout_split(layout, factor=0.0, align=False):
     return layout.split(factor=factor, align=align)
 
 
-def get_user_preferences(context=None):
+def get_user_preferences(context: bpy.types.Context = bpy.context, addon_name: str = ""):
     """Intermediate method for pre and post blender 2.8 grabbing preferences"""
-    if not context:
-        context = bpy.context
-    prefs = None
-    if hasattr(context, "user_preferences"):
-        prefs = context.user_preferences.addons.get(__package__, None)
-    elif hasattr(context, "preferences"):
-        prefs = context.preferences.addons.get(__package__, None)
-    if prefs:
-        return prefs.preferences
-    # To make the addon stable and non-exception prone, return None
-    # raise Exception("Could not fetch user preferences")
-    return None
+
+    addon = context.preferences.addons.get(addon_name, None)
+    if (addon is not None):
+        return addon.preferences
+    else:
+        return None
 
 
 # -----------------------------------------------------------------------------
@@ -1336,35 +1328,22 @@ classes = (
 
 def register(bl_info):
     """Registering the operators in this module"""
-    # Safer failure in case of issue loading module.
+
     if updater.error:
         print("Exiting updater registration, " + updater.error)
         return
     updater.clear_state()  # Clear internal vars, avoids reloading oddities.
 
-    # Confirm your updater "engine" (Github is default if not specified).
     updater.engine = "Github"
-    # updater.engine = "GitLab"
-    # updater.engine = "Bitbucket"
-
-    # If using private repository, indicate the token here.
-    # Must be set after assigning the engine.
-    # **WARNING** Depending on the engine, this token can act like a password!!
-    # Only provide a token if the project is *non-public*, see readme for
-    # other considerations and suggestions from a security standpoint.
     updater.private_token = None  # "tokenstring"
 
-    # Choose your own username, must match website (not needed for GitLab).
-    updater.user = "Valery-AA"
-
-    # Choose your own repository, must match git name for GitHUb and Bitbucket,
-    # for GitLab use project ID (numbers only).
-    updater.repo = "AlxOverHaul"
+    updater.user = "cgcookie"
+    updater.repo = "blender-addon-updater"
 
     # updater.addon = # define at top of module, MUST be done first
 
     # Website for manual addon download, optional but recommended to set.
-    updater.website = "https://github.com/Valery-AA/AlxOverHaul"
+    updater.website = "https://github.com/CGCookie/blender-addon-updater/"
 
     # Addon subfolder path.
     # "sample/path/to/addon"
@@ -1380,22 +1359,20 @@ def register(bl_info):
 
     # Optional, consider turning off for production or allow as an option
     # This will print out additional debugging info to the console
-    updater.verbose = False  # make False for production default
+    updater.verbose = True  # make False for production default
 
     # Optional, customize where the addon updater processing subfolder is,
     # essentially a staging folder used by the updater on its own
     # Needs to be within the same folder as the addon itself
     # Need to supply a full, absolute path to folder
-    from pathlib import Path
-    updater._updater_path = str(Path.absolute(Path(update_path_fix[0])))
-    # set path of updater folder, by default:
+    # updater.updater_path = # set path of updater folder, by default:
     # 			/addons/{__package__}/{__package__}_updater
 
     # Auto create a backup of the addon when installing other versions.
     updater.backup_current = True  # True by default
 
     # Sample ignore patterns for when creating backup of current during update.
-    updater.backup_ignore_patterns = ["__pycache__", ".git", ".gitignore"]
+    updater.backup_ignore_patterns = ["__pycache__"]
     # Alternate example patterns:
     # updater.backup_ignore_patterns = [".git", "__pycache__", "*.bat", ".gitignore", "*.exe"]
 
@@ -1447,13 +1424,13 @@ def register(bl_info):
     # but the user has the option from user preferences to directly
     # update to the master branch or any other branches specified using
     # the "install {branch}/older version" operator.
-    updater.include_branches = False
+    updater.include_branches = True
 
     # (GitHub only) This options allows using "releases" instead of "tags",
     # which enables pulling down release logs/notes, as well as installs update
     # from release-attached zips (instead of the auto-packaged code generated
     # with a release/tag). Setting has no impact on BitBucket or GitLab repos.
-    updater.use_releases = True
+    updater.use_releases = False
     # Note: Releases always have a tag, but a tag may not always be a release.
     # Therefore, setting True above will filter out any non-annotated tags.
     # Note 2: Using this option will also display (and filter by) the release
@@ -1489,7 +1466,7 @@ def register(bl_info):
     # Set the min and max versions allowed to install.
     # Optional, default None
     # min install (>=) will install this and higher
-    updater.version_min_update = None
+    updater.version_min_update = (0, 0, 0)
     # updater.version_min_update = None  # None or default for no minimum.
 
     # Max install (<) will install strictly anything lower than this version
@@ -1508,16 +1485,17 @@ def register(bl_info):
     # Recommended false to encourage blender restarts on update completion
     # Setting this option to True is NOT as stable as false (could cause
     # blender crashes).
-    updater.auto_reload_post_update = True
+    updater.auto_reload_post_update = False
 
     # The register line items for all operators/panels.
     # If using bpy.utils.register_module(__name__) to register elsewhere
     # in the addon, delete these lines (also from unregister).
     for cls in classes:
-        # Apply annotations to remove Blender 2.8+ warnings, no effect on 2.7
-        make_annotations(cls)
-        # Comment out this line if using bpy.utils.register_module(__name__)
-        bpy.utils.register_class(cls)
+        try:
+            make_annotations(cls)
+            bpy.utils.register_class(cls)
+        except:
+            pass
 
     # Special situation: we just updated the addon, show a popup to tell the
     # user it worked. Could enclosed in try/catch in case other issues arise.
@@ -1525,9 +1503,11 @@ def register(bl_info):
 
 
 def unregister():
-    for cls in reversed(classes):
-        # Comment out this line if using bpy.utils.unregister_module(__name__).
-        bpy.utils.unregister_class(cls)
+    for cls in classes:
+        try:
+            bpy.utils.unregister_class(cls)
+        except:
+            pass
 
     # Clear global vars since they may persist if not restarting blender.
     updater.clear_state()  # Clear internal vars, avoids reloading oddities.

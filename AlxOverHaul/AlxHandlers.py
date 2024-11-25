@@ -14,7 +14,8 @@ def armature_handler_lambda():
 
 @bpy.app.handlers.persistent
 def AlxMain_depsgraph_update_post(context):
-    json_serialize_keymaps([Path("E:\ProjectSovereign\Blender\Addon\AlxOverHaul\AlxOverHaul\keymap_json_test.json")], bpy.context.window_manager.keyconfigs.user.keymaps)
+    pass
+    # json_serialize_keymaps([Path("E:\ProjectSovereign\Blender\Addon\AlxOverHaul\AlxOverHaul\keymap_json_test.json")], bpy.context.window_manager.keyconfigs.user.keymaps)
 
 
 @bpy.app.handlers.persistent

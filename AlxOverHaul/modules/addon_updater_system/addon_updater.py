@@ -22,32 +22,58 @@ See documentation for usage
 https://github.com/CGCookie/blender-addon-updater
 """
 
+import addon_utils
+import bpy
+from datetime import datetime, timedelta
+import fnmatch
+import threading
+import shutil
+import zipfile
+import json
+import os
+import urllib
+import urllib.request
+import ssl
+import platform
+import traceback
+import errno
+
+
 __version__ = "1.1.1"
 
-import errno
-import traceback
-import platform
-import ssl
-import urllib.request
-import urllib
-import os
-import json
-import zipfile
-import shutil
-import threading
-import fnmatch
-from datetime import datetime, timedelta
 
 # Blender imports, used in limited cases.
-import bpy
-import addon_utils
 
 # -----------------------------------------------------------------------------
 # The main class
 # -----------------------------------------------------------------------------
 
+class AddonUpdaterSettings():
+    """
+    addon : __ package __
+    addon_current_version :
+    addon_minimum_update_version : tuple(x, x, x)
+    addon_maximum_update_version : tuple(x, x, x)
 
-class SingletonUpdater:
+    engine : github / gitlab / bitbucket
+    engine_user_name : str "example username"
+    engine_repo_name : str "example_repo_name"
+
+    manual_download_website : str "https://github.com/example_username/example_repo/releases"
+    """
+    addon: str = ""
+    addon_current_version: tuple[int, int, int] = (1, 0, 0)
+    addon_minimum_update_version: tuple[int, int, int] = (0, 0, 0)
+    addon_maximum_update_version: tuple[int, int, int] = (100, 0, 0)
+
+    engine: str = "github"
+    engine_user_name: str = ""
+    engine_repo_name: str = ""
+
+    manual_download_website: str = ""
+
+
+class AddonUpdater:
     """Addon updater service class.
 
     This is the singleton class to instance once and then reference where
@@ -1742,4 +1768,4 @@ class GitlabEngine:
 # should be what's imported to other files
 # -----------------------------------------------------------------------------
 
-Updater = SingletonUpdater()
+Updater = AddonUpdater()
