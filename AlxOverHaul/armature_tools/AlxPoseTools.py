@@ -1,6 +1,6 @@
 import bpy
 
-from ..Utilities.AlxUtilities import get_active_object_skeleton, get_bone_always_left, AlxGetBoneAlwaysRight, AlxGetBoneOpposite, AlxCloneIKSettings, AlxCloneIKBoneLimitOnChain
+from ..utilities.Alx_armature_utils import Get_ActiveObject_Skeleton, Get_PoseBone_Always_Left, Get_PoseBone_Always_Right, Get_PoseBone_Opposite, AlxCloneIKSettings, AlxCloneIKBoneLimitOnChain
 
 
 class Alx_OT_Armature_Pose_SetPosePosition(bpy.types.Operator):
@@ -17,7 +17,7 @@ class Alx_OT_Armature_Pose_SetPosePosition(bpy.types.Operator):
         return True
 
     def execute(self, context: bpy.types.Context):
-        armature: bpy.types.Armature = get_active_object_skeleton(context) if self.optional_skeleton_target_name == "" else bpy.data.armatures.get(self.optional_skeleton_target_name)
+        armature: bpy.types.Armature = Get_ActiveObject_Skeleton(context) if self.optional_skeleton_target_name == "" else bpy.data.armatures.get(self.optional_skeleton_target_name)
         if (armature is not None):
             if (self.b_pose):
                 armature.pose_position = "POSE"
@@ -107,16 +107,16 @@ class Alx_OT_Armature_MatchIKByMirroredName(bpy.types.Operator):
                     ContextOppositeBone = None
 
                     if (self.SourceSide == "LEFT"):
-                        ContextPoseBone = get_bone_always_left(
+                        ContextPoseBone = Get_PoseBone_Always_Left(
                             UniquePoseBone, ContextArmature)
-                        ContextOppositeBone = AlxGetBoneOpposite(
-                            get_bone_always_left(UniquePoseBone, ContextArmature), ContextArmature)
+                        ContextOppositeBone = Get_PoseBone_Opposite(
+                            Get_PoseBone_Always_Left(UniquePoseBone, ContextArmature), ContextArmature)
 
                     if (self.SourceSide == "RIGHT"):
-                        ContextPoseBone = AlxGetBoneAlwaysRight(
+                        ContextPoseBone = Get_PoseBone_Always_Right(
                             UniquePoseBone, ContextArmature)
-                        ContextOppositeBone = AlxGetBoneOpposite(
-                            AlxGetBoneAlwaysRight(UniquePoseBone, ContextArmature), ContextArmature)
+                        ContextOppositeBone = Get_PoseBone_Opposite(
+                            Get_PoseBone_Always_Right(UniquePoseBone, ContextArmature), ContextArmature)
 
                     if (ContextPoseBone is not None) and (ContextOppositeBone is not None):
                         AlxCloneIKSettings(

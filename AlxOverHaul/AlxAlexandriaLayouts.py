@@ -107,6 +107,17 @@ def UIPreset_ModifierSettings(layout: bpy.types.UILayout = None, modifier: bpy.t
 
         mod_layout = indented_layout.column()
         match modifier.type:
+            case "BEVEL":
+                row = layout.row().split(factor=0.33, align=True)
+
+                row.prop(modifier, "offset_type", text="")
+                row.prop(modifier, "width", text="width")
+                row.prop(modifier, "segments", text="segments")
+                layout.row().prop(modifier, "limit_method", text="")
+
+                layout.row().prop(modifier, "miter_outer", text="miter outer")
+                layout.row().prop(modifier, "harden_normals", text="harden")
+
             case "DATA_TRANSFER":
                 modifier: bpy.types.DataTransferModifier
 
@@ -205,17 +216,6 @@ def UIPreset_ModifierSettings(layout: bpy.types.UILayout = None, modifier: bpy.t
         if (modifier.type == "ARMATURE"):
             layout.row().prop(modifier, "object", text="")
             layout.row().prop(modifier, "use_deform_preserve_volume", text="preserve volume")
-
-        if (modifier.type == "BEVEL"):
-            row = layout.row().split(factor=0.33, align=True)
-
-            row.prop(modifier, "offset_type", text="")
-            row.prop(modifier, "width", text="width")
-            row.prop(modifier, "segments", text="segments")
-            layout.row().prop(modifier, "limit_method", text="")
-
-            layout.row().prop(modifier, "miter_outer", text="miter outer")
-            layout.row().prop(modifier, "harden_normals", text="harden")
 
         if (modifier.type == "BOOLEAN"):
             row = layout.row()

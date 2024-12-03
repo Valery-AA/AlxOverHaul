@@ -3,7 +3,7 @@ from .UnlockedTools import AlxUnlockedModeling
 from . import AlxAlexandriaGeneralPanel
 from . import AlxProperties
 import importlib
-from .AlxModuleManager import (
+from .Alx_module_manager import (
     Alx_Module_Manager
 )
 
@@ -25,6 +25,7 @@ bl_info = {
 
 
 module_loader = Alx_Module_Manager(__path__, globals())
+module_loader.developer_blacklist_folder({"addon_updater_system"})
 
 
 def RegisterProperties():
@@ -108,8 +109,8 @@ def UnRegisterHandlers():
 
 
 def register():
-    module_loader.developer_register_modules()
-    module_loader.developer_process_module_keymaps()
+    module_loader.developer_register_modules(mute=True)
+    module_loader.developer_register_module_icons()
 
     RegisterProperties()
     RegisterHandlers()
@@ -119,6 +120,7 @@ def register():
 
 def unregister():
     module_loader.developer_unregister_modules()
+    module_loader.developer_unregister_module_icons()
 
     UnRegisterProperties()
     UnRegisterHandlers()

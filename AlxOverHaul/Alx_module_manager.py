@@ -1,14 +1,16 @@
+import bpy.utils.previews
 import os
 from contextlib import redirect_stdout
 from typing import Optional
-import json
-from enum import Enum
+
 
 from inspect import getmembers, isclass
 from typing import Any
 
 from pathlib import Path
 from os import sep as os_separator
+
+from .module_data.icons import icons
 
 import bpy
 
@@ -23,37 +25,60 @@ class Alx_Module_Manager():
     __module_classes: set[str] = set()
 
     __folder_blacklist: set[str] = set()
-    __folder_blacklist.update({"__pycache__", "modules"})
+    __folder_blacklist.update({"__pycache__"})
     __file_blacklist: set[str] = set()
     __file_blacklist.update({"__init__.py"})
 
-    __module_data_json_path: str
+    __module_data_path: str
+    __module_icons_path: str
 
     def __init__(self, path: str, globals: dict[str, Any]):
         self.__init_globals = globals
 
         self.__module_path = path[0]
-        self.__module_data_json_path = f"{self.__module_path}\module_data\{__package__}_data.json"
+        self.__module_data_path = f"{self.__module_path}\\module_data"
+        self.__module_icons_path = f"{self.__module_data_path}\\icons"
 
-    def developer_register_modules(self):
+    def developer_register_modules(self, mute: Optional[bool] = True):
         self.__module_folders = self.__gather_addon_folders(self.__module_path, self.__folder_blacklist)
         self.__module_files = self.__gather_addon_files(self.__module_folders, self.__file_blacklist)
         self.__execute_locals_update(self.__module_path, self.__module_files)
         self.__module_classes = self.__gather_classes_from_files(self.__module_files)
 
-        self.__register_addon_classes(self.__module_classes, mute=True)
+        self.__register_addon_classes(self.__module_classes, mute=mute)
 
     def developer_unregister_modules(self):
         self.__unregister_addon_classes(self.__module_classes)
 
     def developer_blacklist_folder(self, folders: set[str]):
-        self.__folder_blacklist.add(folders)
+        self.__folder_blacklist.add(*folders)
 
     def developer_blacklist_file(self, files: set[str]):
-        self.__file_blacklist.add(files)
+        self.__file_blacklist.add(*files)
 
-    def __gather_modules():
-        pass
+    def developer_register_module_icons(self):
+        if (self.__verify_module_data_path()):
+            try:
+                icons_path = Path(self.__module_icons_path)
+                if (icons_path.exists()) and (icons_path.is_dir()):
+                    for icon_file in icons_path.iterdir():
+                        if (icon_file.suffix in [".png"]):
+                            new_icon = bpy.utils.previews.new()
+                            new_icon.load(icon_file.name.removesuffix(icon_file.suffix).upper(),
+                                          str(icons_path.joinpath(icon_file.name)),
+                                          "IMAGE")
+                            icons.icons.update({icon_file.name.removesuffix(icon_file.suffix).upper(): new_icon})
+
+            except Exception as error:
+                print(error)
+
+    def developer_unregister_module_icons(self):
+        try:
+            for icon_name in icons.icons.keys():
+                bpy.utils.previews.remove(icons.icons.get(icon_name))
+                icons.icons.clear()
+        except:
+            pass
 
     def __gather_addon_folders(self, path: str, folder_blacklist: set[str] = {"__pycache__"}):
         """
@@ -141,8 +166,8 @@ class Alx_Module_Manager():
                     else:
                         bpy.utils.register_class(addon_class)
 
-            except:
-                pass
+            except Exception as error:
+                print(error)
 
     def __unregister_addon_classes(self, addon_classes: list[object]):
         for addon_class in addon_classes:
@@ -154,61 +179,18 @@ class Alx_Module_Manager():
             except:
                 pass
 
-    def __verify_module_data_json_path(self) -> bool:
+    def __verify_module_data_path(self) -> bool:
         try:
-            keymap_path = Path(self.__module_data_json_path)
+            data_path = Path(self.__module_data_path)
+            icons_path = Path(self.__module_icons_path)
 
-            if (keymap_path.exists() == False):
-                if (keymap_path.suffix != "json"):
-                    keymap_path.joinpath(f"{__package__}.json")
+            if (data_path.exists() == False):
+                data_path.mkdir(parents=True, exist_ok=True)
 
-                keymap_path.parent.mkdir(parents=True, exist_ok=True)
+            if (icons_path.exists() == False):
+                icons_path.mkdir(parents=True, exist_ok=True)
 
-            with open(keymap_path, "r+") as module_data_json:
-                try:
-                    data = dict()
-                    data["module_name"] = __package__
-                    json.dump(data, module_data_json)
-
-                    module_data_json.close()
-                except Exception as error:
-                    print(error)
-
+            return True
         except Exception as error:
             print(error)
-
-    def developer_process_module_keymaps(self):
-        self.__verify_module_data_json_path()
-
-        # with open(self.__module_data_json_path, "r") as module_data_json:
-        # if ("keymaps" in json.load(module_data_json).keys()):
-        # pass
-        # module_data_json.close()
-
-
-class Base_ModuleSettings():
-    module_name: str = ""
-
-    def __init__(self):
-        pass
-
-
-class KeyConfigSource(Enum):
-    BLENDER = "default"
-    ADDON = "addon"
-    USER = "user"
-
-
-class KeyConfigSpace(Enum):
-    pass
-    # class Base_ModuleKeymap():
-    #     def __init__(self,
-    #                  keyconfig: KeyConfigSource = KeyConfigSource.ADDON,
-    #                  keyconfig_space_name: KeyConfigSpace = KeyConfigSpace
-    #                  ):
-
-    # def developer_enable_module(module_name: str = "",
-    #                             module_settings: Base_ModuleSettings = Base_ModuleSettings()
-    #                             ):
-    #     """
-    #     """
+        return False

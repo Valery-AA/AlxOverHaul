@@ -446,9 +446,9 @@ class Alx_WT_WorkSpaceTool_UnlockedModeling(bpy.types.WorkSpaceTool):
     bl_idname = "alx.workspace_unlocked_modeling_tool"
     bl_label = "Alx Unlocked Modeling"
 
-    after: "None"
-    separator: True
-    group: False
+    after = "None"
+    separator = True
+    group = False
 
     bl_keymap = (
         ("alx.operator_unlocked_modeling_tool", {"type": "MIDDLEMOUSE", "value": "PRESS"},
