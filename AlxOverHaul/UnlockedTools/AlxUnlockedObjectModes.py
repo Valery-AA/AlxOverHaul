@@ -1,7 +1,6 @@
 import bpy
 
 from ..Definitions.AlxTypesDefinition import TD_object_types
-from ..Utilities.AlxUtilities import operator_log_info, operator_log_warning, operator_log_error
 
 
 class Alx_MT_MenuPie_UnlockedObjectModes(bpy.types.Menu):

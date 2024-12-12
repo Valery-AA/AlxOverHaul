@@ -3,10 +3,9 @@ from bpy_extras import node_utils
 
 from .Definitions.AlxTypesDefinition import TD_modifier_modifiy_types, TD_modifier_generate_types, TD_modifier_deform_types, TD_modifier_physics_types
 
-from .Utilities.AlxUtilities import get_enum_property_items, get_active_object_skeleton
 
-from .ArmatureTools.AlxPoseTools import Alx_OT_Armature_Pose_SetPosePosition
-
+from .utilities.Alx_armature_utils import Get_ActiveObject_Skeleton
+from .armature_tools.Alx_pose_tools import Alx_OT_Armature_Pose_SetPosePosition
 
 from . AlxProperties import Alx_PG_PropertyGroup_SessionProperties
 
@@ -216,7 +215,7 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
     def draw(self, context: bpy.types.Context):
         # region Variable Shortcuts
         addon_properties: Alx_PG_PropertyGroup_SessionProperties = context.window_manager.alx_session_properties
-        context_skeleton: bpy.types.Object = get_active_object_skeleton(context)
+        context_skeleton: bpy.types.Object = Get_ActiveObject_Skeleton(context)
         # endregion
 
         # region Overrides
@@ -280,7 +279,6 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
                 overlay_prop.prop(context.space_data.overlay,
                                   "show_overlays", text="", icon="OVERLAY")
 
-                
                 poly_prop = header_layout.row(align=True)
                 poly_prop.prop(context.space_data.overlay,
                                "show_face_orientation", text="", icon="NORMALS_FACE")

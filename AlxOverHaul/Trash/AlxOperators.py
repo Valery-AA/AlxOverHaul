@@ -3,8 +3,6 @@
 import bpy
 import bmesh
 
-from ..Utilities import AlxUtilities
-
 
 class Alx_OT_Mesh_BoundaryMultiTool(bpy.types.Operator):
     """"""

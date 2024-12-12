@@ -1,7 +1,7 @@
 import bpy
 import bmesh
 
-from ..Utilities.AlxUtilities import operator_log_warning, get_modifiers_of_type
+from ..utilities.AlxUtilities import operator_log_warning, get_modifiers_of_type
 
 
 class Alx_OT_Armature_BoneChainOnSelection(bpy.types.Operator):
@@ -106,18 +106,18 @@ class Alx_OT_Armature_BoneChainOnSelection(bpy.types.Operator):
                 bpy.ops.object.mode_set(mode="OBJECT")
                 ordered_bone_position_map = dict()
 
-                for i in range(0, len(ordered_vert_chain)-1):
+                for i in range(0, len(ordered_vert_chain) - 1):
                     head = self.hair_strip_object.matrix_world @ self.hair_strip_bmesh.verts[
                         ordered_vert_chain[i]].co
                     tail = self.hair_strip_object.matrix_world @ self.hair_strip_bmesh.verts[
-                        ordered_vert_chain[i+1]].co
+                        ordered_vert_chain[i + 1]].co
                     vertex_normal = self.hair_strip_bmesh.verts[ordered_vert_chain[i]].normal
 
                     ordered_bone_position_map.update(
                         {f"bone.v_index_{ordered_vert_chain[i]}": [head, tail, vertex_normal]})
 
                 i = 0
-                while i < len(ordered_vert_chain)-1:
+                while i < len(ordered_vert_chain) - 1:
                     if (self.hair_strip_object.vertex_groups.get(f"bone.v_index_{ordered_vert_chain[i]}") is None):
                         self.hair_strip_object.vertex_groups.new(
                             name=f"bone.v_index_{ordered_vert_chain[i]}")
@@ -139,13 +139,13 @@ class Alx_OT_Armature_BoneChainOnSelection(bpy.types.Operator):
 
                     processed_edges = []
                     for i in range(0, len(ordered_vert_chain)):
-                        if (i < len(ordered_vert_chain)-1):
+                        if (i < len(ordered_vert_chain) - 1):
                             bone_vertex_group: bpy.types.VertexGroup = self.hair_strip_object.vertex_groups.get(
                                 f"bone.v_index_{ordered_vert_chain[i]}")
 
                             if (bone_vertex_group is not None):
                                 bone_edge = [v1_edge for v1_edge in self.hair_strip_bmesh.verts[ordered_vert_chain[i]].link_edges if (
-                                    v1_edge.index in [v2_edge.index for v2_edge in self.hair_strip_bmesh.verts[ordered_vert_chain[i+1]].link_edges])][0]
+                                    v1_edge.index in [v2_edge.index for v2_edge in self.hair_strip_bmesh.verts[ordered_vert_chain[i + 1]].link_edges])][0]
                                 bone_vertex_group.add(
                                     index=[vert.index for vert in bone_edge.verts], weight=1, type="REPLACE")
 

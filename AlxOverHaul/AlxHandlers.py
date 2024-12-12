@@ -1,6 +1,5 @@
 from pathlib import Path
 from .AlxJson import json_serialize_keymaps
-from .Utilities.AlxUtilities import get_enum_property_items
 
 
 import bpy

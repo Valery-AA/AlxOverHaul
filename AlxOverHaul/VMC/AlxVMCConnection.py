@@ -1,7 +1,7 @@
 from typing import Optional
 from threading import Thread
 
-from ..Utilities.AlxUtilities import developer_log_console, operator_log_error
+from ..utilities.AlxUtilities import developer_log_console
 
 from .pythonosc import dispatcher, osc_server
 

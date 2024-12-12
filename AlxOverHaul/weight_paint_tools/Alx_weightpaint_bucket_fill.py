@@ -18,7 +18,7 @@ class Alx_OT_WeightPaint_BucketFill(bpy.types.Operator):
             if (wp_object.vertex_groups.active is not None):
                 wp_object.vertex_groups.active.add([vert.index for vert in wp_object.data.vertices], weight=1.0, type="ADD")
             else:
-                self.report({"[object][missing] | [active][vertex group]"})
+                self.report({"INFO"}, "[object][missing] | [active][vertex group]")
         return {"FINISHED"}
 
 
