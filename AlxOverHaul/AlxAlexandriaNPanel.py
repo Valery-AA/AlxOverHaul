@@ -89,6 +89,9 @@ class ALX_PT_UI_Addon_HelpSection(bpy.types.Panel):
         layout.separator()
 
         help_section_info = {
+            "Menus:": ["\u2022 Alexandria General [Ctrl+Alt+A]",
+                       "\u2022 Alexandria Pivot [Shift+Alt+S]"
+                       ],
             "Weight Paint:": ["\u2022 Bucket Fill"]
         }
 
@@ -96,7 +99,7 @@ class ALX_PT_UI_Addon_HelpSection(bpy.types.Panel):
             info_section = layout.column()
             info_section.label(text=section)
 
-            paragraph = layout.row().split(factor=0.05)
             for line in help_section_info[section]:
+                paragraph = layout.row().split(factor=0.05)
                 paragraph.separator()
                 paragraph.label(text=line)

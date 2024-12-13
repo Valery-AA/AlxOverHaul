@@ -77,27 +77,22 @@ def UIPreset_VisibilityIsolator(parent_layout: bpy.types.UILayout = None, addon_
 def UIPreset_OverlayToggles(parent_layout: bpy.types.UILayout = None, context: bpy.types.Context = None):
     layout = parent_layout.row()
 
-    row = layout.row()
-    row.prop(
-        context.area.spaces.active.shading,
-        "show_xray",
-        text="Mesh",
-        icon="XRAY"
-    )
-    row.prop(
-        context.space_data.overlay,
-        "show_xray_bone",
-        text="Bone",
-        icon="XRAY"
-    )
+    column = layout.column()
+    column.prop(context.space_data.overlay, "show_overlays", text="", icon="OVERLAY")
+    column.prop(context.space_data.overlay, "show_face_orientation", text="", icon="NORMALS_FACE")
 
-    grid = layout.grid_flow(row_major=True, columns=2, even_columns=True, even_rows=True)
-    grid.prop(
-        context.area.spaces.active.shading,
-        "type",
-        text="",
-        expand=True
-    )
+    column = layout.column()
+
+    row = column.row().split(factor=0.5, align=True)
+    row.prop(context.area.spaces.active.shading, "show_xray", text="Mesh", icon="XRAY")
+    row.prop(context.space_data.overlay, "show_xray_bone", text="Bone", icon="XRAY")
+
+    row = column.row().split(factor=0.5, align=True)
+    row.prop(context.space_data.overlay, "show_wireframes", text="Wireframe", icon="MOD_WIREFRAME")
+    row.prop(context.space_data.overlay, "show_retopology", text="Retopology", icon="MESH_GRID")
+
+    grid = layout.grid_flow(align=True, row_major=True, columns=2, even_columns=True, even_rows=True)
+    grid.prop(context.area.spaces.active.shading, "type", text="", expand=True)
 
 
 def UIPreset_ModifierSettings(layout: bpy.types.UILayout = None, modifier: bpy.types.Modifier = None, context: bpy.types.Context = None, object: bpy.types.Object = None):

@@ -9,7 +9,8 @@ from .armature_tools.Alx_pose_tools import Alx_OT_Armature_Pose_SetPosePosition
 
 from . AlxProperties import Alx_PG_PropertyGroup_SessionProperties
 
-from . AlxAlexandriaLayouts import UIPreset_PosePosition, UIPreset_VisibilityIsolator, UIPreset_EnumButtons, UIPreset_ModifierList, UIPreset_ModifierSettings
+from . AlxAlexandriaLayouts import (UIPreset_PosePosition, UIPreset_VisibilityIsolator, UIPreset_OverlayToggles,
+                                    UIPreset_EnumButtons, UIPreset_ModifierList, UIPreset_ModifierSettings)
 
 from .AlxVisibilityOperators import Alx_OT_Scene_VisibilityIsolator
 
@@ -226,6 +227,12 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
         override_region = [region for region in override_area[0].regions if region.type == 'WINDOW'] if (
             b_override_v3d_area_exists) else None
         b_override_v3d_region_exists = len(override_area) > 0
+
+        override_window = bpy.context.window
+        override_screen = override_window.screen
+        override_area = [area for area in override_screen.areas if area.type == "VIEW_3D"]
+        override_region = [region for region in override_area[0].regions if region.type == 'WINDOW']
+
         # endregion
 
         # region Layouts
@@ -249,11 +256,15 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
         # header slot one
         header_slot_one = header_grid.column()
 
-        UIPreset_PosePosition(header_slot_one, context_skeleton, Alx_OT_Armature_Pose_SetPosePosition.bl_idname)
-        header_slot_one.separator()
+        with context.temp_override(window=override_window, area=override_area[0], region=override_region[0]):
+            UIPreset_PosePosition(header_slot_one, context_skeleton, Alx_OT_Armature_Pose_SetPosePosition.bl_idname)
+            header_slot_one.separator()
 
-        UIPreset_VisibilityIsolator(header_slot_one, addon_properties, Alx_OT_Scene_VisibilityIsolator.bl_idname)
-        header_slot_one.separator()
+            UIPreset_VisibilityIsolator(header_slot_one, addon_properties, Alx_OT_Scene_VisibilityIsolator.bl_idname)
+            header_slot_one.separator()
+
+            UIPreset_OverlayToggles(header_slot_one, context)
+            header_slot_one.separator()
 
 # endregion
 
@@ -263,29 +274,6 @@ class Alx_PT_Panel_AlexandriaGeneralPanel(bpy.types.Panel):
         tabs = main_layout.column().prop(addon_properties, "alexandria_general_panel_tabs",
                                          icon_only=True, expand=True, emboss=False)
         tabs_panels = main_layout.column()
-
-        override_window = bpy.context.window
-        override_screen = override_window.screen
-        override_area = [
-            area for area in override_screen.areas if area.type == "VIEW_3D"]
-        if (len(override_area) > 0):
-            override_region = [
-                region for region in override_area[0].regions if region.type == 'WINDOW']
-
-            with bpy.context.temp_override(window=override_window, area=override_area[0], region=override_region[0]):
-
-                overlay_column = header_layout.column(align=True)
-                overlay_prop = overlay_column.row(align=True)
-                overlay_prop.prop(context.space_data.overlay,
-                                  "show_overlays", text="", icon="OVERLAY")
-
-                poly_prop = header_layout.row(align=True)
-                poly_prop.prop(context.space_data.overlay,
-                               "show_face_orientation", text="", icon="NORMALS_FACE")
-                poly_prop.prop(context.space_data.overlay, "show_wireframes",
-                               text="Wireframe", icon="MOD_WIREFRAME")
-                poly_prop.prop(context.space_data.overlay,
-                               "show_retopology", text="Retopology", icon="MESH_GRID")
 
         header_layout.separator()
 
